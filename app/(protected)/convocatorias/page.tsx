@@ -12,6 +12,7 @@ import {
   CreateConvocatoriaRequest,
   Empresa,
 } from "../../types/api";
+
 // Local utility functions and constants
 const CATEGORIAS_CONVOCATORIA = [
   "Innovación",
@@ -41,26 +42,19 @@ const validateConvocatoriaForBackend = (
     errors.push("La fecha de fin debe ser posterior a la fecha de inicio");
   }
 
+  // Validate presupuesto range to prevent C# int32 overflow
+  if (data.presupuesto !== undefined && data.presupuesto !== null) {
+    if (data.presupuesto < 0) {
+      errors.push("El presupuesto no puede ser negativo");
+    } else if (data.presupuesto > 2147483647) {
+      errors.push("El presupuesto es demasiado grande (máximo: 2,147,483,647)");
+    }
+  }
+
   return errors;
 };
 
 // Local preparation function
-const prepareConvocatoriaForBackend = (data: CreateConvocatoriaRequest) => {
-  return {
-    titulo: data.titulo.trim(),
-    descripcion: data.descripcion.trim(),
-    fechaInicio: data.fechaInicio,
-    fechaFin: data.fechaFin,
-    categoria: data.categoria.trim(),
-    entidad: data.entidad.trim(),
-    estado: data.estado || "pendiente",
-    estadoManual: data.estadoManual || false,
-    requisitos: data.requisitos || [],
-    presupuesto: data.presupuesto,
-    companyId: data.companyId,
-  };
-};
-
 // Helper functions for estado management
 const getEstadoColor = (estado: string): string => {
   switch (estado) {
@@ -215,16 +209,32 @@ export default function ConvocatoriasPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Debug: Log form data before validation
+    console.log("� DEBUGGING - Form data before validation:", formData);
+    console.log("� DEBUGGING - Individual field values:", {
+      titulo: JSON.stringify(formData.titulo),
+      descripcion: JSON.stringify(formData.descripcion),
+      fechaInicio: JSON.stringify(formData.fechaInicio),
+      fechaFin: JSON.stringify(formData.fechaFin),
+      categoria: JSON.stringify(formData.categoria),
+      entidad: JSON.stringify(formData.entidad),
+      estado: JSON.stringify(formData.estado),
+      estadoManual: JSON.stringify(formData.estadoManual),
+      presupuesto: JSON.stringify(formData.presupuesto),
+      companyId: JSON.stringify(formData.companyId),
+    });
+
     // Validar datos antes de enviar
     const validationErrors = validateConvocatoriaForBackend(formData);
     if (validationErrors.length > 0) {
+      console.log("❌ Debug - Validation errors:", validationErrors);
       alert("Errores de validación:\n" + validationErrors.join("\n"));
       return;
     }
 
     try {
-      // Preparar datos para el backend
-      const dataToSend = prepareConvocatoriaForBackend(formData);
+      // Debug: Log form data before sending
+      console.log("� DEBUGGING - Form data being sent to service:", formData);
 
       let resultado;
 
@@ -232,11 +242,11 @@ export default function ConvocatoriasPage() {
         // Editar convocatoria existente
         resultado = await ConvocatoriaService.actualizarConvocatoria(
           editingConvocatoria.id!,
-          dataToSend
+          formData
         );
       } else {
         // Crear nueva convocatoria
-        resultado = await ConvocatoriaService.crearConvocatoria(dataToSend);
+        resultado = await ConvocatoriaService.crearConvocatoria(formData);
       }
 
       if (resultado.success) {
@@ -762,6 +772,8 @@ export default function ConvocatoriasPage() {
                   </label>
                   <input
                     type="number"
+                    min="0"
+                    max="2147483647"
                     value={
                       formData.presupuesto !== undefined
                         ? formData.presupuesto
@@ -777,8 +789,11 @@ export default function ConvocatoriasPage() {
                       })
                     }
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
-                    placeholder="Presupuesto disponible"
+                    placeholder="Presupuesto disponible (máx: 2,147,483,647)"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Valor máximo permitido: $2,147,483,647
+                  </p>
                 </div>
 
                 <div className="group">

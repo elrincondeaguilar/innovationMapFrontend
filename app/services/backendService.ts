@@ -340,7 +340,48 @@ export class ConvocatoriaService {
   }
 
   static async crearConvocatoria(convocatoria: CreateConvocatoriaRequest) {
-    return backendService.post<Convocatoria>("convocatorias", convocatoria);
+    console.log("ConvocatoriaService.crearConvocatoria - Creating new convocatoria");
+    
+    // Convert frontend camelCase to backend PascalCase
+    // Convert date strings (YYYY-MM-DD) to ISO format with UTC timezone
+    const fechaInicioISO = convocatoria.fechaInicio 
+      ? new Date(convocatoria.fechaInicio + 'T00:00:00Z').toISOString()
+      : null;
+    const fechaFinISO = convocatoria.fechaFin 
+      ? new Date(convocatoria.fechaFin + 'T00:00:00Z').toISOString()
+      : null;
+
+    const backendData = {
+      Titulo: convocatoria.titulo?.trim(),
+      Descripcion: convocatoria.descripcion?.trim(),
+      FechaInicio: fechaInicioISO,
+      FechaFin: fechaFinISO,
+      Categoria: convocatoria.categoria?.trim(),
+      Entidad: convocatoria.entidad?.trim(),
+      // Only include optional fields if they have valid values
+      ...(convocatoria.requisitos && convocatoria.requisitos.length > 0 && {
+        Requisitos: convocatoria.requisitos,
+      }),
+      ...(convocatoria.presupuesto !== undefined &&
+        convocatoria.presupuesto !== null &&
+        convocatoria.presupuesto > 0 &&
+        convocatoria.presupuesto <= 2147483647 && {
+          Presupuesto: convocatoria.presupuesto,
+        }),
+      ...(convocatoria.companyId !== undefined &&
+        convocatoria.companyId !== null &&
+        convocatoria.companyId > 0 && { CompanyId: convocatoria.companyId }),
+      ...(convocatoria.estado &&
+        convocatoria.estado.trim() !== "" && {
+          Estado: convocatoria.estado,
+        }),
+      ...(convocatoria.estadoManual !== undefined && {
+        EstadoManual: convocatoria.estadoManual,
+      }),
+    };
+
+    console.log("Backend data prepared");
+    return backendService.post<Convocatoria>("convocatorias", backendData);
   }
 
   static async actualizarConvocatoria(
