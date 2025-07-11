@@ -15,30 +15,32 @@ import {
 // Local utility functions and constants
 const CATEGORIAS_CONVOCATORIA = [
   "Innovación",
-  "Tecnología", 
+  "Tecnología",
   "Emprendimiento",
   "Investigación",
   "Desarrollo",
   "Sostenibilidad",
   "Educación",
-  "Salud"
+  "Salud",
 ] as const;
 
 // Local validation function
-const validateConvocatoriaForBackend = (data: CreateConvocatoriaRequest): string[] => {
+const validateConvocatoriaForBackend = (
+  data: CreateConvocatoriaRequest
+): string[] => {
   const errors: string[] = [];
-  
+
   if (!data.titulo?.trim()) errors.push("El título es requerido");
   if (!data.descripcion?.trim()) errors.push("La descripción es requerida");
   if (!data.fechaInicio) errors.push("La fecha de inicio es requerida");
   if (!data.fechaFin) errors.push("La fecha de fin es requerida");
   if (!data.categoria?.trim()) errors.push("La categoría es requerida");
   if (!data.entidad?.trim()) errors.push("La entidad es requerida");
-  
+
   if (data.fechaInicio && data.fechaFin && data.fechaInicio >= data.fechaFin) {
     errors.push("La fecha de fin debe ser posterior a la fecha de inicio");
   }
-  
+
   return errors;
 };
 
@@ -55,7 +57,7 @@ const prepareConvocatoriaForBackend = (data: CreateConvocatoriaRequest) => {
     estadoManual: data.estadoManual || false,
     requisitos: data.requisitos || [],
     presupuesto: data.presupuesto,
-    companyId: data.companyId
+    companyId: data.companyId,
   };
 };
 

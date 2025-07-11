@@ -7,10 +7,13 @@ import {
 } from "../types/api";
 import { backendService } from "./backendService";
 
-// Debug helper that only logs in development
+// Debug helper that only logs in development and for critical operations
 const debugLog = (message: string, ...args: unknown[]) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(message, ...args);
+  if (process.env.NODE_ENV === "development") {
+    // Only log critical auth operations, not every token check
+    if (message.includes("login") || message.includes("register") || message.includes("logout") || message.includes("Error")) {
+      console.log(message, ...args);
+    }
   }
 };
 
@@ -429,18 +432,15 @@ export class AuthService {
    */
   static getToken(): string | null {
     if (typeof window === "undefined") {
-      console.log("🔍 getToken: window undefined (SSR)");
       return null;
     }
 
     if (typeof localStorage === "undefined") {
-      console.log("🔍 getToken: localStorage undefined");
       return null;
     }
 
     try {
       const token = localStorage.getItem(this.TOKEN_KEY);
-      debugLog("🔍 getToken:", token ? "Token found" : "No token");
       return token;
     } catch (error) {
       console.error("💥 Error accessing localStorage for token:", error);
@@ -461,41 +461,24 @@ export class AuthService {
    */
   static getStoredUser(): User | null {
     if (typeof window === "undefined") {
-      console.log("🔍 getStoredUser: window undefined (SSR)");
       return null;
     }
 
     if (typeof localStorage === "undefined") {
-      console.log("🔍 getStoredUser: localStorage undefined");
       return null;
     }
 
     try {
       const userJson = localStorage.getItem(this.USER_KEY);
-      debugLog("🔍 getStoredUser - Raw userJson:", userJson);
-      debugLog("🔍 getStoredUser - userJson type:", typeof userJson);
-      debugLog("🔍 getStoredUser - userJson length:", userJson?.length);
 
       if (!userJson) {
-        debugLog("🔍 getStoredUser: No user data in localStorage");
         return null;
       }
 
       const user = JSON.parse(userJson);
-      debugLog("🔍 getStoredUser - Parsed user:", user);
-      debugLog("🔍 getStoredUser - User type:", typeof user);
-      debugLog(
-        "🔍 getStoredUser - User keys:",
-        user ? Object.keys(user) : []
-      );
-
       return user;
     } catch (error) {
       console.error("💥 Error al parsear usuario del localStorage:", error);
-      console.error(
-        "💥 Raw userJson that failed:",
-        localStorage.getItem(this.USER_KEY)
-      );
       return null;
     }
   }

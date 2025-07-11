@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     // Only apply rewrites in development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       return [
         {
           source: "/api/backend/:path*",
