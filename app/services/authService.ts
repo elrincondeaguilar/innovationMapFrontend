@@ -11,7 +11,12 @@ import { backendService } from "./backendService";
 const debugLog = (message: string, ...args: unknown[]) => {
   if (process.env.NODE_ENV === "development") {
     // Only log critical auth operations, not every token check
-    if (message.includes("login") || message.includes("register") || message.includes("logout") || message.includes("Error")) {
+    if (
+      message.includes("login") ||
+      message.includes("register") ||
+      message.includes("logout") ||
+      message.includes("Error")
+    ) {
       console.log(message, ...args);
     }
   }

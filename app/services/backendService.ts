@@ -24,7 +24,7 @@ class BackendService {
 
   constructor() {
     this.baseUrl = BACKEND_BASE_URL;
-    
+
     // Solo en desarrollo, mostrar la configuración del backend
     if (process.env.NODE_ENV === "development") {
       console.log("🌐 Backend Service initialized");
@@ -157,10 +157,16 @@ class BackendService {
       }
     } catch (error) {
       // Mejorar información sobre errores de conexión
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      
-      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("ERR_CONNECTION_REFUSED")) {
-        console.error(`💥 Backend connection error: Cannot connect to ${this.baseUrl}`);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+
+      if (
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("ERR_CONNECTION_REFUSED")
+      ) {
+        console.error(
+          `💥 Backend connection error: Cannot connect to ${this.baseUrl}`
+        );
         console.error("🔧 Possible solutions:");
         console.error("  1. Check if backend is running");
         console.error("  2. Verify the URL in .env.local");
@@ -169,7 +175,7 @@ class BackendService {
       } else {
         console.error("💥 Backend request error:", error);
       }
-      
+
       return {
         success: false,
         message: errorMessage,

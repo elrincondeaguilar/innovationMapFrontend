@@ -100,6 +100,12 @@ export default function ConvocatoriasPage() {
   const [ordenamiento, setOrdenamiento] = useState<
     "recientes" | "antiguas" | "alfabetico" | "fecha-inicio"
   >("recientes");
+
+  // Debug info - versión y configuración (temporal)
+  console.log("🔧 Convocatorias Page - Version: 2024-07-11-LOGS-FIXED");
+  console.log("🌐 Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+  console.log("🏗️ Environment:", process.env.NODE_ENV);
+
   const [formData, setFormData] = useState<CreateConvocatoriaRequest>({
     titulo: "",
     descripcion: "",
