@@ -7,6 +7,13 @@ import {
 } from "../types/api";
 import { backendService } from "./backendService";
 
+// Debug helper that only logs in development
+const debugLog = (message: string, ...args: unknown[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(message, ...args);
+  }
+};
+
 /**
  * Servicio de autenticación que se conecta con el backend .NET
  */
@@ -270,12 +277,12 @@ export class AuthService {
       const refreshToken = this.getRefreshToken();
 
       if (!token) {
-        console.log("🔍 validateToken: No token found");
+        debugLog("🔍 validateToken: No token found");
         return false;
       }
 
       if (!refreshToken) {
-        console.log(
+        debugLog(
           "🔍 validateToken: No refresh token found, assuming current token is valid"
         );
         return true;
@@ -433,7 +440,7 @@ export class AuthService {
 
     try {
       const token = localStorage.getItem(this.TOKEN_KEY);
-      console.log("🔍 getToken:", token ? "Token found" : "No token");
+      debugLog("🔍 getToken:", token ? "Token found" : "No token");
       return token;
     } catch (error) {
       console.error("💥 Error accessing localStorage for token:", error);
@@ -465,19 +472,19 @@ export class AuthService {
 
     try {
       const userJson = localStorage.getItem(this.USER_KEY);
-      console.log("🔍 getStoredUser - Raw userJson:", userJson);
-      console.log("🔍 getStoredUser - userJson type:", typeof userJson);
-      console.log("🔍 getStoredUser - userJson length:", userJson?.length);
+      debugLog("🔍 getStoredUser - Raw userJson:", userJson);
+      debugLog("🔍 getStoredUser - userJson type:", typeof userJson);
+      debugLog("🔍 getStoredUser - userJson length:", userJson?.length);
 
       if (!userJson) {
-        console.log("🔍 getStoredUser: No user data in localStorage");
+        debugLog("🔍 getStoredUser: No user data in localStorage");
         return null;
       }
 
       const user = JSON.parse(userJson);
-      console.log("🔍 getStoredUser - Parsed user:", user);
-      console.log("🔍 getStoredUser - User type:", typeof user);
-      console.log(
+      debugLog("🔍 getStoredUser - Parsed user:", user);
+      debugLog("🔍 getStoredUser - User type:", typeof user);
+      debugLog(
         "🔍 getStoredUser - User keys:",
         user ? Object.keys(user) : []
       );
