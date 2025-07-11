@@ -12,11 +12,52 @@ import {
   CreateConvocatoriaRequest,
   Empresa,
 } from "../../types/api";
-import {
-  validateConvocatoriaForBackend,
-  prepareConvocatoriaForBackend,
-  CATEGORIAS_CONVOCATORIA,
-} from "../../lib/api/convocatorias";
+// Local utility functions and constants
+const CATEGORIAS_CONVOCATORIA = [
+  "Innovación",
+  "Tecnología", 
+  "Emprendimiento",
+  "Investigación",
+  "Desarrollo",
+  "Sostenibilidad",
+  "Educación",
+  "Salud"
+] as const;
+
+// Local validation function
+const validateConvocatoriaForBackend = (data: CreateConvocatoriaRequest): string[] => {
+  const errors: string[] = [];
+  
+  if (!data.titulo?.trim()) errors.push("El título es requerido");
+  if (!data.descripcion?.trim()) errors.push("La descripción es requerida");
+  if (!data.fechaInicio) errors.push("La fecha de inicio es requerida");
+  if (!data.fechaFin) errors.push("La fecha de fin es requerida");
+  if (!data.categoria?.trim()) errors.push("La categoría es requerida");
+  if (!data.entidad?.trim()) errors.push("La entidad es requerida");
+  
+  if (data.fechaInicio && data.fechaFin && data.fechaInicio >= data.fechaFin) {
+    errors.push("La fecha de fin debe ser posterior a la fecha de inicio");
+  }
+  
+  return errors;
+};
+
+// Local preparation function
+const prepareConvocatoriaForBackend = (data: CreateConvocatoriaRequest) => {
+  return {
+    titulo: data.titulo.trim(),
+    descripcion: data.descripcion.trim(),
+    fechaInicio: data.fechaInicio,
+    fechaFin: data.fechaFin,
+    categoria: data.categoria.trim(),
+    entidad: data.entidad.trim(),
+    estado: data.estado || "pendiente",
+    estadoManual: data.estadoManual || false,
+    requisitos: data.requisitos || [],
+    presupuesto: data.presupuesto,
+    companyId: data.companyId
+  };
+};
 
 // Helper functions for estado management
 const getEstadoColor = (estado: string): string => {
