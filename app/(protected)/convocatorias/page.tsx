@@ -12,7 +12,6 @@ import {
   CreateConvocatoriaRequest,
   Empresa,
 } from "../../types/api";
-// Temporarily import only what exists
 import {
   validateConvocatoriaForBackend,
   prepareConvocatoriaForBackend,

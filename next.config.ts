@@ -14,12 +14,16 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      {
-        source: "/api/backend/:path*",
-        destination: "https://localhost:7001/api/:path*", // Cambia este puerto por el de tu backend C#
-      },
-    ];
+    // Only apply rewrites in development
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        {
+          source: "/api/backend/:path*",
+          destination: "https://localhost:7001/api/:path*", // Cambia este puerto por el de tu backend C#
+        },
+      ];
+    }
+    return [];
   },
   // Configuración para desarrollo con HTTPS si tu backend lo usa
   async headers() {

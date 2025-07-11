@@ -1,0 +1,16 @@
+{
+  "env": {
+    "NEXT_PUBLIC_BACKEND_URL": "https://backinovationmap.onrender.com",
+    "GOOGLE_GEMINI_API": "AIzaSyBnVpZ_2afnsJBhbIqhQzcY57I_Tjrx4ew"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_BACKEND_URL": "https://backinovationmap.onrender.com"
+    }
+  },
+  "functions": {
+    "app/**": {
+      "includeFiles": "app/**"
+    }
+  }
+}
