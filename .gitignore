@@ -144,3 +144,24 @@ docs/build/
 
 # Storybook build outputs
 storybook-static
+
+# Debug and test directories - Ignore all debug and test files
+app/*-debug/
+app/*-test/
+app/debug/
+app/diagnostico/
+app/test-*/
+app/localStorage-debug/
+app/localstorage-test/
+app/backend-debug/
+app/convocatorias-test/
+app/login-debug/
+app/register-debug/
+app/reload-test/
+app/simple-auth-test/
+app/token-debug/
+app/user-info-debug/
+
+# Additional IDE and OS files
+.vscode/settings.json
+.idea/
