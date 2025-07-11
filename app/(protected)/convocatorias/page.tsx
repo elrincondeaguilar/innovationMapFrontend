@@ -12,13 +12,39 @@ import {
   CreateConvocatoriaRequest,
   Empresa,
 } from "../../types/api";
+// Temporarily import only what exists
 import {
   validateConvocatoriaForBackend,
   prepareConvocatoriaForBackend,
-  getEstadoColor,
-  getEstadoDisplayText,
   CATEGORIAS_CONVOCATORIA,
 } from "../../lib/api/convocatorias";
+
+// Helper functions for estado management
+const getEstadoColor = (estado: string): string => {
+  switch (estado) {
+    case "activa":
+      return "bg-green-100 text-green-800";
+    case "cerrada":
+      return "bg-red-100 text-red-800";
+    case "pendiente":
+      return "bg-yellow-100 text-yellow-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const getEstadoDisplayText = (estado: string): string => {
+  switch (estado) {
+    case "activa":
+      return "Activa";
+    case "cerrada":
+      return "Cerrada";
+    case "pendiente":
+      return "Pendiente";
+    default:
+      return estado;
+  }
+};
 
 export default function ConvocatoriasPage() {
   const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
