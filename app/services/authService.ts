@@ -7,18 +7,11 @@ import {
 } from "../types/api";
 import { backendService } from "./backendService";
 
-// Debug helper that only logs in development and for critical operations
+// Debug helper optimizado para producción
 const debugLog = (message: string, ...args: unknown[]) => {
-  if (process.env.NODE_ENV === "development") {
-    // Only log critical auth operations, not every token check
-    if (
-      message.includes("login") ||
-      message.includes("register") ||
-      message.includes("logout") ||
-      message.includes("Error")
-    ) {
-      console.log(message, ...args);
-    }
+  // Solo logs de errores críticos
+  if (message.includes("Error") || message.includes("Failed")) {
+    console.error(message, ...args);
   }
 };
 
@@ -167,17 +160,14 @@ export class AuthService {
    */
   static async logout(): Promise<void> {
     try {
-      console.log("🔓 Logging out user...");
-
-      // Solo realizar logout local ya que el backend no tiene endpoint de logout
-      // Los tokens JWT son stateless y se invalidan automáticamente al expirar
-      this.clearAuthData();
-
-      console.log("✅ User logged out successfully");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userData");
+        localStorage.removeItem("authData");
+      }
     } catch (error) {
-      console.error("💥 Error during logout:", error);
-      // Asegurar que los datos se limpien incluso si hay error
-      this.clearAuthData();
+      debugLog("🚨 Error during logout:", error);
     }
   }
 

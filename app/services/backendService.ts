@@ -24,13 +24,6 @@ class BackendService {
 
   constructor() {
     this.baseUrl = BACKEND_BASE_URL;
-
-    // Solo en desarrollo, mostrar la configuración del backend
-    if (process.env.NODE_ENV === "development") {
-      console.log("🌐 Backend Service initialized");
-      console.log(`📍 Backend URL: ${this.baseUrl}`);
-      console.log(`🔧 Environment: ${process.env.NODE_ENV}`);
-    }
   }
 
   private async makeRequest<T>(
@@ -340,8 +333,6 @@ export class ConvocatoriaService {
   }
 
   static async crearConvocatoria(convocatoria: CreateConvocatoriaRequest) {
-    console.log("ConvocatoriaService.crearConvocatoria - Creating new convocatoria");
-    
     // Convert frontend camelCase to backend PascalCase
     // Convert date strings (YYYY-MM-DD) to ISO format with UTC timezone
     const fechaInicioISO = convocatoria.fechaInicio 
@@ -380,7 +371,6 @@ export class ConvocatoriaService {
       }),
     };
 
-    console.log("Backend data prepared");
     return backendService.post<Convocatoria>("convocatorias", backendData);
   }
 

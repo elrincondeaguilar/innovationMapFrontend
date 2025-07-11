@@ -148,7 +148,7 @@ export default function EmpresasPage() {
           }
         }
       } catch (error) {
-        console.log("Error extrayendo logo:", error);
+        console.error("Error extrayendo logo:", error);
       } finally {
         setLogoLoading(false);
       }

@@ -95,11 +95,6 @@ export default function ConvocatoriasPage() {
     "recientes" | "antiguas" | "alfabetico" | "fecha-inicio"
   >("recientes");
 
-  // Debug info - versión y configuración (temporal)
-  console.log("🔧 Convocatorias Page - Version: 2024-07-11-LOGS-FIXED");
-  console.log("🌐 Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
-  console.log("🏗️ Environment:", process.env.NODE_ENV);
-
   const [formData, setFormData] = useState<CreateConvocatoriaRequest>({
     titulo: "",
     descripcion: "",
@@ -209,33 +204,14 @@ export default function ConvocatoriasPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Debug: Log form data before validation
-    console.log("� DEBUGGING - Form data before validation:", formData);
-    console.log("� DEBUGGING - Individual field values:", {
-      titulo: JSON.stringify(formData.titulo),
-      descripcion: JSON.stringify(formData.descripcion),
-      fechaInicio: JSON.stringify(formData.fechaInicio),
-      fechaFin: JSON.stringify(formData.fechaFin),
-      categoria: JSON.stringify(formData.categoria),
-      entidad: JSON.stringify(formData.entidad),
-      estado: JSON.stringify(formData.estado),
-      estadoManual: JSON.stringify(formData.estadoManual),
-      presupuesto: JSON.stringify(formData.presupuesto),
-      companyId: JSON.stringify(formData.companyId),
-    });
-
     // Validar datos antes de enviar
     const validationErrors = validateConvocatoriaForBackend(formData);
     if (validationErrors.length > 0) {
-      console.log("❌ Debug - Validation errors:", validationErrors);
       alert("Errores de validación:\n" + validationErrors.join("\n"));
       return;
     }
 
     try {
-      // Debug: Log form data before sending
-      console.log("� DEBUGGING - Form data being sent to service:", formData);
-
       let resultado;
 
       if (editingConvocatoria) {
@@ -250,10 +226,6 @@ export default function ConvocatoriasPage() {
       }
 
       if (resultado.success) {
-        console.log(
-          "✅ Debug - Convocatoria guardada exitosamente:",
-          resultado.data
-        );
         setShowForm(false);
         setEditingConvocatoria(null);
         setFormData({
@@ -263,11 +235,11 @@ export default function ConvocatoriasPage() {
           fechaFin: "",
           categoria: "",
           entidad: "",
-          estado: "pendiente", // Estado por defecto más lógico
-          estadoManual: false, // Reset del campo estadoManual
+          estado: "pendiente",
+          estadoManual: false,
           requisitos: [],
-          presupuesto: undefined, // Incluir presupuesto en el reset
-          companyId: undefined, // Incluir companyId en el reset
+          presupuesto: undefined,
+          companyId: undefined,
         });
         cargarConvocatorias(); // Recargar la lista
       } else {
