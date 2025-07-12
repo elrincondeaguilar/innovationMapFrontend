@@ -28,6 +28,14 @@
 
 ---
 
+## 🌐 URL del Frontend Desplegado
+
+Puedes acceder a la aplicación web del frontend en el siguiente enlace:
+
+🔗 [https://innovation-map-frontend.vercel.app/](https://innovation-map-frontend.vercel.app/)
+
+---
+
 ## 🚀 Instalación y Puesta en Marcha
 
 ### 🔧 Requisitos Previos
