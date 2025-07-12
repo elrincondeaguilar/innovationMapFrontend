@@ -216,18 +216,13 @@ export class AuthService {
       const response = await backendService.get<User>("auth/me");
 
       if (response.success && response.data) {
-        console.log("🔍 getCurrentUser - Raw response.data:", response.data);
-
         // Check if response.data is wrapped in another structure
         let userData = response.data;
 
         // If response.data has a 'data' property, use that instead
         if (typeof userData === "object" && "data" in userData) {
-          console.log("🔍 getCurrentUser - Using nested data structure");
           userData = (userData as Record<string, unknown>).data as User;
         }
-
-        console.log("🔍 getCurrentUser - Final userData:", userData);
 
         // Map backend fields to our User type
         const user: User = {
@@ -243,8 +238,6 @@ export class AuthService {
               .lastLoginAt as string),
         };
 
-        console.log("🔍 getCurrentUser - Mapped user:", user);
-
         // Actualizar usuario en localStorage con versión minimalista
         const minimalUser: MinimalUser = {
           id: user.id,
@@ -254,7 +247,6 @@ export class AuthService {
         };
 
         localStorage.setItem(this.USER_KEY, JSON.stringify(minimalUser));
-        console.log("🔐 Minimal user saved to localStorage:", minimalUser);
 
         return user;
       } else {
@@ -323,15 +315,6 @@ export class AuthService {
    * Guardar datos de autenticación en localStorage
    */
   private static saveAuthData(authData: AuthResponse): void {
-    console.log("💾 saveAuthData called with:", {
-      hasToken: !!authData.token,
-      hasUser: !!authData.user,
-      hasRefreshToken: !!authData.refreshToken,
-      tokenType: typeof authData.token,
-      tokenLength: authData.token?.length,
-      authDataStructure: Object.keys(authData),
-    });
-
     try {
       // Check localStorage availability
       if (
@@ -343,27 +326,19 @@ export class AuthService {
       }
 
       if (authData.token) {
-        console.log("🔑 Saving token to localStorage...");
         localStorage.setItem(this.TOKEN_KEY, authData.token);
-        console.log("✅ Token saved to localStorage");
 
         // Immediate verification
         const savedToken = localStorage.getItem(this.TOKEN_KEY);
-        if (savedToken === authData.token) {
-          console.log("✅ Token verification successful");
-        } else {
+        if (savedToken !== authData.token) {
           console.error("❌ Token verification failed!", {
             expected: authData.token.substring(0, 20) + "...",
             found: savedToken?.substring(0, 20) + "...",
           });
         }
-      } else {
-        console.warn("⚠️ No token provided to save");
       }
 
       if (authData.user) {
-        console.log("👤 Saving user to localStorage...");
-
         // Crear versión minimalista para localStorage (más seguro)
         const minimalUser: MinimalUser = {
           id: authData.user.id,
@@ -373,41 +348,17 @@ export class AuthService {
         };
 
         localStorage.setItem(this.USER_KEY, JSON.stringify(minimalUser));
-        console.log("✅ Minimal user saved to localStorage");
-        console.log("🔐 Saved minimal user data:", minimalUser);
 
         // Immediate verification
         const savedUser = localStorage.getItem(this.USER_KEY);
-        if (savedUser) {
-          console.log("✅ User verification successful");
-        } else {
+        if (!savedUser) {
           console.error("❌ User verification failed!");
         }
-      } else {
-        console.warn("⚠️ No user provided to save");
       }
 
       if (authData.refreshToken) {
         localStorage.setItem(this.REFRESH_TOKEN_KEY, authData.refreshToken);
-        console.log("✅ Refresh token saved to localStorage");
-      } else {
-        console.log("ℹ️ No refresh token provided");
       }
-
-      // Final verification of all data
-      console.log("🔍 Final verification:");
-      console.log(
-        "- Token in localStorage:",
-        this.getToken() ? "EXISTS" : "MISSING"
-      );
-      console.log(
-        "- User in localStorage:",
-        this.getStoredUser() ? "EXISTS" : "MISSING"
-      );
-      console.log(
-        "- RefreshToken in localStorage:",
-        this.getRefreshToken() ? "EXISTS" : "MISSING"
-      );
     } catch (error) {
       console.error("💥 Error saving to localStorage:", error);
     }
@@ -526,8 +477,6 @@ export class AuthService {
         return null;
       }
 
-      console.log("🔍 JWT payload:", decoded);
-
       // Helper function to safely extract string values
       const getString = (key: string): string => {
         const value = decoded[key];
@@ -578,11 +527,9 @@ export class AuthService {
 
       // Verificar que tenemos información mínima
       if (!user.email && !user.nombre) {
-        console.warn("⚠️ JWT doesn't contain sufficient user information");
         return null;
       }
 
-      console.log("✅ User extracted from JWT:", user);
       return user;
     } catch (error) {
       console.error("💥 Error extracting user from token:", error);
