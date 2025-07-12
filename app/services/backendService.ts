@@ -335,11 +335,11 @@ export class ConvocatoriaService {
   static async crearConvocatoria(convocatoria: CreateConvocatoriaRequest) {
     // Convert frontend camelCase to backend PascalCase
     // Convert date strings (YYYY-MM-DD) to ISO format with UTC timezone
-    const fechaInicioISO = convocatoria.fechaInicio 
-      ? new Date(convocatoria.fechaInicio + 'T00:00:00Z').toISOString()
+    const fechaInicioISO = convocatoria.fechaInicio
+      ? new Date(convocatoria.fechaInicio + "T00:00:00Z").toISOString()
       : null;
-    const fechaFinISO = convocatoria.fechaFin 
-      ? new Date(convocatoria.fechaFin + 'T00:00:00Z').toISOString()
+    const fechaFinISO = convocatoria.fechaFin
+      ? new Date(convocatoria.fechaFin + "T00:00:00Z").toISOString()
       : null;
 
     const backendData = {
@@ -350,9 +350,10 @@ export class ConvocatoriaService {
       Categoria: convocatoria.categoria?.trim(),
       Entidad: convocatoria.entidad?.trim(),
       // Only include optional fields if they have valid values
-      ...(convocatoria.requisitos && convocatoria.requisitos.length > 0 && {
-        Requisitos: convocatoria.requisitos,
-      }),
+      ...(convocatoria.requisitos &&
+        convocatoria.requisitos.length > 0 && {
+          Requisitos: convocatoria.requisitos,
+        }),
       ...(convocatoria.presupuesto !== undefined &&
         convocatoria.presupuesto !== null &&
         convocatoria.presupuesto > 0 &&
