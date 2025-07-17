@@ -84,31 +84,70 @@ class BackendService {
         // Si no se pudo renovar el token, limpiar datos y devolver error
         AuthService.clearAuthData();
         throw new Error(
-          "Sesión expirada. Por favor, inicia sesión nuevamente."
+          "Usuario y/o Contraseña incorrectos. Por favor, intente nuevamente."
         );
       }
 
       if (!response.ok) {
-        let errorDetails = "";
+        let userFriendlyMessage = "";
         try {
           const errorText = await response.text();
-          console.error("❌ Error response body:", errorText);
 
           // Try to parse as JSON for more detailed error info
           try {
             const errorData = JSON.parse(errorText);
-            errorDetails = errorData.message || errorData.error || errorText;
-            console.error("❌ Parsed error data:", errorData);
+            const serverMessage =
+              errorData.message || errorData.error || errorText;
+
+            // Map common server errors to user-friendly messages
+            if (
+              serverMessage.toLowerCase().includes("usuario") ||
+              serverMessage.toLowerCase().includes("contraseña") ||
+              serverMessage.toLowerCase().includes("credenciales")
+            ) {
+              userFriendlyMessage = "Usuario y/o contraseña incorrectos";
+            } else if (
+              serverMessage.toLowerCase().includes("email") ||
+              serverMessage.toLowerCase().includes("correo")
+            ) {
+              userFriendlyMessage = "El formato del email no es válido";
+            } else if (
+              serverMessage.toLowerCase().includes("token") ||
+              serverMessage.toLowerCase().includes("sesión")
+            ) {
+              userFriendlyMessage =
+                "Su sesión ha expirado. Por favor, inicie sesión nuevamente";
+            } else if (response.status >= 500) {
+              userFriendlyMessage =
+                "Error interno del servidor. Por favor, intente más tarde";
+            } else if (response.status === 404) {
+              userFriendlyMessage = "Recurso no encontrado";
+            } else {
+              userFriendlyMessage = serverMessage || "Error en el servidor";
+            }
           } catch {
-            errorDetails = errorText;
+            // If can't parse JSON, provide generic message based on status
+            if (response.status === 400) {
+              userFriendlyMessage = "Los datos enviados no son válidos";
+            } else if (response.status === 401) {
+              userFriendlyMessage = "Usuario y/o contraseña incorrectos";
+            } else if (response.status === 403) {
+              userFriendlyMessage =
+                "No tiene permisos para realizar esta acción";
+            } else if (response.status === 404) {
+              userFriendlyMessage = "Recurso no encontrado";
+            } else if (response.status >= 500) {
+              userFriendlyMessage =
+                "Error interno del servidor. Por favor, intente más tarde";
+            } else {
+              userFriendlyMessage = "Error en la conexión con el servidor";
+            }
           }
         } catch {
-          errorDetails = `HTTP ${response.status} - ${response.statusText}`;
+          userFriendlyMessage = "Error en la conexión con el servidor";
         }
 
-        throw new Error(
-          `HTTP error! status: ${response.status} - ${errorDetails}`
-        );
+        throw new Error(userFriendlyMessage);
       }
 
       // Manejar respuestas vacías (204 No Content y otros casos)
@@ -148,29 +187,30 @@ class BackendService {
         };
       }
     } catch (error) {
-      // Mejorar información sobre errores de conexión
+      // Generar mensajes amigables para el usuario
       const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
+        error instanceof Error ? error.message : "Ocurrió un error inesperado";
+
+      let userFriendlyMessage = errorMessage;
 
       if (
         errorMessage.includes("Failed to fetch") ||
-        errorMessage.includes("ERR_CONNECTION_REFUSED")
+        errorMessage.includes("ERR_CONNECTION_REFUSED") ||
+        errorMessage.includes("NetworkError")
       ) {
-        console.error(
-          `💥 Backend connection error: Cannot connect to ${this.baseUrl}`
-        );
-        console.error("🔧 Possible solutions:");
-        console.error("  1. Check if backend is running");
-        console.error("  2. Verify the URL in .env.local");
-        console.error("  3. Check for CORS configuration");
-        console.error(`  4. Current backend URL: ${this.baseUrl}`);
-      } else {
-        console.error("💥 Backend request error:", error);
+        userFriendlyMessage =
+          "No se puede conectar con el servidor. Por favor, verifique su conexión a internet e intente nuevamente";
+      } else if (errorMessage.includes("timeout")) {
+        userFriendlyMessage =
+          "La conexión tardó demasiado. Por favor, intente nuevamente";
+      } else if (errorMessage.includes("CORS")) {
+        userFriendlyMessage =
+          "Error de configuración del servidor. Contacte al administrador";
       }
 
       return {
         success: false,
-        message: errorMessage,
+        message: userFriendlyMessage,
       };
     }
   }
@@ -230,7 +270,9 @@ class BackendService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(
+          "Error al subir el archivo. Por favor, verifique el formato y tamaño del archivo"
+        );
       }
 
       const data = await response.json();
@@ -239,10 +281,10 @@ class BackendService {
         data: data,
       };
     } catch (error) {
-      console.error("File upload error:", error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : "File upload failed",
+        message:
+          error instanceof Error ? error.message : "Error al subir el archivo",
       };
     }
   }
@@ -264,15 +306,14 @@ class BackendService {
       } else {
         return {
           isOnline: false,
-          message: `Backend returned ${response.status}`,
+          message: `El servidor no está disponible (código: ${response.status})`,
         };
       }
     } catch (error) {
-      console.error("Backend health check failed:", error);
       return {
         isOnline: false,
-        message: `Cannot reach backend at ${this.baseUrl}: ${
-          error instanceof Error ? error.message : "Unknown error"
+        message: `No se puede conectar con el servidor: ${
+          error instanceof Error ? error.message : "Error de conexión"
         }`,
       };
     }
@@ -301,7 +342,7 @@ class BackendService {
         if (response.ok || response.status < 500) {
           return {
             isOnline: true,
-            message: `Found backend at ${testUrl}`,
+            message: `Servidor encontrado en ${testUrl}`,
             suggestedPorts: [port],
           };
         }
@@ -312,7 +353,7 @@ class BackendService {
 
     return {
       isOnline: false,
-      message: "No backend found on common ports",
+      message: "No se encontró el servidor en los puertos comunes",
       suggestedPorts: commonPorts,
     };
   }

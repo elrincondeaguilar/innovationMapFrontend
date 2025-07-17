@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthOperations } from "../../hooks/useAuth";
 import { RegisterCredentials } from "../../types/api";
-import { 
-  validateEmail, 
-  validatePassword, 
-  validateName, 
+import {
+  validateEmail,
+  validatePassword,
+  validateName,
   validatePasswordConfirmation,
-  getBackendErrorMessage 
+  getBackendErrorMessage,
 } from "../../utils/validation";
 
 export default function RegisterPage() {
@@ -23,7 +23,7 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -32,30 +32,30 @@ export default function RegisterPage() {
 
   const validateField = (name: string, value: string) => {
     let validation;
-    
+
     switch (name) {
-      case 'nombre':
-        validation = validateName(value, 'nombre');
+      case "nombre":
+        validation = validateName(value, "nombre");
         break;
-      case 'apellido':
-        validation = validateName(value, 'apellido');
+      case "apellido":
+        validation = validateName(value, "apellido");
         break;
-      case 'email':
+      case "email":
         validation = validateEmail(value);
         break;
-      case 'password':
+      case "password":
         validation = validatePassword(value, true);
         break;
-      case 'confirmPassword':
+      case "confirmPassword":
         validation = validatePasswordConfirmation(credentials.password, value);
         break;
       default:
         return;
     }
 
-    setFieldErrors(prev => ({
+    setFieldErrors((prev) => ({
       ...prev,
-      [name]: validation.isValid ? '' : (validation.error || '')
+      [name]: validation.isValid ? "" : validation.error || "",
     }));
   };
 
@@ -66,30 +66,33 @@ export default function RegisterPage() {
     setFieldErrors({});
 
     // Validar todos los campos
-    const nameValidation = validateName(credentials.nombre, 'nombre');
-    const lastNameValidation = validateName(credentials.apellido, 'apellido');
+    const nameValidation = validateName(credentials.nombre, "nombre");
+    const lastNameValidation = validateName(credentials.apellido, "apellido");
     const emailValidation = validateEmail(credentials.email);
     const passwordValidation = validatePassword(credentials.password, true);
-    const confirmPasswordValidation = validatePasswordConfirmation(credentials.password, credentials.confirmPassword);
+    const confirmPasswordValidation = validatePasswordConfirmation(
+      credentials.password,
+      credentials.confirmPassword
+    );
 
-    const newFieldErrors: {[key: string]: string} = {};
-    
+    const newFieldErrors: { [key: string]: string } = {};
+
     if (!nameValidation.isValid && nameValidation.error) {
       newFieldErrors.nombre = nameValidation.error;
     }
-    
+
     if (!lastNameValidation.isValid && lastNameValidation.error) {
       newFieldErrors.apellido = lastNameValidation.error;
     }
-    
+
     if (!emailValidation.isValid && emailValidation.error) {
       newFieldErrors.email = emailValidation.error;
     }
-    
+
     if (!passwordValidation.isValid && passwordValidation.error) {
       newFieldErrors.password = passwordValidation.error;
     }
-    
+
     if (!confirmPasswordValidation.isValid && confirmPasswordValidation.error) {
       newFieldErrors.confirmPassword = confirmPasswordValidation.error;
     }
@@ -116,15 +119,15 @@ export default function RegisterPage() {
       ...prev,
       [name]: value,
     }));
-    
+
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (fieldErrors[name]) {
-      setFieldErrors(prev => ({
+      setFieldErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
-    
+
     // Validar en tiempo real después de que el usuario deje de escribir
     setTimeout(() => validateField(name, value), 500);
   };
