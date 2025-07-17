@@ -14,16 +14,13 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    // Only apply rewrites in development
-    if (process.env.NODE_ENV === "development") {
-      return [
-        {
-          source: "/api/backend/:path*",
-          destination: "https://localhost:7001/api/:path*", // Cambia este puerto por el de tu backend C#
-        },
-      ];
-    }
-    return [];
+    // Proxy para evitar problemas de CORS en producción
+    return [
+      {
+        source: "/api/backend/:path*",
+        destination: "https://backinovationmap.onrender.com/api/:path*",
+      },
+    ];
   },
   // Configuración para desarrollo con HTTPS si tu backend lo usa
   async headers() {

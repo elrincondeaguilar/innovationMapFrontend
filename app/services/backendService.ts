@@ -9,8 +9,7 @@ import {
 import AuthService from "./authService";
 
 // Configuración base para el backend
-const BACKEND_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5297";
+const BACKEND_BASE_URL = "/api/backend"; // Usar proxy interno en lugar de URL externa
 
 export interface ApiResponse<T> {
   success: boolean;
