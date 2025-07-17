@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthOperations } from "../../hooks/useAuth";
 import { RegisterCredentials } from "../../types/api";
+import { 
+  validateEmail, 
+  validatePassword, 
+  validateName, 
+  validatePasswordConfirmation,
+  getBackendErrorMessage 
+} from "../../utils/validation";
 
 export default function RegisterPage() {
   const [credentials, setCredentials] = useState<RegisterCredentials>({
@@ -16,26 +23,79 @@ export default function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { register } = useAuthOperations();
   const router = useRouter();
 
+  const validateField = (name: string, value: string) => {
+    let validation;
+    
+    switch (name) {
+      case 'nombre':
+        validation = validateName(value, 'nombre');
+        break;
+      case 'apellido':
+        validation = validateName(value, 'apellido');
+        break;
+      case 'email':
+        validation = validateEmail(value);
+        break;
+      case 'password':
+        validation = validatePassword(value, true);
+        break;
+      case 'confirmPassword':
+        validation = validatePasswordConfirmation(credentials.password, value);
+        break;
+      default:
+        return;
+    }
+
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: validation.isValid ? '' : (validation.error || '')
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setFieldErrors({});
 
-    // Validaciones del frontend
-    if (credentials.password !== credentials.confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      setLoading(false);
-      return;
+    // Validar todos los campos
+    const nameValidation = validateName(credentials.nombre, 'nombre');
+    const lastNameValidation = validateName(credentials.apellido, 'apellido');
+    const emailValidation = validateEmail(credentials.email);
+    const passwordValidation = validatePassword(credentials.password, true);
+    const confirmPasswordValidation = validatePasswordConfirmation(credentials.password, credentials.confirmPassword);
+
+    const newFieldErrors: {[key: string]: string} = {};
+    
+    if (!nameValidation.isValid && nameValidation.error) {
+      newFieldErrors.nombre = nameValidation.error;
+    }
+    
+    if (!lastNameValidation.isValid && lastNameValidation.error) {
+      newFieldErrors.apellido = lastNameValidation.error;
+    }
+    
+    if (!emailValidation.isValid && emailValidation.error) {
+      newFieldErrors.email = emailValidation.error;
+    }
+    
+    if (!passwordValidation.isValid && passwordValidation.error) {
+      newFieldErrors.password = passwordValidation.error;
+    }
+    
+    if (!confirmPasswordValidation.isValid && confirmPasswordValidation.error) {
+      newFieldErrors.confirmPassword = confirmPasswordValidation.error;
     }
 
-    if (credentials.password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
       setLoading(false);
       return;
     }
@@ -44,7 +104,7 @@ export default function RegisterPage() {
       await register(credentials);
       router.push("/"); // Redirigir al dashboard principal
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Error en el registro");
+      setError(getBackendErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -56,6 +116,17 @@ export default function RegisterPage() {
       ...prev,
       [name]: value,
     }));
+    
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+    
+    // Validar en tiempo real después de que el usuario deje de escribir
+    setTimeout(() => validateField(name, value), 500);
   };
 
   return (
