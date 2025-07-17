@@ -30,7 +30,7 @@ class BackendService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const url = `${this.baseUrl}/api/${endpoint}`;
+      const url = `${this.baseUrl}/${endpoint}`;
 
       const defaultHeaders: HeadersInit = {
         "Content-Type": "application/json",
