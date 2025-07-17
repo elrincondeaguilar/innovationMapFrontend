@@ -22,7 +22,6 @@ export default function AnalizarPage() {
   const [error, setError] = useState("");
   const [analisisData, setAnalisisData] = useState<AnalisisConvocatoria | null>(null);
   const [convocatoriaExtraida, setConvocatoriaExtraida] = useState<ConvocatoriaData | null>(null);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
   // Función para analizar con Gemini
@@ -156,9 +155,6 @@ ${textoCompleto}`,
         
         setRespuesta(respuestaFormateada);
         
-        // Mostrar diálogo para agregar manualmente
-        setShowConfirmDialog(true);
-        
       } catch (parseError) {
         console.error("Error al parsear JSON:", parseError);
         setRespuesta(resultado);
@@ -185,7 +181,6 @@ ${textoCompleto}`,
         
         setConvocatoriaExtraida(datosBasicos);
         setAnalisisData(analisisBasico);
-        setShowConfirmDialog(true);
       }
       
     } catch (error) {
@@ -211,7 +206,6 @@ ${textoCompleto}`,
       });
       
       setRespuesta(respuesta + "\n\n✅ ¡Convocatoria agregada exitosamente!");
-      setShowConfirmDialog(false);
       
       // Limpiar el formulario después de agregar
       setTimeout(() => {
@@ -233,7 +227,6 @@ ${textoCompleto}`,
     setError("");
     setAnalisisData(null);
     setConvocatoriaExtraida(null);
-    setShowConfirmDialog(false);
   };
 
   return (
@@ -370,70 +363,19 @@ ${textoCompleto}`,
                 </svg>
                 Resultado del Análisis
               </h3>
-              <div className="bg-gray-50 rounded-xl p-6 border">
+              <div className="bg-gray-50 rounded-xl p-6 border mb-6">
                 <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
                   {respuesta}
                 </pre>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Diálogo de confirmación para agregar convocatoria */}
-        {showConfirmDialog && convocatoriaExtraida && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                  <svg
-                    className="w-7 h-7 mr-3 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  ¿Agregar Convocatoria?
-                </h3>
-                
-                <div className="space-y-4 mb-8">
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h4 className="font-semibold text-gray-800 mb-2">Título:</h4>
-                    <p className="text-gray-700">{convocatoriaExtraida.titulo}</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h4 className="font-semibold text-gray-800 mb-2">Entidad:</h4>
-                    <p className="text-gray-700">{convocatoriaExtraida.entidad}</p>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <h4 className="font-semibold text-gray-800 mb-2">Categoría:</h4>
-                    <p className="text-gray-700">{convocatoriaExtraida.categoria}</p>
-                  </div>
-                  
-                  {analisisData && (
-                    <div className="bg-blue-50 rounded-xl p-4">
-                      <h4 className="font-semibold text-gray-800 mb-2">Estado detectado:</h4>
-                      <p className="text-gray-700">
-                        {analisisData.estado === 'activa' ? '🟢 Activa' : 
-                         analisisData.estado === 'cerrada' ? '🔴 Cerrada' : 
-                         '⚫ No especificado'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-4">
+              
+              {/* Botón para agregar a la base de datos */}
+              {convocatoriaExtraida && analisisData && !respuesta.includes("✅ ¡Convocatoria agregada exitosamente!") && (
+                <div className="flex gap-4 justify-center">
                   <button
                     onClick={agregarConvocatoria}
                     disabled={guardando}
-                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center justify-center"
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center"
                   >
                     {guardando ? (
                       <>
@@ -455,34 +397,15 @@ ${textoCompleto}`,
                             d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                           />
                         </svg>
-                        Sí, agregar convocatoria
+                        Agregar a la Base de Datos
                       </>
                     )}
                   </button>
-                  <button
-                    onClick={() => setShowConfirmDialog(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-300 flex items-center"
-                  >
-                    <svg
-                      className="w-5 h-5 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                    Cancelar
-                  </button>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
