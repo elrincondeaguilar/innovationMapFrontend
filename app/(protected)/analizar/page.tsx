@@ -20,8 +20,11 @@ export default function AnalizarPage() {
   const [respuesta, setRespuesta] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [analisisData, setAnalisisData] = useState<AnalisisConvocatoria | null>(null);
-  const [convocatoriaExtraida, setConvocatoriaExtraida] = useState<ConvocatoriaData | null>(null);
+  const [analisisData, setAnalisisData] = useState<AnalisisConvocatoria | null>(
+    null
+  );
+  const [convocatoriaExtraida, setConvocatoriaExtraida] =
+    useState<ConvocatoriaData | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [agregadoExitoso, setAgregadoExitoso] = useState(false);
 
@@ -77,26 +80,28 @@ ${textoCompleto}`,
 
     try {
       // Extraer texto de la URL
-      const response = await fetch('/api/scraper', {
-        method: 'POST',
+      const response = await fetch("/api/scraper", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ url }),
       });
 
       if (!response.ok) {
-        throw new Error('Error al extraer el texto de la URL');
+        throw new Error("Error al extraer el texto de la URL");
       }
 
       const data = await response.json();
       setTexto(data.text);
-      
+
       // Analizar automáticamente el texto extraído
       await analizarTexto(data.text);
     } catch (error) {
       console.error("Error procesando URL:", error);
-      setError('No se pudo extraer el texto de la URL proporcionada. Verifica que la URL sea válida y esté accesible.');
+      setError(
+        "No se pudo extraer el texto de la URL proporcionada. Verifica que la URL sea válida y esté accesible."
+      );
     } finally {
       setLoading(false);
     }
@@ -104,9 +109,11 @@ ${textoCompleto}`,
 
   const analizarTexto = async (textoAAnalizar?: string) => {
     const textoCompleto = textoAAnalizar || texto;
-    
+
     if (!textoCompleto.trim()) {
-      setRespuesta("Por favor, ingresa el texto de la convocatoria a analizar.");
+      setRespuesta(
+        "Por favor, ingresa el texto de la convocatoria a analizar."
+      );
       return;
     }
 
@@ -117,73 +124,89 @@ ${textoCompleto}`,
 
     try {
       const resultado = await analizarConGemini(textoCompleto);
-      
+
       // Limpiar el resultado para extraer solo el JSON
       let jsonString = resultado.trim();
-      
+
       // Buscar el JSON en el resultado si viene con texto adicional
       const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         jsonString = jsonMatch[0];
       }
-      
+
       try {
         // Intentar parsear el JSON
         const analisisJSON = JSON.parse(jsonString);
-        
+
         setAnalisisData(analisisJSON);
         setConvocatoriaExtraida(analisisJSON.datosConvocatoria);
-        
+
         // Formatear la respuesta para mostrar
         const respuestaFormateada = `
 ✅ **Análisis completado**
 
-**Estado de la convocatoria:** ${analisisJSON.estado === 'activa' ? '🟢 Activa' : analisisJSON.estado === 'cerrada' ? '🔴 Cerrada' : '⚫ No especificado'}
+**Estado de la convocatoria:** ${
+          analisisJSON.estado === "activa"
+            ? "🟢 Activa"
+            : analisisJSON.estado === "cerrada"
+            ? "🔴 Cerrada"
+            : "⚫ No especificado"
+        }
 **Justificación:** ${analisisJSON.justificacion}
 **Nivel de confianza:** ${analisisJSON.confianza}%
 
 **Fechas encontradas:**
-- Inicio: ${analisisJSON.fechasEncontradas?.inicio || 'No especificada'}
-- Fin: ${analisisJSON.fechasEncontradas?.fin || 'No especificada'}
+- Inicio: ${analisisJSON.fechasEncontradas?.inicio || "No especificada"}
+- Fin: ${analisisJSON.fechasEncontradas?.fin || "No especificada"}
 
 **Datos extraídos:**
-- **Título:** ${analisisJSON.datosConvocatoria?.titulo || 'No especificado'}
-- **Entidad:** ${analisisJSON.datosConvocatoria?.entidad || 'No especificada'}
-- **Categoría:** ${analisisJSON.datosConvocatoria?.categoria || 'No especificada'}
-- **Presupuesto:** ${analisisJSON.datosConvocatoria?.presupuesto ? `$${analisisJSON.datosConvocatoria.presupuesto.toLocaleString()}` : 'No especificado'}
-- **Requisitos:** ${analisisJSON.datosConvocatoria?.requisitos?.length > 0 ? analisisJSON.datosConvocatoria.requisitos.join(', ') : 'No especificados'}
+- **Título:** ${analisisJSON.datosConvocatoria?.titulo || "No especificado"}
+- **Entidad:** ${analisisJSON.datosConvocatoria?.entidad || "No especificada"}
+- **Categoría:** ${
+          analisisJSON.datosConvocatoria?.categoria || "No especificada"
+        }
+- **Presupuesto:** ${
+          analisisJSON.datosConvocatoria?.presupuesto
+            ? `$${analisisJSON.datosConvocatoria.presupuesto.toLocaleString()}`
+            : "No especificado"
+        }
+- **Requisitos:** ${
+          analisisJSON.datosConvocatoria?.requisitos?.length > 0
+            ? analisisJSON.datosConvocatoria.requisitos.join(", ")
+            : "No especificados"
+        }
         `.trim();
-        
+
         setRespuesta(respuestaFormateada);
-        
       } catch (parseError) {
         console.error("Error al parsear JSON:", parseError);
         setRespuesta(resultado);
-        
+
         // Crear datos básicos para poder agregar manualmente
-        const tituloExtraido = textoCompleto.split('\n')
-          .find(line => line.trim().length > 10 && line.trim().length < 200)
-          ?.trim() || "Convocatoria";
-        
+        const tituloExtraido =
+          textoCompleto
+            .split("\n")
+            .find((line) => line.trim().length > 10 && line.trim().length < 200)
+            ?.trim() || "Convocatoria";
+
         const datosBasicos: ConvocatoriaData = {
           titulo: tituloExtraido,
           descripcion: textoCompleto.substring(0, 500) + "...",
           categoria: "Sin categorizar",
           entidad: "Por determinar",
-          requisitos: ["Revisar documento completo"]
+          requisitos: ["Revisar documento completo"],
         };
-        
+
         const analisisBasico: AnalisisConvocatoria = {
           estado: "no_especificada",
           justificacion: "Análisis manual requerido",
           fechasEncontradas: {},
-          confianza: 50
+          confianza: 50,
         };
-        
+
         setConvocatoriaExtraida(datosBasicos);
         setAnalisisData(analisisBasico);
       }
-      
     } catch (error) {
       console.error("Error en análisis:", error);
       setRespuesta(
@@ -201,21 +224,34 @@ ${textoCompleto}`,
     try {
       await ConvocatoriaService.crearConvocatoria({
         ...convocatoriaExtraida,
-        fechaInicio: analisisData.fechasEncontradas?.inicio || new Date().toISOString().split('T')[0],
-        fechaFin: analisisData.fechasEncontradas?.fin || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        estado: analisisData.estado === 'activa' ? 'activa' : analisisData.estado === 'cerrada' ? 'cerrada' : 'pendiente'
+        fechaInicio:
+          analisisData.fechasEncontradas?.inicio ||
+          new Date().toISOString().split("T")[0],
+        fechaFin:
+          analisisData.fechasEncontradas?.fin ||
+          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
+        estado:
+          analisisData.estado === "activa"
+            ? "activa"
+            : analisisData.estado === "cerrada"
+            ? "cerrada"
+            : "pendiente",
       });
-      
+
       setAgregadoExitoso(true);
-      
+
       // Limpiar el formulario después de agregar
       setTimeout(() => {
         limpiarFormulario();
       }, 3000);
-      
     } catch (error) {
       console.error("Error agregando convocatoria:", error);
-      setRespuesta(respuesta + "\n\n❌ Error al agregar la convocatoria. Por favor, intenta nuevamente.");
+      setRespuesta(
+        respuesta +
+          "\n\n❌ Error al agregar la convocatoria. Por favor, intenta nuevamente."
+      );
     } finally {
       setGuardando(false);
     }
@@ -235,10 +271,12 @@ ${textoCompleto}`,
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Sección principal */}
-          <div className="bg-white rounded-2xl shadow-2xl border border-purple-100 p-8 mb-8">
-            <div className="max-w-2xl mx-auto">
+        <div className="max-w-7xl mx-auto">
+          {/* Layout en dos columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Columna izquierda - Analizar Convocatoria por URL */}
+            <div className="bg-white rounded-2xl shadow-2xl border border-purple-100 p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                 <svg
                   className="w-7 h-7 mr-3 text-purple-600"
@@ -261,18 +299,18 @@ ${textoCompleto}`,
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                   URL de la convocatoria:
                 </label>
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3">
                   <input
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://ejemplo.com/convocatoria"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                   />
                   <button
                     onClick={procesarUrl}
                     disabled={loading || !url.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center justify-center"
+                    className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center justify-center"
                   >
                     {loading ? (
                       <>
@@ -300,7 +338,8 @@ ${textoCompleto}`,
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Ingresa la URL de una convocatoria para extraer y analizar automáticamente su contenido
+                  Ingresa la URL de una convocatoria para extraer y analizar
+                  automáticamente su contenido
                 </p>
               </div>
 
@@ -331,48 +370,12 @@ ${textoCompleto}`,
                 Limpiar
               </button>
             </div>
-          </div>
 
-          {/* Mostrar confirmación de éxito */}
-          {agregadoExitoso && (
-            <div className="bg-white rounded-2xl shadow-xl border border-green-200 p-8 mb-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg
-                    className="w-8 h-8 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-green-800 mb-2">
-                  ¡Convocatoria Agregada Exitosamente!
-                </h3>
-                <p className="text-green-600 mb-4">
-                  La convocatoria ha sido guardada en la base de datos correctamente.
-                </p>
-                <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                  <p className="text-sm text-green-700">
-                    📋 La información se ha procesado y almacenado. Puedes continuar analizando más convocatorias.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Mostrar respuesta */}
-          {respuesta && (
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            {/* Columna derecha - Resultado del Análisis */}
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                 <svg
-                  className="w-6 h-6 mr-3 text-green-600"
+                  className="w-7 h-7 mr-3 text-green-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -386,48 +389,111 @@ ${textoCompleto}`,
                 </svg>
                 Resultado del Análisis
               </h3>
-              <div className="bg-gray-50 rounded-xl p-6 border mb-6">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
-                  {respuesta}
-                </pre>
-              </div>
               
-              {/* Botón para agregar a la base de datos */}
-              {convocatoriaExtraida && analisisData && !agregadoExitoso && (
-                <div className="flex gap-4 justify-center">
-                  <button
-                    onClick={agregarConvocatoria}
-                    disabled={guardando}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center"
-                  >
-                    {guardando ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Agregando...
-                      </>
-                    ) : (
-                      <>
-                        <svg
-                          className="w-5 h-5 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                          />
-                        </svg>
-                        Agregar a la Base de Datos
-                      </>
-                    )}
-                  </button>
+              {!respuesta && !agregadoExitoso && (
+                <div className="flex items-center justify-center h-64 text-gray-400">
+                  <div className="text-center">
+                    <svg
+                      className="w-16 h-16 mx-auto mb-4 text-gray-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <p className="text-lg">Los resultados aparecerán aquí</p>
+                    <p className="text-sm mt-2">Ingresa una URL y haz clic en &quot;Analizar URL&quot;</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Mostrar confirmación de éxito */}
+              {agregadoExitoso && (
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <h4 className="text-xl font-bold text-green-800 mb-2">
+                    ¡Convocatoria Agregada Exitosamente!
+                  </h4>
+                  <p className="text-green-600 mb-4">
+                    La convocatoria ha sido guardada en la base de datos
+                    correctamente.
+                  </p>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <p className="text-sm text-green-700">
+                      📋 La información se ha procesado y almacenado. Puedes
+                      continuar analizando más convocatorias.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Mostrar respuesta del análisis */}
+              {respuesta && !agregadoExitoso && (
+                <div>
+                  <div className="bg-gray-50 rounded-xl p-6 border mb-6 max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+                      {respuesta}
+                    </pre>
+                  </div>
+
+                  {/* Botón para agregar a la base de datos */}
+                  {convocatoriaExtraida && analisisData && (
+                    <div className="flex justify-center">
+                      <button
+                        onClick={agregarConvocatoria}
+                        disabled={guardando}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center"
+                      >
+                        {guardando ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Agregando...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-5 h-5 mr-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                            Agregar a la Base de Datos
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
+          </div>
+
         </div>
       </div>
     </div>
