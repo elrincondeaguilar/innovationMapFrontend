@@ -2,19 +2,59 @@
 
 import { useState } from "react";
 import Navbar from "../../components/Navbar";
+import { ConvocatoriaService } from "../../services/backendService";
+import { AnalisisConvocatoria } from "../../types/api";
+
+interface ConvocatoriaData {
+  titulo: string;
+  descripcion: string;
+  categoria: string;
+  entidad: string;
+  requisitos: string[];
+  presupuesto?: number;
+}
 
 export default function AnalizarPage() {
+  const [url, setUrl] = useState("");
   const [texto, setTexto] = useState("");
   const [respuesta, setRespuesta] = useState("");
   const [loading, setLoading] = useState(false);
-  const [analisisRealizado, setAnalisisRealizado] = useState(false);
+  const [error, setError] = useState("");
+  const [analisisData, setAnalisisData] = useState<AnalisisConvocatoria | null>(null);
+  const [convocatoriaExtraida, setConvocatoriaExtraida] = useState<ConvocatoriaData | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [guardando, setGuardando] = useState(false);
 
-  const analizarConGemini = async () => {
+  // Función para analizar con Gemini
+  const analizarConGemini = async (textoCompleto: string) => {
     const res = await fetch("/api/gemini", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        prompt: `Analiza este texto de convocatoria y responde si está activa, cerrada o no especificada. Justifica tu respuesta:\n\n${texto}`,
+        prompt: `Analiza esta convocatoria y extrae la información en formato JSON válido. Responde ÚNICAMENTE con el JSON, sin texto adicional:
+
+{
+  "estado": "activa" | "cerrada" | "no_especificada",
+  "justificacion": "explicación del estado",
+  "fechasEncontradas": {
+    "inicio": "YYYY-MM-DD o null",
+    "fin": "YYYY-MM-DD o null"
+  },
+  "confianza": número entre 0-100,
+  "datosConvocatoria": {
+    "titulo": "título extraído",
+    "descripcion": "descripción completa",
+    "categoria": "categoría identificada",
+    "entidad": "entidad convocante",
+    "requisitos": ["req1", "req2", "req3"],
+    "presupuesto": número o null
+  }
+}
+
+IMPORTANTE: Responde SOLO el JSON válido, sin explicaciones adicionales.
+
+Texto de la convocatoria:
+${textoCompleto}`,
       }),
     });
 
@@ -22,80 +62,188 @@ export default function AnalizarPage() {
     return data.result;
   };
 
-  const analizar = async () => {
-    if (!texto.trim()) {
-      setRespuesta(
-        "Por favor, ingresa el texto de la convocatoria a analizar."
-      );
+  // Procesar URL para extraer y analizar automáticamente
+  const procesarUrl = async () => {
+    if (!url.trim()) {
+      setError("Por favor, ingresa una URL válida");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setRespuesta("");
+    setAnalisisData(null);
+    setConvocatoriaExtraida(null);
+
+    try {
+      // Extraer texto de la URL
+      const response = await fetch('/api/scraper', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al extraer el texto de la URL');
+      }
+
+      const data = await response.json();
+      setTexto(data.text);
+      
+      // Analizar automáticamente el texto extraído
+      await analizarTexto(data.text);
+    } catch (error) {
+      console.error("Error procesando URL:", error);
+      setError('No se pudo extraer el texto de la URL proporcionada. Verifica que la URL sea válida y esté accesible.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const analizarTexto = async (textoAAnalizar?: string) => {
+    const textoCompleto = textoAAnalizar || texto;
+    
+    if (!textoCompleto.trim()) {
+      setRespuesta("Por favor, ingresa el texto de la convocatoria a analizar.");
       return;
     }
 
     setLoading(true);
     setRespuesta("");
-    setAnalisisRealizado(false);
+    setAnalisisData(null);
+    setConvocatoriaExtraida(null);
 
     try {
-      const resultado = await analizarConGemini();
-      setRespuesta(resultado);
-      setAnalisisRealizado(true);
+      const resultado = await analizarConGemini(textoCompleto);
+      
+      // Limpiar el resultado para extraer solo el JSON
+      let jsonString = resultado.trim();
+      
+      // Buscar el JSON en el resultado si viene con texto adicional
+      const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonString = jsonMatch[0];
+      }
+      
+      try {
+        // Intentar parsear el JSON
+        const analisisJSON = JSON.parse(jsonString);
+        
+        setAnalisisData(analisisJSON);
+        setConvocatoriaExtraida(analisisJSON.datosConvocatoria);
+        
+        // Formatear la respuesta para mostrar
+        const respuestaFormateada = `
+✅ **Análisis completado**
+
+**Estado de la convocatoria:** ${analisisJSON.estado === 'activa' ? '🟢 Activa' : analisisJSON.estado === 'cerrada' ? '🔴 Cerrada' : '⚫ No especificado'}
+**Justificación:** ${analisisJSON.justificacion}
+**Nivel de confianza:** ${analisisJSON.confianza}%
+
+**Fechas encontradas:**
+- Inicio: ${analisisJSON.fechasEncontradas?.inicio || 'No especificada'}
+- Fin: ${analisisJSON.fechasEncontradas?.fin || 'No especificada'}
+
+**Datos extraídos:**
+- **Título:** ${analisisJSON.datosConvocatoria?.titulo || 'No especificado'}
+- **Entidad:** ${analisisJSON.datosConvocatoria?.entidad || 'No especificada'}
+- **Categoría:** ${analisisJSON.datosConvocatoria?.categoria || 'No especificada'}
+- **Presupuesto:** ${analisisJSON.datosConvocatoria?.presupuesto ? `$${analisisJSON.datosConvocatoria.presupuesto.toLocaleString()}` : 'No especificado'}
+- **Requisitos:** ${analisisJSON.datosConvocatoria?.requisitos?.length > 0 ? analisisJSON.datosConvocatoria.requisitos.join(', ') : 'No especificados'}
+        `.trim();
+        
+        setRespuesta(respuestaFormateada);
+        
+        // Mostrar diálogo para agregar manualmente
+        setShowConfirmDialog(true);
+        
+      } catch (parseError) {
+        console.error("Error al parsear JSON:", parseError);
+        setRespuesta(resultado);
+        
+        // Crear datos básicos para poder agregar manualmente
+        const tituloExtraido = textoCompleto.split('\n')
+          .find(line => line.trim().length > 10 && line.trim().length < 200)
+          ?.trim() || "Convocatoria";
+        
+        const datosBasicos: ConvocatoriaData = {
+          titulo: tituloExtraido,
+          descripcion: textoCompleto.substring(0, 500) + "...",
+          categoria: "Sin categorizar",
+          entidad: "Por determinar",
+          requisitos: ["Revisar documento completo"]
+        };
+        
+        const analisisBasico: AnalisisConvocatoria = {
+          estado: "no_especificada",
+          justificacion: "Análisis manual requerido",
+          fechasEncontradas: {},
+          confianza: 50
+        };
+        
+        setConvocatoriaExtraida(datosBasicos);
+        setAnalisisData(analisisBasico);
+        setShowConfirmDialog(true);
+      }
+      
     } catch (error) {
-      console.error("Error al analizar:", error);
+      console.error("Error en análisis:", error);
       setRespuesta(
-        `Error: ${error instanceof Error ? error.message : "Error desconocido"}`
+        error instanceof Error ? error.message : "Error al analizar el texto"
       );
     } finally {
       setLoading(false);
     }
   };
 
+  const agregarConvocatoria = async () => {
+    if (!convocatoriaExtraida || !analisisData) return;
+
+    setGuardando(true);
+    try {
+      await ConvocatoriaService.crearConvocatoria({
+        ...convocatoriaExtraida,
+        fechaInicio: analisisData.fechasEncontradas?.inicio || new Date().toISOString().split('T')[0],
+        fechaFin: analisisData.fechasEncontradas?.fin || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        estado: analisisData.estado === 'activa' ? 'activa' : analisisData.estado === 'cerrada' ? 'cerrada' : 'pendiente'
+      });
+      
+      setRespuesta(respuesta + "\n\n✅ ¡Convocatoria agregada exitosamente!");
+      setShowConfirmDialog(false);
+      
+      // Limpiar el formulario después de agregar
+      setTimeout(() => {
+        limpiarFormulario();
+      }, 2000);
+      
+    } catch (error) {
+      console.error("Error agregando convocatoria:", error);
+      setRespuesta(respuesta + "\n\n❌ Error al agregar la convocatoria. Por favor, intenta nuevamente.");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   const limpiarFormulario = () => {
+    setUrl("");
     setTexto("");
     setRespuesta("");
-    setAnalisisRealizado(false);
+    setError("");
+    setAnalisisData(null);
+    setConvocatoriaExtraida(null);
+    setShowConfirmDialog(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
       <Navbar />
-
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-      <div className="absolute top-40 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-purple-800 text-sm font-medium mb-4">
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Análisis Inteligente
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent mb-4">
-            Analizar Convocatoria
-          </h1>
-
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Utiliza inteligencia artificial para analizar el estado de
-            convocatorias, identificar fechas importantes y obtener insights
-            valiosos
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Panel de entrada */}
-          <div className="space-y-6">
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Sección principal */}
+          <div className="bg-white rounded-2xl shadow-2xl border border-purple-100 p-8 mb-8">
+            <div className="max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                 <svg
                   className="w-7 h-7 mr-3 text-purple-600"
@@ -107,90 +255,86 @@ export default function AnalizarPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                   />
                 </svg>
-                Texto de la Convocatoria
+                Analizar Convocatoria por URL
               </h2>
 
-              {/* Área de texto */}
+              {/* Campo URL */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Contenido de la convocatoria:
+                  URL de la convocatoria:
                 </label>
-                <textarea
-                  value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
-                  placeholder="Pega aquí el texto completo de la convocatoria que deseas analizar..."
-                  rows={12}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500 resize-none"
-                />
-                <div className="text-sm text-gray-500 mt-2">
-                  {texto.length > 0 && `${texto.length} caracteres`}
-                </div>
-              </div>
-
-              {/* Botones de acción */}
-              <div className="flex gap-3">
-                <button
-                  onClick={analizar}
-                  disabled={loading || !texto.trim()}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center justify-center"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Analizando...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-5 h-5 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                      Analizar
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={limpiarFormulario}
-                  className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-300 flex items-center"
-                >
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <div className="flex gap-3">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://ejemplo.com/convocatoria"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                  />
+                  <button
+                    onClick={procesarUrl}
+                    disabled={loading || !url.trim()}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center justify-center"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                  Limpiar
-                </button>
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Analizando...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          />
+                        </svg>
+                        Analizar URL
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Ingresa la URL de una convocatoria para extraer y analizar automáticamente su contenido
+                </p>
               </div>
-            </div>
-          </div>
 
-          {/* Panel de resultados */}
-          <div className="space-y-6">
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+              {/* Mostrar error si existe */}
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Mostrar texto extraído si existe */}
+              {texto && (
+                <div className="mt-6 p-4 bg-gray-50 rounded-xl border">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Texto extraído:</h4>
+                  <div className="text-xs text-gray-600 max-h-32 overflow-y-auto">
+                    {texto.substring(0, 500)}...
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {texto.length} caracteres extraídos
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={limpiarFormulario}
+                className="w-full mt-4 px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center"
+              >
                 <svg
-                  className="w-7 h-7 mr-3 text-green-600"
+                  className="w-5 h-5 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -199,17 +343,128 @@ export default function AnalizarPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                Limpiar
+              </button>
+            </div>
+          </div>
+
+          {/* Mostrar respuesta */}
+          {respuesta && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <svg
+                  className="w-6 h-6 mr-3 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
                 Resultado del Análisis
-              </h2>
+              </h3>
+              <div className="bg-gray-50 rounded-xl p-6 border">
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+                  {respuesta}
+                </pre>
+              </div>
+            </div>
+          )}
+        </div>
 
-              {!respuesta && !loading && (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        {/* Diálogo de confirmación para agregar convocatoria */}
+        {showConfirmDialog && convocatoriaExtraida && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-8">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                  <svg
+                    className="w-7 h-7 mr-3 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  ¿Agregar Convocatoria?
+                </h3>
+                
+                <div className="space-y-4 mb-8">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h4 className="font-semibold text-gray-800 mb-2">Título:</h4>
+                    <p className="text-gray-700">{convocatoriaExtraida.titulo}</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h4 className="font-semibold text-gray-800 mb-2">Entidad:</h4>
+                    <p className="text-gray-700">{convocatoriaExtraida.entidad}</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h4 className="font-semibold text-gray-800 mb-2">Categoría:</h4>
+                    <p className="text-gray-700">{convocatoriaExtraida.categoria}</p>
+                  </div>
+                  
+                  {analisisData && (
+                    <div className="bg-blue-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-800 mb-2">Estado detectado:</h4>
+                      <p className="text-gray-700">
+                        {analisisData.estado === 'activa' ? '🟢 Activa' : 
+                         analisisData.estado === 'cerrada' ? '🔴 Cerrada' : 
+                         '⚫ No especificado'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={agregarConvocatoria}
+                    disabled={guardando}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 flex items-center justify-center"
+                  >
+                    {guardando ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Agregando...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        Sí, agregar convocatoria
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowConfirmDialog(false)}
+                    className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-300 flex items-center"
+                  >
                     <svg
-                      className="w-8 h-8 text-gray-400"
+                      className="w-5 h-5 mr-2"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -218,176 +473,16 @@ export default function AnalizarPage() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
-                  </div>
-                  <p className="text-gray-500 text-lg">
-                    Ingresa el texto de una convocatoria para comenzar el
-                    análisis
-                  </p>
+                    Cancelar
+                  </button>
                 </div>
-              )}
-
-              {loading && (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  <p className="text-gray-700 text-lg font-medium">
-                    Analizando convocatoria con Gemini AI...
-                  </p>
-                </div>
-              )}
-
-              {respuesta && (
-                <div className="space-y-4">
-                  <div
-                    className={`p-4 rounded-xl border-l-4 ${
-                      respuesta.includes("Error")
-                        ? "bg-red-50 border-red-500"
-                        : analisisRealizado
-                        ? "bg-green-50 border-green-500"
-                        : "bg-blue-50 border-blue-500"
-                    }`}
-                  >
-                    <div className="flex items-start">
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-1 ${
-                          respuesta.includes("Error")
-                            ? "bg-red-100"
-                            : analisisRealizado
-                            ? "bg-green-100"
-                            : "bg-blue-100"
-                        }`}
-                      >
-                        <svg
-                          className={`w-4 h-4 ${
-                            respuesta.includes("Error")
-                              ? "text-red-600"
-                              : analisisRealizado
-                              ? "text-green-600"
-                              : "text-blue-600"
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          {respuesta.includes("Error") ? (
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          ) : (
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          )}
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <div
-                          className={`text-sm font-medium mb-2 ${
-                            respuesta.includes("Error")
-                              ? "text-red-800"
-                              : analisisRealizado
-                              ? "text-green-800"
-                              : "text-blue-800"
-                          }`}
-                        >
-                          {respuesta.includes("Error")
-                            ? "Error en el análisis"
-                            : "Análisis completado"}
-                        </div>
-                        <pre
-                          className={`text-sm whitespace-pre-wrap ${
-                            respuesta.includes("Error")
-                              ? "text-red-700"
-                              : "text-gray-800"
-                          }`}
-                        >
-                          {respuesta}
-                        </pre>
-                      </div>
-                    </div>
-                  </div>
-
-                  {analisisRealizado && !respuesta.includes("Error") && (
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
-                      <div className="flex items-center text-purple-800">
-                        <svg
-                          className="w-5 h-5 mr-2"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="font-medium">
-                          Análisis realizado con Gemini AI
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Tips section */}
-        <div className="mt-12 bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <svg
-              className="w-6 h-6 mr-3 text-yellow-500"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Consejos para mejores resultados
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
-            <div className="flex items-start">
-              <span className="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-              <span>
-                Include el texto completo de la convocatoria, incluyendo fechas
-                importantes
-              </span>
-            </div>
-            <div className="flex items-start">
-              <span className="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-              <span>
-                Gemini AI ofrece análisis contextual y detallado de
-                convocatorias
-              </span>
-            </div>
-            <div className="flex items-start">
-              <span className="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-              <span>
-                Incluye información sobre requisitos y criterios de evaluación
-              </span>
-            </div>
-            <div className="flex items-start">
-              <span className="w-2 h-2 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-              <span>
-                Revisa el resultado para verificar la precisión del análisis
-              </span>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

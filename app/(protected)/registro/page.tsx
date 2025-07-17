@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Navbar from "../../components/Navbar";
 import { CreateEmpresaRequest } from "../../types/api";
 import { EmpresaService } from "../../services/backendService";
@@ -293,10 +294,12 @@ export default function RegistroPage() {
               {formData.logoUrl && (
                 <div className="mt-3 flex items-center space-x-3">
                   <span className="text-sm text-gray-600">Vista previa:</span>
-                  <img
+                  <Image
                     src={formData.logoUrl}
                     alt="Logo preview"
-                    className="w-8 h-8 object-contain rounded border border-gray-200"
+                    width={32}
+                    height={32}
+                    className="object-contain rounded border border-gray-200"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
