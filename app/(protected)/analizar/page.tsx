@@ -23,6 +23,7 @@ export default function AnalizarPage() {
   const [analisisData, setAnalisisData] = useState<AnalisisConvocatoria | null>(null);
   const [convocatoriaExtraida, setConvocatoriaExtraida] = useState<ConvocatoriaData | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [agregadoExitoso, setAgregadoExitoso] = useState(false);
 
   // Función para analizar con Gemini
   const analizarConGemini = async (textoCompleto: string) => {
@@ -205,12 +206,12 @@ ${textoCompleto}`,
         estado: analisisData.estado === 'activa' ? 'activa' : analisisData.estado === 'cerrada' ? 'cerrada' : 'pendiente'
       });
       
-      setRespuesta(respuesta + "\n\n✅ ¡Convocatoria agregada exitosamente!");
+      setAgregadoExitoso(true);
       
       // Limpiar el formulario después de agregar
       setTimeout(() => {
         limpiarFormulario();
-      }, 2000);
+      }, 3000);
       
     } catch (error) {
       console.error("Error agregando convocatoria:", error);
@@ -227,6 +228,7 @@ ${textoCompleto}`,
     setError("");
     setAnalisisData(null);
     setConvocatoriaExtraida(null);
+    setAgregadoExitoso(false);
   };
 
   return (
@@ -309,19 +311,6 @@ ${textoCompleto}`,
                 </div>
               )}
 
-              {/* Mostrar texto extraído si existe */}
-              {texto && (
-                <div className="mt-6 p-4 bg-gray-50 rounded-xl border">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Texto extraído:</h4>
-                  <div className="text-xs text-gray-600 max-h-32 overflow-y-auto">
-                    {texto.substring(0, 500)}...
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {texto.length} caracteres extraídos
-                  </p>
-                </div>
-              )}
-
               <button
                 onClick={limpiarFormulario}
                 className="w-full mt-4 px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center"
@@ -343,6 +332,40 @@ ${textoCompleto}`,
               </button>
             </div>
           </div>
+
+          {/* Mostrar confirmación de éxito */}
+          {agregadoExitoso && (
+            <div className="bg-white rounded-2xl shadow-xl border border-green-200 p-8 mb-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    className="w-8 h-8 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-green-800 mb-2">
+                  ¡Convocatoria Agregada Exitosamente!
+                </h3>
+                <p className="text-green-600 mb-4">
+                  La convocatoria ha sido guardada en la base de datos correctamente.
+                </p>
+                <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                  <p className="text-sm text-green-700">
+                    📋 La información se ha procesado y almacenado. Puedes continuar analizando más convocatorias.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Mostrar respuesta */}
           {respuesta && (
@@ -370,7 +393,7 @@ ${textoCompleto}`,
               </div>
               
               {/* Botón para agregar a la base de datos */}
-              {convocatoriaExtraida && analisisData && !respuesta.includes("✅ ¡Convocatoria agregada exitosamente!") && (
+              {convocatoriaExtraida && analisisData && !agregadoExitoso && (
                 <div className="flex gap-4 justify-center">
                   <button
                     onClick={agregarConvocatoria}
