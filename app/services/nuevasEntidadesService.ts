@@ -11,6 +11,10 @@ import {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://localhost:7036/api';
 
 console.log('🔗 API_BASE_URL configurada:', API_BASE_URL);
+console.log('🔍 Environment variables:', {
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL
+});
 
 // Función auxiliar para manejar respuestas de la API
 async function handleResponse<T>(response: Response): Promise<{ success: boolean; data?: T; message?: string }> {
@@ -349,55 +353,66 @@ export const EcosystemService = {
       // Convertir promotores
       if (promotoressResult.success && promotoressResult.data) {
         promotoressResult.data.forEach(promotor => {
-          ecosystemItems.push({
-            id: promotor.id,
-            nombre: promotor.nombre,
-            tipo: 'Promotor',
-            descripcion: promotor.descripcion,
-            ciudad: promotor.ciudad,
-            departamento: promotor.departamento,
-            latitud: promotor.latitud,
-            longitud: promotor.longitud,
-            tipoPromotor: promotor.tipoPromotor
-          });
+          // 🆕 Solo agregar si tiene coordenadas
+          if (promotor.latitud && promotor.longitud) {
+            ecosystemItems.push({
+              id: promotor.id,
+              nombre: promotor.nombre,
+              tipo: 'Promotor',
+              descripcion: promotor.descripcion,
+              ciudad: promotor.ciudad,
+              departamento: promotor.departamento,
+              latitud: promotor.latitud,
+              longitud: promotor.longitud,
+              tipoPromotor: promotor.tipoPromotor
+            });
+          }
         });
       }
 
       // Convertir articuladores
       if (articuladoresResult.success && articuladoresResult.data) {
         articuladoresResult.data.forEach(articulador => {
-          ecosystemItems.push({
-            id: articulador.id,
-            nombre: articulador.nombre,
-            tipo: 'Articulador',
-            descripcion: articulador.descripcion,
-            ciudad: articulador.ciudad,
-            departamento: articulador.departamento,
-            latitud: articulador.latitud,
-            longitud: articulador.longitud,
-            experiencia: articulador.experiencia,
-            areasExperiencia: articulador.areasExperiencia
-          });
+          // 🆕 Solo agregar si tiene coordenadas
+          if (articulador.latitud && articulador.longitud) {
+            ecosystemItems.push({
+              id: articulador.id,
+              nombre: articulador.nombre,
+              tipo: 'Articulador',
+              descripcion: articulador.descripcion,
+              ciudad: articulador.ciudad,
+              departamento: articulador.departamento,
+              latitud: articulador.latitud,
+              longitud: articulador.longitud,
+              experiencia: articulador.experiencia,
+              areasExperiencia: articulador.areasExperiencia
+            });
+          }
         });
       }
 
       // Convertir portafolios
       if (portfoliosResult.success && portfoliosResult.data) {
         portfoliosResult.data.forEach(portfolio => {
-          ecosystemItems.push({
-            id: portfolio.id,
-            nombre: portfolio.nombre,
-            tipo: 'PortafolioArco',
-            descripcion: portfolio.descripcion,
-            ciudad: portfolio.ciudad,
-            departamento: portfolio.departamento,
-            latitud: portfolio.latitud,
-            longitud: portfolio.longitud,
-            objetivos: portfolio.objetivos,
-            publico: portfolio.publico
-          });
+          // 🆕 Solo agregar si tiene coordenadas
+          if (portfolio.latitud && portfolio.longitud) {
+            ecosystemItems.push({
+              id: portfolio.id,
+              nombre: portfolio.nombre,
+              tipo: 'PortafolioArco',
+              descripcion: portfolio.descripcion,
+              ciudad: portfolio.ciudad,
+              departamento: portfolio.departamento,
+              latitud: portfolio.latitud,
+              longitud: portfolio.longitud,
+              objetivos: portfolio.objetivos,
+              publico: portfolio.publico
+            });
+          }
         });
       }
+
+      console.log(`🗺️ Ecosystem items with coordinates: ${ecosystemItems.length}`);
 
       return { success: true, data: ecosystemItems };
     } catch (error) {
@@ -411,29 +426,42 @@ export const EcosystemService = {
   // Obtener empresas del ecosistema (desde el servicio de backend existente)
   async getCompaniesAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
     try {
-      // Usar el endpoint existente de companies
-      const response = await fetch(`${API_BASE_URL}/companies`);
+      // 🆕 Intentar primero el endpoint nuevo /companies
+      let response = await fetch(`${API_BASE_URL}/companies`);
+      
+      // 🆕 Si falla, intentar el endpoint legacy /backend/empresas
+      if (!response.ok) {
+        console.log('🔄 /companies failed, trying legacy /backend/empresas');
+        response = await fetch(`${API_BASE_URL}/backend/empresas`);
+      }
+      
       const result = await handleResponse<Company[]>(response);
 
-      if (result.success && result.data) {
-        const companyItems: EcosystemMapItem[] = result.data.map(company => ({
-          id: company.id,
-          nombre: company.name,
-          tipo: 'Company' as const,
-          descripcion: company.description,
-          ciudad: company.ciudad,
-          departamento: company.departamento,
-          latitud: company.latitud,
-          longitud: company.longitud,
-          industry: company.industry,
-          fundada: company.founded
-        }));
+      console.log('🏢 Companies data received:', result);
 
+      if (result.success && result.data) {
+        const companyItems: EcosystemMapItem[] = result.data
+          .filter(company => company.latitud && company.longitud) // 🆕 Solo incluir empresas con coordenadas
+          .map(company => ({
+            id: company.id,
+            nombre: company.name,
+            tipo: 'Company' as const,
+            descripcion: company.description,
+            ciudad: company.ciudad,
+            departamento: company.departamento,
+            latitud: company.latitud,
+            longitud: company.longitud,
+            industry: company.industry,
+            fundada: company.founded
+          }));
+
+        console.log(`🏢 Companies with coordinates: ${companyItems.length}/${result.data.length}`);
         return { success: true, data: companyItems };
       }
 
       return { success: false, message: result.message || 'No se pudieron obtener las empresas' };
     } catch (error) {
+      console.error('🏢 Error fetching companies:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error obteniendo empresas'
@@ -444,12 +472,22 @@ export const EcosystemService = {
   // Obtener convocatorias del ecosistema
   async getConvocatoriasAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
     try {
-      // Usar el endpoint existente de convocatorias
-      const response = await fetch(`${API_BASE_URL}/convocatorias`);
+      // 🆕 Intentar primero el endpoint nuevo /convocatorias
+      let response = await fetch(`${API_BASE_URL}/convocatorias`);
+      
+      // 🆕 Si falla, intentar el endpoint legacy /backend/convocatorias
+      if (!response.ok) {
+        console.log('🔄 /convocatorias failed, trying legacy /backend/convocatorias');
+        response = await fetch(`${API_BASE_URL}/backend/convocatorias`);
+      }
+      
       const result = await handleResponse<Convocatoria[]>(response);
 
+      console.log('📢 Convocatorias data received:', result);
+
       if (result.success && result.data) {
-        const convocatoriaItems: EcosystemMapItem[] = result.data.map(convocatoria => ({
+        // 🆕 Las convocatorias probablemente no tienen coordenadas, así que usaremos coordenadas por defecto de Colombia
+        const convocatoriaItems: EcosystemMapItem[] = result.data.map((convocatoria, index) => ({
           id: convocatoria.id || 0,
           nombre: convocatoria.titulo,
           tipo: 'Convocatoria' as const,
@@ -458,14 +496,19 @@ export const EcosystemService = {
           entidad: convocatoria.entidad,
           fechaInicio: convocatoria.fechaInicio,
           fechaFin: convocatoria.fechaFin,
-          estado: convocatoria.estado
+          estado: convocatoria.estado,
+          // 🆕 Coordenadas por defecto (Bogotá con pequeñas variaciones para evitar superposición)
+          latitud: 4.6097 + (index * 0.01), // Bogotá + offset
+          longitud: -74.0817 + (index * 0.01)
         }));
 
+        console.log(`📢 Convocatorias with coordinates: ${convocatoriaItems.length}`);
         return { success: true, data: convocatoriaItems };
       }
 
       return { success: false, message: result.message || 'No se pudieron obtener las convocatorias' };
     } catch (error) {
+      console.error('📢 Error fetching convocatorias:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error obteniendo convocatorias'
@@ -476,6 +519,8 @@ export const EcosystemService = {
   // Obtener todos los elementos del ecosistema incluyendo empresas y convocatorias
   async getAllEcosystemWithCompanies(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
     try {
+      console.log('🚀 Starting to fetch all ecosystem data...');
+      
       const [ecosystemResult, companiesResult, convocatoriasResult] = await Promise.all([
         this.getAllEcosystemItems(),
         this.getCompaniesAsEcosystemItems(),
@@ -485,19 +530,32 @@ export const EcosystemService = {
       const allItems: EcosystemMapItem[] = [];
 
       if (ecosystemResult.success && ecosystemResult.data) {
+        console.log(`🎯 Ecosystem items loaded: ${ecosystemResult.data.length}`);
         allItems.push(...ecosystemResult.data);
       }
 
       if (companiesResult.success && companiesResult.data) {
+        console.log(`🏢 Companies loaded: ${companiesResult.data.length}`);
         allItems.push(...companiesResult.data);
       }
 
       if (convocatoriasResult.success && convocatoriasResult.data) {
+        console.log(`📢 Convocatorias loaded: ${convocatoriasResult.data.length}`);
         allItems.push(...convocatoriasResult.data);
       }
 
+      console.log(`📊 Total ecosystem items: ${allItems.length}`);
+      console.log('📊 Items by type:', {
+        companies: allItems.filter(item => item.tipo === 'Company').length,
+        promotores: allItems.filter(item => item.tipo === 'Promotor').length,
+        articuladores: allItems.filter(item => item.tipo === 'Articulador').length,
+        portfolios: allItems.filter(item => item.tipo === 'PortafolioArco').length,
+        convocatorias: allItems.filter(item => item.tipo === 'Convocatoria').length
+      });
+
       return { success: true, data: allItems };
     } catch (error) {
+      console.error('❌ Error in getAllEcosystemWithCompanies:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error obteniendo todos los elementos del ecosistema'
