@@ -6,7 +6,7 @@ const BACKEND_BASE_URL =
 
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/api/portafolioarco`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/portafolioarco`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
