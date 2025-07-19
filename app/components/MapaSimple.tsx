@@ -106,10 +106,9 @@ export default function MapaSimple({
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        // 🆕 Usar el servicio que incluye empresas
+        // Usar el servicio que incluye empresas
         const result = await EcosystemService.getAllEcosystemWithCompanies();
         if (result.success && result.data) {
-          console.log('🗺️ Datos cargados en el mapa:', result.data);
           setEcosystemItems(result.data);
         } else {
           setError(result.message || 'Error al cargar datos');

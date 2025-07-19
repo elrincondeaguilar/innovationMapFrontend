@@ -43,8 +43,8 @@ export default function MapaPage() {
       <div className="absolute top-40 right-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000 pointer-events-none"></div>
 
       <main className="relative h-[calc(100vh-64px)]">
-        {/* Header flotante */}
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1001] pointer-events-none">
+        {/* Header flotante - Oculto en móviles para mayor espacio de mapa */}
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1001] pointer-events-none hidden sm:block">
           <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 px-6 py-3 pointer-events-auto">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">

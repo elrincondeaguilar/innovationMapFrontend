@@ -15,8 +15,19 @@ const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-// 🆕 URLs para proxy (evita problemas de CORS en producción)
+// URLs para proxy (evita problemas de CORS en producción)
 const PROXY_BASE_URL = IS_PRODUCTION ? '/api/proxy' : API_BASE_URL;
+
+// Log configuration in development mode only
+if (IS_DEVELOPMENT) {
+  console.log('🔗 API Configuration:', {
+    API_BASE_URL,
+    PROXY_BASE_URL,
+    USE_MOCK_DATA,
+    IS_DEVELOPMENT,
+    IS_PRODUCTION
+  });
+}
 
 console.log('🔗 API_BASE_URL configurada:', API_BASE_URL);
 console.log('🔧 PROXY_BASE_URL configurada:', PROXY_BASE_URL);
@@ -90,10 +101,6 @@ export const PromotorService = {
   // Crear nuevo promotor
   async create(promotor: Omit<Promotor, 'id'>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      // 🆕 Log para debug
-      console.log('Sending promotor data:', JSON.stringify(promotor, null, 2));
-      console.log('🔗 Using API URL:', `${PROXY_BASE_URL}/promotores`);
-      
       const response = await fetch(`${PROXY_BASE_URL}/promotores`, {
         method: 'POST',
         headers: {
@@ -403,9 +410,6 @@ export const EcosystemService = {
         unavailable.push(`${endpoint} (network error)`);
       }
     }
-
-    console.log('📊 Available endpoints:', available);
-    console.log('❌ Unavailable endpoints:', unavailable);
     
     return { available, unavailable };
   },
@@ -555,8 +559,6 @@ export const EcosystemService = {
         });
       }
 
-      console.log(`🗺️ Ecosystem items with coordinates: ${ecosystemItems.length}`);
-
       return { success: true, data: ecosystemItems };
     } catch (error) {
       return {
@@ -568,9 +570,8 @@ export const EcosystemService = {
 
   // Obtener empresas del ecosistema (desde el servicio de backend existente)
   async getCompaniesAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
-    // 🆕 Si está configurado para usar mock data, devolver inmediatamente
+    // Si está configurado para usar mock data, devolver inmediatamente
     if (USE_MOCK_DATA) {
-      console.log('🏢 Using mock companies data (configured)');
       const mockCompanies = this.getMockCompanies();
       return { 
         success: true, 
@@ -580,16 +581,14 @@ export const EcosystemService = {
     }
 
     try {
-      console.log(`🏢 Trying companies endpoint: ${API_BASE_URL}`);
       
-      // 🆕 Lista de endpoints posibles para empresas
+      // Lista de endpoints posibles para empresas
       const possibleEndpoints = [
-        '/companies',
         '/empresas', 
+        '/companies',
         '/Company',
         '/Empresa',
-        '/backend/empresas',
-        '/api/empresas'
+        '/backend/empresas'
       ];
 
       let response: Response | null = null;
@@ -599,26 +598,20 @@ export const EcosystemService = {
       for (const endpoint of possibleEndpoints) {
         try {
           const testUrl = `${API_BASE_URL}${endpoint}`;
-          console.log(`🔍 Trying endpoint: ${testUrl}`);
           
           const testResponse = await fetch(testUrl);
           if (testResponse.ok) {
             response = testResponse;
             usedEndpoint = endpoint;
-            console.log(`✅ Found working companies endpoint: ${testUrl}`);
             break;
-          } else {
-            console.log(`❌ Failed endpoint ${testUrl}: ${testResponse.status}`);
           }
-        } catch (error) {
-          console.log(`❌ Error with endpoint ${endpoint}:`, error);
+        } catch {
+          // Continúa al siguiente endpoint
         }
       }
 
       if (!response) {
-        console.error('❌ No working companies endpoint found, using mock data');
         const mockCompanies = this.getMockCompanies();
-        console.log(`🏢 Using ${mockCompanies.length} mock companies`);
         return { 
           success: true, 
           data: mockCompanies,
