@@ -12,6 +12,13 @@ interface ConvocatoriaData {
   entidad: string;
   requisitos: string[];
   presupuesto?: number;
+  // 🆕 Nuevos campos extendidos
+  enlace?: string;
+  clasificacion?: string;
+  lineaOportunidad?: string;
+  palabrasClave?: string;
+  fechaApertura?: string;
+  fechaCierre?: string;
 }
 
 export default function AnalizarPage() {
@@ -41,7 +48,9 @@ export default function AnalizarPage() {
   "justificacion": "explicación del estado",
   "fechasEncontradas": {
     "inicio": "YYYY-MM-DD o null",
-    "fin": "YYYY-MM-DD o null"
+    "fin": "YYYY-MM-DD o null",
+    "apertura": "YYYY-MM-DD o null",
+    "cierre": "YYYY-MM-DD o null"
   },
   "confianza": número entre 0-100,
   "datosConvocatoria": {
@@ -50,11 +59,19 @@ export default function AnalizarPage() {
     "categoria": "categoría identificada",
     "entidad": "entidad convocante",
     "requisitos": ["req1", "req2", "req3"],
-    "presupuesto": número o null
+    "presupuesto": número o null,
+    "enlace": "URL original o detectada",
+    "clasificacion": "Convocatorias|Licitaciones|Eventos|Financiación",
+    "lineaOportunidad": "Transversal|Medio Ambiente|Movilidad inteligente|Gobernanza inteligente",
+    "palabrasClave": "palabras clave separadas por comas"
   }
 }
 
-IMPORTANTE: Responde SOLO el JSON válido, sin explicaciones adicionales.
+IMPORTANTE: 
+- Clasifica la línea de oportunidad según estas categorías: Transversal, Medio Ambiente/Energía, Movilidad inteligente, Gobernanza inteligente
+- Identifica palabras clave relevantes como: Smart Cities, sostenibilidad, innovación, climate change, govtech, etc.
+- Extrae fechas de apertura y cierre si están disponibles
+- Responde SOLO el JSON válido, sin explicaciones adicionales.
 
 Texto de la convocatoria:
 ${textoCompleto}`,
@@ -158,12 +175,23 @@ ${textoCompleto}`,
 **Fechas encontradas:**
 - Inicio: ${analisisJSON.fechasEncontradas?.inicio || "No especificada"}
 - Fin: ${analisisJSON.fechasEncontradas?.fin || "No especificada"}
+- Apertura: ${analisisJSON.fechasEncontradas?.apertura || "No especificada"}
+- Cierre: ${analisisJSON.fechasEncontradas?.cierre || "No especificada"}
 
 **Datos extraídos:**
 - **Título:** ${analisisJSON.datosConvocatoria?.titulo || "No especificado"}
 - **Entidad:** ${analisisJSON.datosConvocatoria?.entidad || "No especificada"}
 - **Categoría:** ${
           analisisJSON.datosConvocatoria?.categoria || "No especificada"
+        }
+- **Clasificación:** ${
+          analisisJSON.datosConvocatoria?.clasificacion || "No especificada"
+        }
+- **Línea de Oportunidad:** ${
+          analisisJSON.datosConvocatoria?.lineaOportunidad || "No especificada"
+        }
+- **Palabras Clave:** ${
+          analisisJSON.datosConvocatoria?.palabrasClave || "No especificadas"
         }
 - **Presupuesto:** ${
           analisisJSON.datosConvocatoria?.presupuesto
@@ -195,6 +223,10 @@ ${textoCompleto}`,
           categoria: "Sin categorizar",
           entidad: "Por determinar",
           requisitos: ["Revisar documento completo"],
+          enlace: url, // Usar la URL que se está analizando
+          clasificacion: "Convocatorias", // Valor por defecto
+          lineaOportunidad: "Transversal", // Valor por defecto
+          palabrasClave: "innovación, oportunidad", // Palabras por defecto
         };
 
         const analisisBasico: AnalisisConvocatoria = {
@@ -232,6 +264,9 @@ ${textoCompleto}`,
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split("T")[0],
+        // 🆕 Usar las nuevas fechas si están disponibles
+        fechaApertura: analisisData.fechasEncontradas?.apertura,
+        fechaCierre: analisisData.fechasEncontradas?.cierre,
         estado:
           analisisData.estado === "activa"
             ? "activa"
@@ -274,7 +309,6 @@ ${textoCompleto}`,
         <div className="max-w-7xl mx-auto">
           {/* Layout en dos columnas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
             {/* Columna izquierda - Analizar Convocatoria por URL */}
             <div className="bg-white rounded-2xl shadow-2xl border border-purple-100 p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
@@ -389,7 +423,7 @@ ${textoCompleto}`,
                 </svg>
                 Resultado del Análisis
               </h3>
-              
+
               {!respuesta && !agregadoExitoso && (
                 <div className="flex items-center justify-center h-64 text-gray-400">
                   <div className="text-center">
@@ -407,11 +441,13 @@ ${textoCompleto}`,
                       />
                     </svg>
                     <p className="text-lg">Los resultados aparecerán aquí</p>
-                    <p className="text-sm mt-2">Ingresa una URL y haz clic en &quot;Analizar URL&quot;</p>
+                    <p className="text-sm mt-2">
+                      Ingresa una URL y haz clic en &quot;Analizar URL&quot;
+                    </p>
                   </div>
                 </div>
               )}
-              
+
               {/* Mostrar confirmación de éxito */}
               {agregadoExitoso && (
                 <div className="text-center">
@@ -493,7 +529,6 @@ ${textoCompleto}`,
               )}
             </div>
           </div>
-
         </div>
       </div>
     </div>

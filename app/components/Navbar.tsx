@@ -30,6 +30,7 @@ export default function Navbar() {
     { href: "/mapa", label: "Mapa", icon: "🗺️" },
     { href: "/analizar", label: "Analizar", icon: "🔍" },
     { href: "/convocatorias", label: "Convocatorias", icon: "📢" },
+    { href: "/admin", label: "Ecosistema", icon: "⚙️" },
   ];
 
   return (

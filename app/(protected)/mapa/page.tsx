@@ -113,20 +113,32 @@ export default function MapaPage() {
                 clipRule="evenodd"
               />
             </svg>
-            Leyenda
+            Leyenda del Ecosistema
           </h3>
           <div className="space-y-2 text-xs">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-blue-600 rounded-full mr-2"></div>
-              <span className="text-gray-700">Empresas registradas</span>
+              <span className="text-gray-700">🏢 Empresas</span>
             </div>
             <div className="flex items-center">
+              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+              <span className="text-gray-700">📢 Promotores</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+              <span className="text-gray-700">🤝 Articuladores</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-purple-600 rounded-full mr-2"></div>
+              <span className="text-gray-700">📊 Portafolio ARCO</span>
+            </div>
+            <div className="flex items-center mt-3 pt-2 border-t border-gray-200">
               <div className="w-3 h-3 border-2 border-blue-600 rounded-full mr-2"></div>
               <span className="text-gray-700">Ubicación aproximada</span>
             </div>
             <div className="mt-3 pt-2 border-t border-gray-200">
               <p className="text-gray-500">
-                Usa los filtros para explorar empresas por sector y ubicación
+                Usa los filtros para explorar el ecosistema de innovación
               </p>
             </div>
           </div>

@@ -5,7 +5,8 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useState, useCallback } from "react";
 import { backendService } from "../services/backendService";
-import { Empresa } from "../types/api";
+import { PromotorService, ArticuladorService, PortafolioArcoService } from "../services/nuevasEntidadesService";
+import { Empresa, Promotor, Articulador, PortafolioArco } from "../types/api";
 import { useRouter } from "next/navigation";
 
 // Configurar iconos por defecto de Leaflet
@@ -83,6 +84,37 @@ const createNumberedIcon = (count: number) => {
   });
 };
 
+// Crear iconos personalizados para cada tipo de entidad
+const createEntityIcon = (type: 'empresa' | 'promotor' | 'articulador' | 'portafolio', emoji: string, color: string) => {
+  return L.divIcon({
+    html: `<div style="
+      background: ${color};
+      color: white;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+      border: 3px solid white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    ">${emoji}</div>`,
+    className: `${type}-marker`,
+    iconSize: [35, 35],
+    iconAnchor: [17.5, 17.5],
+  });
+};
+
+// Iconos específicos para cada tipo
+const ENTITY_ICONS = {
+  empresa: createEntityIcon('empresa', '🏢', 'linear-gradient(135deg, #3B82F6, #1D4ED8)'),
+  promotor: createEntityIcon('promotor', '📢', 'linear-gradient(135deg, #EF4444, #DC2626)'),
+  articulador: createEntityIcon('articulador', '🤝', 'linear-gradient(135deg, #10B981, #059669)'),
+  portafolio: createEntityIcon('portafolio', '📊', 'linear-gradient(135deg, #8B5CF6, #7C3AED)'),
+};
+
 // Componente para controlar el mapa
 function MapController({
   empresaEspecifica,
@@ -120,6 +152,12 @@ export default function MapaSimple({
   const router = useRouter();
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [empresasFiltradas, setEmpresasFiltradas] = useState<Empresa[]>([]);
+  
+  // Estados para nuevas entidades
+  const [promotores, setPromotores] = useState<Promotor[]>([]);
+  const [articuladores, setArticuladores] = useState<Articulador[]>([]);
+  const [portafolios, setPortafolios] = useState<PortafolioArco[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -127,26 +165,74 @@ export default function MapaSimple({
   const [filtroSector, setFiltroSector] = useState<string>("");
   const [filtroDepartamento, setFiltroDepartamento] = useState<string>("");
   const [busquedaTexto, setBusquedaTexto] = useState<string>("");
+  
+  // Estados para filtros por tipo de entidad
+  const [mostrarEmpresas, setMostrarEmpresas] = useState<boolean>(true);
+  const [mostrarPromotores, setMostrarPromotores] = useState<boolean>(true);
+  const [mostrarArticuladores, setMostrarArticuladores] = useState<boolean>(true);
+  const [mostrarPortafolios, setMostrarPortafolios] = useState<boolean>(true);
 
   useEffect(() => {
-    const cargarEmpresas = async () => {
+    const cargarTodasLasEntidades = async () => {
       try {
-        const resultado = await backendService.get<Empresa[]>("companies");
-        if (resultado.success && resultado.data) {
-          setEmpresas(resultado.data);
-          setEmpresasFiltradas(resultado.data);
-        } else {
-          setError(resultado.message || "Error al cargar empresas");
+        setLoading(true);
+        
+        // Cargar todas las entidades en paralelo
+        const [
+          resultadoEmpresas,
+          resultadoPromotores,
+          resultadoArticuladores,
+          resultadoPortafolios
+        ] = await Promise.all([
+          backendService.get<Empresa[]>("companies"),
+          PromotorService.getAll(),
+          ArticuladorService.getAll(),
+          PortafolioArcoService.getAll()
+        ]);
+
+        // Procesar resultados de empresas
+        if (resultadoEmpresas.success && resultadoEmpresas.data) {
+          setEmpresas(resultadoEmpresas.data);
+          setEmpresasFiltradas(resultadoEmpresas.data);
         }
+
+        // Procesar resultados de promotores
+        if (resultadoPromotores.success && resultadoPromotores.data) {
+          setPromotores(resultadoPromotores.data);
+        }
+
+        // Procesar resultados de articuladores
+        if (resultadoArticuladores.success && resultadoArticuladores.data) {
+          setArticuladores(resultadoArticuladores.data);
+        }
+
+        // Procesar resultados de portafolios
+        if (resultadoPortafolios.success && resultadoPortafolios.data) {
+          setPortafolios(resultadoPortafolios.data);
+        }
+
+        // Verificar si hubo errores
+        const errors = [
+          !resultadoEmpresas.success && resultadoEmpresas.message,
+          !resultadoPromotores.success && resultadoPromotores.message,
+          !resultadoArticuladores.success && resultadoArticuladores.message,
+          !resultadoPortafolios.success && resultadoPortafolios.message,
+        ].filter(Boolean);
+
+        if (errors.length > 0) {
+          console.warn("Algunos servicios fallaron:", errors);
+          setError(`Advertencia: ${errors.join(", ")}`);
+        }
+
       } catch (error) {
-        console.error("Error fetching empresas:", error);
-        setError("Error de conexión al cargar empresas");
+        console.error("Error cargando entidades:", error);
+        setError("Error de conexión al cargar datos del ecosistema");
       } finally {
         setLoading(false);
       }
     };
 
-    cargarEmpresas();
+    cargarTodasLasEntidades();
   }, []);
 
   // Función para aplicar filtros
@@ -207,10 +293,65 @@ export default function MapaSimple({
         ? [empresaEspecifica]
         : empresasFiltradas;
 
-    empresasParaContar.forEach((empresa) => {
-      contador[empresa.department] = (contador[empresa.department] || 0) + 1;
-    });
+    if (mostrarEmpresas) {
+      empresasParaContar.forEach((empresa) => {
+        contador[empresa.department] = (contador[empresa.department] || 0) + 1;
+      });
+    }
     return contador;
+  };
+
+  // Función para obtener marcadores de promotores  
+  const getMarcadoresPromotores = () => {
+    if (!mostrarPromotores) return [];
+    
+    // Para promotores, como no tienen ubicación específica, los distribuimos por Colombia
+    const departamentosDistribucion = ['Antioquia', 'Cundinamarca', 'Valle del Cauca', 'Atlántico'];
+    
+    return promotores.map((promotor, index) => {
+      const departamento = departamentosDistribucion[index % departamentosDistribucion.length];
+      const baseCoords = getCoordinatesByDepartment(departamento);
+      // Agregar un pequeño offset para evitar superposición
+      const coords: [number, number] = [
+        baseCoords[0] + (Math.random() - 0.5) * 0.1,
+        baseCoords[1] + (Math.random() - 0.5) * 0.1
+      ];
+      
+      return { ...promotor, coordinates: coords, type: 'promotor' as const };
+    });
+  };
+
+  // Función para obtener marcadores de articuladores
+  const getMarcadoresArticuladores = () => {
+    if (!mostrarArticuladores) return [];
+    
+    return articuladores.map((articulador) => {
+      // Usar la región si está disponible, sino usar un departamento por defecto
+      const departamento = articulador.region || 'Cundinamarca';
+      const baseCoords = getCoordinatesByDepartment(departamento);
+      const coords: [number, number] = [
+        baseCoords[0] + (Math.random() - 0.5) * 0.1,
+        baseCoords[1] + (Math.random() - 0.5) * 0.1
+      ];
+      
+      return { ...articulador, coordinates: coords, type: 'articulador' as const };
+    });
+  };
+
+  // Función para obtener marcadores de portafolios ARCO
+  const getMarcadoresPortafolios = () => {
+    if (!mostrarPortafolios) return [];
+    
+    return portafolios.map((portafolio) => {
+      const departamento = portafolio.departamento || 'Cundinamarca';
+      const baseCoords = getCoordinatesByDepartment(departamento);
+      const coords: [number, number] = [
+        baseCoords[0] + (Math.random() - 0.5) * 0.1,
+        baseCoords[1] + (Math.random() - 0.5) * 0.1
+      ];
+      
+      return { ...portafolio, coordinates: coords, type: 'portafolio' as const };
+    });
   };
 
   const empresasPorDepartamento = contarEmpresasPorDepartamento();
@@ -225,6 +366,10 @@ export default function MapaSimple({
     setFiltroSector("");
     setFiltroDepartamento("");
     setBusquedaTexto("");
+    setMostrarEmpresas(true);
+    setMostrarPromotores(true);
+    setMostrarArticuladores(true);
+    setMostrarPortafolios(true);
   };
 
   if (loading) {
@@ -367,6 +512,54 @@ export default function MapaSimple({
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Filtros de tipo de entidad */}
+            <div className="bg-white/40 rounded-xl p-4 border border-white/60">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                🌐 Tipos de entidades visibles
+              </label>
+              <div className="space-y-3">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={mostrarEmpresas}
+                    onChange={(e) => setMostrarEmpresas(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">🏢 Empresas ({empresas.length})</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={mostrarPromotores}
+                    onChange={(e) => setMostrarPromotores(e.target.checked)}
+                    className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">📢 Promotores ({promotores.length})</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={mostrarArticuladores}
+                    onChange={(e) => setMostrarArticuladores(e.target.checked)}
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">🤝 Articuladores ({articuladores.length})</span>
+                </label>
+                
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={mostrarPortafolios}
+                    onChange={(e) => setMostrarPortafolios(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">📊 Portafolio ARCO ({portafolios.length})</span>
+                </label>
+              </div>
             </div>
 
             {/* Botón limpiar filtros */}
@@ -575,6 +768,147 @@ export default function MapaSimple({
               }
             )
           )}
+
+          {/* Marcadores para Promotores */}
+          {!soloEmpresaEspecifica && getMarcadoresPromotores().map((promotor) => (
+            <Marker
+              key={`promotor-${promotor.id}`}
+              position={promotor.coordinates}
+              icon={ENTITY_ICONS.promotor}
+            >
+              <Popup>
+                <div className="p-3 min-w-[250px]">
+                  <div className="text-center mb-3">
+                    <div className="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium mb-2">
+                      📢 Promotor
+                    </div>
+                  </div>
+                  <strong className="text-lg text-red-900">{promotor.medio}</strong>
+                  
+                  {promotor.descripcion && (
+                    <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                      {promotor.descripcion}
+                    </p>
+                  )}
+                  
+                  {promotor.enlace && (
+                    <div className="mt-3 pt-2 border-t border-gray-200">
+                      <a
+                        href={promotor.enlace}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        🔗 Ver enlace
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
+          {/* Marcadores para Articuladores */}
+          {!soloEmpresaEspecifica && getMarcadoresArticuladores().map((articulador) => (
+            <Marker
+              key={`articulador-${articulador.id}`}
+              position={articulador.coordinates}
+              icon={ENTITY_ICONS.articulador}
+            >
+              <Popup>
+                <div className="p-3 min-w-[250px]">
+                  <div className="text-center mb-3">
+                    <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium mb-2">
+                      🤝 Articulador
+                    </div>
+                  </div>
+                  <strong className="text-lg text-green-900">{articulador.nombre}</strong>
+                  
+                  <div className="flex gap-2 mt-2">
+                    {articulador.tipo && (
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                        🏢 {articulador.tipo}
+                      </span>
+                    )}
+                    {articulador.region && (
+                      <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                        📍 {articulador.region}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {articulador.contacto && (
+                    <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+                      📞 {articulador.contacto}
+                    </p>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
+          {/* Marcadores para Portafolio ARCO */}
+          {!soloEmpresaEspecifica && getMarcadoresPortafolios().map((portafolio) => (
+            <Marker
+              key={`portafolio-${portafolio.id}`}
+              position={portafolio.coordinates}
+              icon={ENTITY_ICONS.portafolio}
+            >
+              <Popup>
+                <div className="p-3 min-w-[280px]">
+                  <div className="text-center mb-3">
+                    <div className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium mb-2">
+                      📊 Portafolio ARCO
+                    </div>
+                  </div>
+                  <strong className="text-lg text-purple-900">{portafolio.entidad}</strong>
+                  
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                      📅 {portafolio.anio}
+                    </span>
+                    {portafolio.instrumento && (
+                      <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                        🔧 {portafolio.instrumento}
+                      </span>
+                    )}
+                    {portafolio.departamento && (
+                      <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
+                        📍 {portafolio.departamento}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {portafolio.tipoApoyo && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      <strong>Tipo de apoyo:</strong> {portafolio.tipoApoyo}
+                    </p>
+                  )}
+                  
+                  {portafolio.objetivo && (
+                    <p className="mt-1 text-sm text-gray-600 leading-relaxed">
+                      <strong>Objetivo:</strong> {portafolio.objetivo.length > 100 
+                        ? `${portafolio.objetivo.substring(0, 100)}...` 
+                        : portafolio.objetivo}
+                    </p>
+                  )}
+                  
+                  {portafolio.enlace && (
+                    <div className="mt-3 pt-2 border-t border-gray-200">
+                      <a
+                        href={portafolio.enlace}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm font-medium"
+                      >
+                        🔗 Ver enlace
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
       </div>
     </div>
