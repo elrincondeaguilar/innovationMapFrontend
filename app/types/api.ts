@@ -2,7 +2,7 @@
 export interface EcosystemMapItem {
   id: number;
   nombre: string;
-  tipo: 'Company' | 'Promotor' | 'Articulador' | 'PortafolioArco';
+  tipo: 'Company' | 'Promotor' | 'Articulador' | 'PortafolioArco' | 'Convocatoria';
   descripcion?: string;
   ciudad?: string;
   departamento?: string;
@@ -16,6 +16,11 @@ export interface EcosystemMapItem {
   areasExperiencia?: string; // Para Articulador
   objetivos?: string; // Para PortafolioArco
   publico?: string; // Para PortafolioArco
+  categoria?: string; // Para Convocatoria
+  entidad?: string; // Para Convocatoria
+  fechaInicio?: string; // Para Convocatoria
+  fechaFin?: string; // Para Convocatoria
+  estado?: string; // Para Convocatoria
 }
 
 // Tipos para la API del backend

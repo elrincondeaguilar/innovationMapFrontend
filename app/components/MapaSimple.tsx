@@ -56,6 +56,14 @@ const iconMap = {
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
+  }),
+  Convocatoria: new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
   })
 };
 
@@ -86,8 +94,10 @@ export default function MapaSimple({
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        const result = await EcosystemService.getAllEcosystemItems();
+        // 🆕 Usar el servicio que incluye empresas
+        const result = await EcosystemService.getAllEcosystemWithCompanies();
         if (result.success && result.data) {
+          console.log('🗺️ Datos cargados en el mapa:', result.data);
           setEcosystemItems(result.data);
         } else {
           setError(result.message || 'Error al cargar datos');
@@ -166,6 +176,7 @@ export default function MapaSimple({
             <option value="Promotor">🎯 Promotores</option>
             <option value="Articulador">🤝 Articuladores</option>
             <option value="PortafolioArco">📋 Portafolio ARCO</option>
+            <option value="Convocatoria">📢 Convocatorias</option>
           </select>
           {filtroTipo && (
             <button
@@ -210,6 +221,7 @@ export default function MapaSimple({
                       item.tipo === 'Company' ? 'bg-blue-500' :
                       item.tipo === 'Promotor' ? 'bg-green-500' :
                       item.tipo === 'Articulador' ? 'bg-orange-500' :
+                      item.tipo === 'Convocatoria' ? 'bg-purple-500' :
                       'bg-red-500'
                     }`}></span>
                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -250,6 +262,21 @@ export default function MapaSimple({
                     )}
                     {item.tipo === 'PortafolioArco' && item.objetivos && (
                       <p>🎯 {item.objetivos}</p>
+                    )}
+                    {item.tipo === 'Convocatoria' && item.categoria && (
+                      <p>📋 {item.categoria}</p>
+                    )}
+                    {item.tipo === 'Convocatoria' && item.entidad && (
+                      <p>🏛️ {item.entidad}</p>
+                    )}
+                    {item.tipo === 'Convocatoria' && item.estado && (
+                      <p>📊 Estado: {item.estado}</p>
+                    )}
+                    {item.tipo === 'Convocatoria' && item.fechaInicio && (
+                      <p>📅 Inicio: {new Date(item.fechaInicio).toLocaleDateString()}</p>
+                    )}
+                    {item.tipo === 'Convocatoria' && item.fechaFin && (
+                      <p>⏰ Fin: {new Date(item.fechaFin).toLocaleDateString()}</p>
                     )}
                   </div>
                 </div>
@@ -297,6 +324,15 @@ export default function MapaSimple({
             </div>
             <span className="text-gray-500 text-xs">
               {elementosAMostrar.filter(item => item.tipo === 'PortafolioArco').length}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+              <span className="text-gray-700 font-medium">Convocatorias</span>
+            </div>
+            <span className="text-gray-500 text-xs">
+              {elementosAMostrar.filter(item => item.tipo === 'Convocatoria').length}
             </span>
           </div>
         </div>

@@ -3,11 +3,14 @@ import {
   Articulador, 
   PortafolioArco,
   EcosystemMapItem,
-  Company
+  Company,
+  Convocatoria
 } from '../types/api';
 
 // URL base del backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7036/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://localhost:7036/api';
+
+console.log('🔗 API_BASE_URL configurada:', API_BASE_URL);
 
 // Función auxiliar para manejar respuestas de la API
 async function handleResponse<T>(response: Response): Promise<{ success: boolean; data?: T; message?: string }> {
@@ -438,12 +441,45 @@ export const EcosystemService = {
     }
   },
 
-  // Obtener todos los elementos del ecosistema incluyendo empresas
+  // Obtener convocatorias del ecosistema
+  async getConvocatoriasAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
+    try {
+      // Usar el endpoint existente de convocatorias
+      const response = await fetch(`${API_BASE_URL}/convocatorias`);
+      const result = await handleResponse<Convocatoria[]>(response);
+
+      if (result.success && result.data) {
+        const convocatoriaItems: EcosystemMapItem[] = result.data.map(convocatoria => ({
+          id: convocatoria.id || 0,
+          nombre: convocatoria.titulo,
+          tipo: 'Convocatoria' as const,
+          descripcion: convocatoria.descripcion,
+          categoria: convocatoria.categoria,
+          entidad: convocatoria.entidad,
+          fechaInicio: convocatoria.fechaInicio,
+          fechaFin: convocatoria.fechaFin,
+          estado: convocatoria.estado
+        }));
+
+        return { success: true, data: convocatoriaItems };
+      }
+
+      return { success: false, message: result.message || 'No se pudieron obtener las convocatorias' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error obteniendo convocatorias'
+      };
+    }
+  },
+
+  // Obtener todos los elementos del ecosistema incluyendo empresas y convocatorias
   async getAllEcosystemWithCompanies(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
     try {
-      const [ecosystemResult, companiesResult] = await Promise.all([
+      const [ecosystemResult, companiesResult, convocatoriasResult] = await Promise.all([
         this.getAllEcosystemItems(),
-        this.getCompaniesAsEcosystemItems()
+        this.getCompaniesAsEcosystemItems(),
+        this.getConvocatoriasAsEcosystemItems()
       ]);
 
       const allItems: EcosystemMapItem[] = [];
@@ -454,6 +490,10 @@ export const EcosystemService = {
 
       if (companiesResult.success && companiesResult.data) {
         allItems.push(...companiesResult.data);
+      }
+
+      if (convocatoriasResult.success && convocatoriasResult.data) {
+        allItems.push(...convocatoriasResult.data);
       }
 
       return { success: true, data: allItems };

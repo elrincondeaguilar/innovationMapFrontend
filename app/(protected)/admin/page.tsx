@@ -194,6 +194,64 @@ export default function AdminEntidadesPage() {
     }
   };
 
+  // 🆕 Funciones para eliminar entidades
+  const eliminarPromotor = async (id: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar este promotor?")) return;
+    
+    setLoading(true);
+    try {
+      const resultado = await PromotorService.delete(id);
+      if (resultado.success) {
+        setSuccess("Promotor eliminado exitosamente");
+        cargarDatos();
+      } else {
+        setError(`Error eliminando promotor: ${resultado.message}`);
+      }
+    } catch (error) {
+      setError(`Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const eliminarArticulador = async (id: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar este articulador?")) return;
+    
+    setLoading(true);
+    try {
+      const resultado = await ArticuladorService.delete(id);
+      if (resultado.success) {
+        setSuccess("Articulador eliminado exitosamente");
+        cargarDatos();
+      } else {
+        setError(`Error eliminando articulador: ${resultado.message}`);
+      }
+    } catch (error) {
+      setError(`Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const eliminarPortafolio = async (id: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar este portafolio?")) return;
+    
+    setLoading(true);
+    try {
+      const resultado = await PortafolioArcoService.delete(id);
+      if (resultado.success) {
+        setSuccess("Portafolio eliminado exitosamente");
+        cargarDatos();
+      } else {
+        setError(`Error eliminando portafolio: ${resultado.message}`);
+      }
+    } catch (error) {
+      setError(`Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Limpiar mensajes
   const limpiarMensajes = () => {
     setError("");
@@ -393,24 +451,41 @@ export default function AdminEntidadesPage() {
                             key={promotor.id}
                             className="bg-white border border-gray-200 rounded-lg p-4"
                           >
-                            <h4 className="font-semibold text-gray-800">
-                              {promotor.medio}
-                            </h4>
-                            {promotor.descripcion && (
-                              <p className="text-sm text-gray-600 mt-1">
-                                {promotor.descripcion}
-                              </p>
-                            )}
-                            {promotor.enlace && (
-                              <a
-                                href={promotor.enlace}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block"
-                              >
-                                🔗 Ver enlace
-                              </a>
-                            )}
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-800">
+                                  {promotor.nombre || promotor.medio}
+                                </h4>
+                                {promotor.medio && promotor.nombre && (
+                                  <p className="text-sm text-gray-500">Medio: {promotor.medio}</p>
+                                )}
+                                {promotor.descripcion && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {promotor.descripcion}
+                                  </p>
+                                )}
+                                {promotor.enlace && (
+                                  <a
+                                    href={promotor.enlace}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block"
+                                  >
+                                    🔗 Ver enlace
+                                  </a>
+                                )}
+                              </div>
+                              <div className="flex gap-2 ml-4">
+                                <button
+                                  onClick={() => eliminarPromotor(promotor.id)}
+                                  disabled={loading}
+                                  className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm rounded-lg transition-colors duration-200"
+                                  title="Eliminar promotor"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         ))}
                         {promotores.length === 0 && (
@@ -527,22 +602,36 @@ export default function AdminEntidadesPage() {
                             key={articulador.id}
                             className="bg-white border border-gray-200 rounded-lg p-4"
                           >
-                            <h4 className="font-semibold text-gray-800">
-                              {articulador.nombre}
-                            </h4>
-                            <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                              {articulador.tipo && (
-                                <span>🏢 {articulador.tipo}</span>
-                              )}
-                              {articulador.region && (
-                                <span>📍 {articulador.region}</span>
-                              )}
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-800">
+                                  {articulador.nombre}
+                                </h4>
+                                <div className="flex gap-4 text-sm text-gray-600 mt-1">
+                                  {articulador.tipo && (
+                                    <span>🏢 {articulador.tipo}</span>
+                                  )}
+                                  {articulador.region && (
+                                    <span>📍 {articulador.region}</span>
+                                  )}
+                                </div>
+                                {articulador.contacto && (
+                                  <p className="text-sm text-gray-600 mt-2">
+                                    {articulador.contacto}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex gap-2 ml-4">
+                                <button
+                                  onClick={() => eliminarArticulador(articulador.id)}
+                                  disabled={loading}
+                                  className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm rounded-lg transition-colors duration-200"
+                                  title="Eliminar articulador"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </div>
-                            {articulador.contacto && (
-                              <p className="text-sm text-gray-600 mt-2">
-                                {articulador.contacto}
-                              </p>
-                            )}
                           </div>
                         ))}
                         {articuladores.length === 0 && (
@@ -735,12 +824,24 @@ export default function AdminEntidadesPage() {
                             className="bg-white border border-gray-200 rounded-lg p-4"
                           >
                             <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-semibold text-gray-800">
-                                {portafolio.entidad}
-                              </h4>
-                              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                {portafolio.anio}
-                              </span>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-800">
+                                  {portafolio.entidad}
+                                </h4>
+                                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  {portafolio.anio}
+                                </span>
+                              </div>
+                              <div className="flex gap-2 ml-4">
+                                <button
+                                  onClick={() => eliminarPortafolio(portafolio.id)}
+                                  disabled={loading}
+                                  className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm rounded-lg transition-colors duration-200"
+                                  title="Eliminar portafolio"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-2">
