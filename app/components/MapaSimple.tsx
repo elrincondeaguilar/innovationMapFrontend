@@ -525,7 +525,7 @@ export default function MapaSimple({
       `}>
         <div className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-gray-800 text-sm">Leyenda</h4>
+            <h4 className="font-semibold text-gray-800 text-sm">Leyenda del Ecosistema</h4>
             <button
               onClick={() => setMostrarLeyenda(false)}
               className="sm:hidden text-gray-500 hover:text-gray-700"
@@ -584,8 +584,8 @@ export default function MapaSimple({
           
           {elementosAMostrar.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-xs text-gray-600">
-                {elementosAMostrar.length} elementos mostrados
+              <p className="text-xs text-gray-600 text-center">
+                <span className="font-medium">{elementosAMostrar.length}</span> elementos del ecosistema
               </p>
             </div>
           )}
