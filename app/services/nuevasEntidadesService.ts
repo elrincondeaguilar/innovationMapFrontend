@@ -29,26 +29,6 @@ if (IS_DEVELOPMENT) {
   });
 }
 
-console.log('🔗 API_BASE_URL configurada:', API_BASE_URL);
-console.log('🔧 PROXY_BASE_URL configurada:', PROXY_BASE_URL);
-console.log('🔧 USE_MOCK_DATA:', USE_MOCK_DATA);
-console.log('🚀 IS_DEVELOPMENT:', IS_DEVELOPMENT);
-console.log('🚀 IS_PRODUCTION:', IS_PRODUCTION);
-console.log('🔍 Environment variables:', {
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
-  NEXT_PUBLIC_USE_MOCK_DATA: process.env.NEXT_PUBLIC_USE_MOCK_DATA,
-  NODE_ENV: process.env.NODE_ENV
-});
-console.log('� USE_MOCK_DATA:', USE_MOCK_DATA);
-console.log('🚀 IS_DEVELOPMENT:', IS_DEVELOPMENT);
-console.log('�🔍 Environment variables:', {
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
-  NEXT_PUBLIC_USE_MOCK_DATA: process.env.NEXT_PUBLIC_USE_MOCK_DATA,
-  NODE_ENV: process.env.NODE_ENV
-});
-
 // Función auxiliar para manejar respuestas de la API
 async function handleResponse<T>(response: Response): Promise<{ success: boolean; data?: T; message?: string }> {
   try {
@@ -112,7 +92,9 @@ export const PromotorService = {
       // 🆕 Log de respuesta
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Backend error response:', errorText);
+        if (IS_DEVELOPMENT) {
+          console.error('Backend error response:', errorText);
+        }
         return {
           success: false,
           message: `Error ${response.status}: ${errorText}`
@@ -121,7 +103,9 @@ export const PromotorService = {
       
       return await handleResponse<Promotor>(response);
     } catch (error) {
-      console.error('Network error:', error);
+      if (IS_DEVELOPMENT) {
+        console.error('Network error:', error);
+      }
       
       // 🆕 Detectar específicamente errores de CORS
       const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
@@ -620,7 +604,9 @@ export const EcosystemService = {
       }
       
       const result = await handleResponse<Company[]>(response);
-      console.log(`🏢 Companies data received from ${usedEndpoint}:`, result);
+      if (IS_DEVELOPMENT) {
+        console.log(`🏢 Companies data received from ${usedEndpoint}:`, result);
+      }
 
       if (result.success && result.data) {
         const companyItems: EcosystemMapItem[] = result.data
@@ -638,13 +624,17 @@ export const EcosystemService = {
             fundada: company.founded
           }));
 
-        console.log(`🏢 Companies with coordinates: ${companyItems.length}/${result.data.length}`);
+        if (IS_DEVELOPMENT) {
+          console.log(`🏢 Companies with coordinates: ${companyItems.length}/${result.data.length}`);
+        }
         return { success: true, data: companyItems };
       }
 
       return { success: false, message: result.message || 'No se pudieron obtener las empresas' };
     } catch (error) {
-      console.error('🏢 Error fetching companies:', error);
+      if (IS_DEVELOPMENT) {
+        console.error('🏢 Error fetching companies:', error);
+      }
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error obteniendo empresas'
@@ -654,9 +644,8 @@ export const EcosystemService = {
 
   // Obtener convocatorias del ecosistema
   async getConvocatoriasAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
-    // 🆕 Si está configurado para usar mock data, devolver inmediatamente
+    // Si está configurado para usar mock data, devolver inmediatamente
     if (USE_MOCK_DATA) {
-      console.log('📢 Using mock convocatorias data (configured)');
       const mockConvocatorias = this.getMockConvocatorias();
       return { 
         success: true, 
@@ -666,44 +655,60 @@ export const EcosystemService = {
     }
 
     try {
-      console.log(`📢 Trying convocatorias endpoint: ${API_BASE_URL}`);
-      
-      // 🆕 Lista de endpoints posibles para convocatorias
-      const possibleEndpoints = [
-        '/convocatorias',
-        '/Convocatorias', 
-        '/Convocatoria',
-        '/backend/convocatorias',
-        '/api/convocatorias'
-      ];
-
+      // Intentar usar el proxy primero
       let response: Response | null = null;
-      let usedEndpoint = '';
+      
+      try {
+        response = await fetch(`${PROXY_BASE_URL}/convocatorias`);
+        if (response.ok && IS_DEVELOPMENT) {
+          console.log('✅ Convocatorias proxy working');
+        }
+      } catch {
+        if (IS_DEVELOPMENT) {
+          console.log('❌ Convocatorias proxy failed, trying direct endpoints');
+        }
+        response = null;
+      }
 
-      // Probar cada endpoint hasta encontrar uno que funcione
-      for (const endpoint of possibleEndpoints) {
-        try {
-          const testUrl = `${API_BASE_URL}${endpoint}`;
-          console.log(`🔍 Trying endpoint: ${testUrl}`);
-          
-          const testResponse = await fetch(testUrl);
-          if (testResponse.ok) {
-            response = testResponse;
-            usedEndpoint = endpoint;
-            console.log(`✅ Found working convocatorias endpoint: ${testUrl}`);
-            break;
-          } else {
-            console.log(`❌ Failed endpoint ${testUrl}: ${testResponse.status}`);
+      // Si el proxy falla, intentar endpoints directos
+      if (!response || !response.ok) {
+        const possibleEndpoints = [
+          '/api/Convocatorias',
+          '/Convocatorias', 
+          '/convocatorias',
+          '/api/convocatorias'
+        ];
+
+        for (const endpoint of possibleEndpoints) {
+          try {
+            const testUrl = `${API_BASE_URL}${endpoint}`;
+            if (IS_DEVELOPMENT) {
+              console.log(`🔍 Trying endpoint: ${testUrl}`);
+            }
+            
+            const testResponse = await fetch(testUrl);
+            if (testResponse.ok) {
+              response = testResponse;
+              if (IS_DEVELOPMENT) {
+                console.log(`✅ Found working convocatorias endpoint: ${testUrl}`);
+              }
+              break;
+            } else if (IS_DEVELOPMENT) {
+              console.log(`❌ Failed endpoint ${testUrl}: ${testResponse.status}`);
+            }
+          } catch {
+            if (IS_DEVELOPMENT) {
+              console.log(`❌ Error with endpoint ${endpoint}`);
+            }
           }
-        } catch (error) {
-          console.log(`❌ Error with endpoint ${endpoint}:`, error);
         }
       }
 
-      if (!response) {
-        console.error('❌ No working convocatorias endpoint found, using mock data');
+      if (!response || !response.ok) {
+        if (IS_DEVELOPMENT) {
+          console.error('❌ No working convocatorias endpoint found, using mock data');
+        }
         const mockConvocatorias = this.getMockConvocatorias();
-        console.log(`📢 Using ${mockConvocatorias.length} mock convocatorias`);
         return { 
           success: true, 
           data: mockConvocatorias,
@@ -712,10 +717,8 @@ export const EcosystemService = {
       }
       
       const result = await handleResponse<Convocatoria[]>(response);
-      console.log(`📢 Convocatorias data received from ${usedEndpoint}:`, result);
 
       if (result.success && result.data) {
-        // 🆕 Las convocatorias probablemente no tienen coordenadas, así que usaremos coordenadas por defecto de Colombia
         const convocatoriaItems: EcosystemMapItem[] = result.data.map((convocatoria, index) => ({
           id: convocatoria.id || 0,
           nombre: convocatoria.titulo,
@@ -726,18 +729,18 @@ export const EcosystemService = {
           fechaInicio: convocatoria.fechaInicio,
           fechaFin: convocatoria.fechaFin,
           estado: convocatoria.estado,
-          // 🆕 Coordenadas por defecto (Bogotá con pequeñas variaciones para evitar superposición)
           latitud: 4.6097 + (index * 0.01), // Bogotá + offset
           longitud: -74.0817 + (index * 0.01)
         }));
 
-        console.log(`📢 Convocatorias with coordinates: ${convocatoriaItems.length}`);
         return { success: true, data: convocatoriaItems };
       }
 
       return { success: false, message: result.message || 'No se pudieron obtener las convocatorias' };
     } catch (error) {
-      console.error('📢 Error fetching convocatorias:', error);
+      if (IS_DEVELOPMENT) {
+        console.error('📢 Error fetching convocatorias:', error);
+      }
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error obteniendo convocatorias'
@@ -748,7 +751,9 @@ export const EcosystemService = {
   // Obtener todos los elementos del ecosistema incluyendo empresas y convocatorias
   async getAllEcosystemWithCompanies(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
     try {
-      console.log('🚀 Starting to fetch all ecosystem data...');
+      if (IS_DEVELOPMENT) {
+        console.log('🚀 Starting to fetch all ecosystem data...');
+      }
       
       const [ecosystemResult, companiesResult, convocatoriasResult] = await Promise.all([
         this.getAllEcosystemItems(),
@@ -759,32 +764,42 @@ export const EcosystemService = {
       const allItems: EcosystemMapItem[] = [];
 
       if (ecosystemResult.success && ecosystemResult.data) {
-        console.log(`🎯 Ecosystem items loaded: ${ecosystemResult.data.length}`);
+        if (IS_DEVELOPMENT) {
+          console.log(`🎯 Ecosystem items loaded: ${ecosystemResult.data.length}`);
+        }
         allItems.push(...ecosystemResult.data);
       }
 
       if (companiesResult.success && companiesResult.data) {
-        console.log(`🏢 Companies loaded: ${companiesResult.data.length}`);
+        if (IS_DEVELOPMENT) {
+          console.log(`🏢 Companies loaded: ${companiesResult.data.length}`);
+        }
         allItems.push(...companiesResult.data);
       }
 
       if (convocatoriasResult.success && convocatoriasResult.data) {
-        console.log(`📢 Convocatorias loaded: ${convocatoriasResult.data.length}`);
+        if (IS_DEVELOPMENT) {
+          console.log(`📢 Convocatorias loaded: ${convocatoriasResult.data.length}`);
+        }
         allItems.push(...convocatoriasResult.data);
       }
 
-      console.log(`📊 Total ecosystem items: ${allItems.length}`);
-      console.log('📊 Items by type:', {
-        companies: allItems.filter(item => item.tipo === 'Company').length,
-        promotores: allItems.filter(item => item.tipo === 'Promotor').length,
-        articuladores: allItems.filter(item => item.tipo === 'Articulador').length,
-        portfolios: allItems.filter(item => item.tipo === 'PortafolioArco').length,
-        convocatorias: allItems.filter(item => item.tipo === 'Convocatoria').length
-      });
+      if (IS_DEVELOPMENT) {
+        console.log(`📊 Total ecosystem items: ${allItems.length}`);
+        console.log('📊 Items by type:', {
+          companies: allItems.filter(item => item.tipo === 'Company').length,
+          promotores: allItems.filter(item => item.tipo === 'Promotor').length,
+          articuladores: allItems.filter(item => item.tipo === 'Articulador').length,
+          portfolios: allItems.filter(item => item.tipo === 'PortafolioArco').length,
+          convocatorias: allItems.filter(item => item.tipo === 'Convocatoria').length
+        });
+      }
 
       return { success: true, data: allItems };
     } catch (error) {
-      console.error('❌ Error in getAllEcosystemWithCompanies:', error);
+      if (IS_DEVELOPMENT) {
+        console.error('❌ Error in getAllEcosystemWithCompanies:', error);
+      }
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error obteniendo todos los elementos del ecosistema'

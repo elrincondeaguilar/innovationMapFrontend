@@ -6,21 +6,53 @@ const BACKEND_BASE_URL =
 
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/portafolioarco`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    // Lista de endpoints posibles para portafolioarco
+    const possibleEndpoints = [
+      '/api/PortafolioArco',
+      '/PortafolioArco',
+      '/portafolioarco',
+      '/api/portafolioarco'
+    ];
 
-    if (!response.ok) {
+    let response: Response | null = null;
+    let usedEndpoint = '';
+
+    // Probar cada endpoint hasta encontrar uno que funcione
+    for (const endpoint of possibleEndpoints) {
+      try {
+        const testUrl = `${BACKEND_BASE_URL}${endpoint}`;
+        console.log(`🔍 Trying portafolioarco endpoint: ${testUrl}`);
+        
+        const testResponse = await fetch(testUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (testResponse.ok) {
+          response = testResponse;
+          usedEndpoint = endpoint;
+          console.log(`✅ Found working portafolioarco endpoint: ${testUrl}`);
+          break;
+        } else {
+          console.log(`❌ Failed endpoint ${testUrl}: ${testResponse.status}`);
+        }
+      } catch (error) {
+        console.log(`❌ Error with endpoint ${endpoint}:`, error);
+      }
+    }
+
+    if (!response) {
+      console.error('❌ No working portafolioarco endpoint found');
       return NextResponse.json(
-        { error: `Backend error: ${response.status} ${response.statusText}` },
-        { status: response.status }
+        { error: 'No working portafolioarco endpoint found' },
+        { status: 404 }
       );
     }
 
     const data = await response.json();
+    console.log(`✅ PortafolioArco data received from ${usedEndpoint}`);
     return NextResponse.json(data);
   } catch (error) {
     console.error("Proxy error:", error);
