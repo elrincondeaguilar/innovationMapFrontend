@@ -135,40 +135,68 @@ export default function MapaSimple({
 
   // Cargar datos del ecosistema
   useEffect(() => {
+    let isMounted = true;
+    
     const cargarDatos = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         // Usar el servicio que incluye empresas
         const result = await EcosystemService.getAllEcosystemWithCompanies();
-        if (result.success && result.data) {
-          setEcosystemItems(result.data);
-        } else {
-          setError(result.message || 'Error al cargar datos');
+        
+        // Solo actualizar estado si el componente sigue montado
+        if (isMounted) {
+          if (result.success && result.data) {
+            setEcosystemItems(result.data);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('🗺️ Ecosystem items loaded:', result.data.length);
+              console.log('🗺️ Items by type:', {
+                companies: result.data.filter(item => item.tipo === 'Company').length,
+                promotores: result.data.filter(item => item.tipo === 'Promotor').length,
+                articuladores: result.data.filter(item => item.tipo === 'Articulador').length,
+                portfolios: result.data.filter(item => item.tipo === 'PortafolioArco').length,
+                convocatorias: result.data.filter(item => item.tipo === 'Convocatoria').length
+              });
+            }
+          } else {
+            setError(result.message || 'Error al cargar datos');
+          }
         }
       } catch (error) {
-        console.error('Error cargando datos del ecosistema:', error);
-        setError('Error al cargar los datos del mapa');
+        if (isMounted) {
+          console.error('Error cargando datos del ecosistema:', error);
+          setError('Error al cargar los datos del mapa');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     cargarDatos();
-  }, []);
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Sin dependencias para evitar recargas innecesarias
 
   // Cerrar paneles móviles al hacer click en el mapa
   useEffect(() => {
+    if (!mapInstance) return;
+    
     const handleMapClick = () => {
       setMostrarFiltros(false);
       setMostrarLeyenda(false);
     };
 
-    if (mapInstance) {
-      mapInstance.on('click', handleMapClick);
-      return () => {
-        mapInstance.off('click', handleMapClick);
-      };
-    }
+    mapInstance.on('click', handleMapClick);
+    
+    return () => {
+      mapInstance.off('click', handleMapClick);
+    };
   }, [mapInstance]);
 
   // Filtrar elementos si se especifica una empresa específica

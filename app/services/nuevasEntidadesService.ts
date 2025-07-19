@@ -609,23 +609,22 @@ export const EcosystemService = {
       }
 
       if (result.success && result.data) {
-        const companyItems: EcosystemMapItem[] = result.data
-          .filter(company => company.latitud && company.longitud) // 🆕 Solo incluir empresas con coordenadas
-          .map(company => ({
-            id: company.id,
-            nombre: company.name,
-            tipo: 'Company' as const,
-            descripcion: company.description,
-            ciudad: company.ciudad,
-            departamento: company.departamento,
-            latitud: company.latitud,
-            longitud: company.longitud,
-            industry: company.industry,
-            fundada: company.founded
-          }));
+        const companyItems: EcosystemMapItem[] = result.data.map((company, index) => ({
+          id: company.id,
+          nombre: company.name,
+          tipo: 'Company' as const,
+          descripcion: company.description,
+          ciudad: company.ciudad || company.department, // Usar department si ciudad no existe
+          departamento: company.department,
+          // Usar coordenadas por defecto si no tiene (similar a convocatorias)
+          latitud: company.latitud || (6.2442 + (index * 0.01)), // Medellín + offset
+          longitud: company.longitud || (-75.5812 + (index * 0.01)),
+          industry: company.industry || company.sector,
+          fundada: company.founded
+        }));
 
         if (IS_DEVELOPMENT) {
-          console.log(`🏢 Companies with coordinates: ${companyItems.length}/${result.data.length}`);
+          console.log(`🏢 Companies loaded: ${companyItems.length}/${result.data.length}`);
         }
         return { success: true, data: companyItems };
       }
