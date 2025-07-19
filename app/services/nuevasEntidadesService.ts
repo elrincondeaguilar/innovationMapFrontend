@@ -10,10 +10,18 @@ import {
 // URL base del backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://localhost:7036/api';
 
+// 🆕 Configuración para modo fallback
+const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+
 console.log('🔗 API_BASE_URL configurada:', API_BASE_URL);
-console.log('🔍 Environment variables:', {
+console.log('� USE_MOCK_DATA:', USE_MOCK_DATA);
+console.log('🚀 IS_DEVELOPMENT:', IS_DEVELOPMENT);
+console.log('�🔍 Environment variables:', {
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL
+  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  NEXT_PUBLIC_USE_MOCK_DATA: process.env.NEXT_PUBLIC_USE_MOCK_DATA,
+  NODE_ENV: process.env.NODE_ENV
 });
 
 // Función auxiliar para manejar respuestas de la API
@@ -339,6 +347,115 @@ export const PortafolioArcoService = {
 
 // 🆕 Servicio unificado para el ecosistema
 export const EcosystemService = {
+  // 🆕 Verificar qué endpoints están disponibles
+  async checkAvailableEndpoints(): Promise<{ available: string[]; unavailable: string[] }> {
+    const endpointsToCheck = [
+      '/promotores',
+      '/articuladores', 
+      '/portafolioarco',
+      '/companies',
+      '/empresas',
+      '/Company',
+      '/Empresa', 
+      '/convocatorias',
+      '/Convocatorias',
+      '/Convocatoria'
+    ];
+
+    const available: string[] = [];
+    const unavailable: string[] = [];
+
+    for (const endpoint of endpointsToCheck) {
+      try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'HEAD' });
+        if (response.ok) {
+          available.push(endpoint);
+        } else {
+          unavailable.push(`${endpoint} (${response.status})`);
+        }
+      } catch {
+        unavailable.push(`${endpoint} (network error)`);
+      }
+    }
+
+    console.log('📊 Available endpoints:', available);
+    console.log('❌ Unavailable endpoints:', unavailable);
+    
+    return { available, unavailable };
+  },
+
+  // 🆕 Datos mock como fallback
+  getMockCompanies(): EcosystemMapItem[] {
+    return [
+      {
+        id: 1,
+        nombre: "Tech Innovation SAS",
+        tipo: 'Company' as const,
+        descripcion: "Empresa de desarrollo de software y tecnología",
+        ciudad: "Medellín",
+        departamento: "Antioquia",
+        latitud: 6.2442,
+        longitud: -75.5812,
+        industry: "Tecnología",
+        fundada: 2020
+      },
+      {
+        id: 2,
+        nombre: "Green Solutions SA",
+        tipo: 'Company' as const,
+        descripcion: "Soluciones ambientales sostenibles",
+        ciudad: "Bogotá",
+        departamento: "Cundinamarca", 
+        latitud: 4.6097,
+        longitud: -74.0817,
+        industry: "Medio Ambiente",
+        fundada: 2019
+      },
+      {
+        id: 3,
+        nombre: "Digital Marketing Pro",
+        tipo: 'Company' as const,
+        descripcion: "Agencia de marketing digital y publicidad",
+        ciudad: "Cali",
+        departamento: "Valle del Cauca",
+        latitud: 3.4516,
+        longitud: -76.5320,
+        industry: "Marketing",
+        fundada: 2021
+      }
+    ];
+  },
+
+  getMockConvocatorias(): EcosystemMapItem[] {
+    return [
+      {
+        id: 1,
+        nombre: "Convocatoria de Innovación 2025",
+        tipo: 'Convocatoria' as const,
+        descripcion: "Programa de apoyo a emprendimientos innovadores",
+        categoria: "Innovación",
+        entidad: "MinCiencias",
+        fechaInicio: "2025-02-01",
+        fechaFin: "2025-04-30",
+        estado: "Abierta",
+        latitud: 4.6097,
+        longitud: -74.0817
+      },
+      {
+        id: 2,
+        nombre: "Fondo Emprender Regional",
+        tipo: 'Convocatoria' as const,
+        descripcion: "Financiación para empresas del sector tecnológico",
+        categoria: "Emprendimiento",
+        entidad: "Cámara de Comercio",
+        fechaInicio: "2025-01-15",
+        fechaFin: "2025-03-15",
+        estado: "Abierta",
+        latitud: 6.2442,
+        longitud: -75.5812
+      }
+    ];
+  },
   // Obtener todos los elementos del ecosistema en formato unificado para el mapa
   async getAllEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
     try {
@@ -425,19 +542,66 @@ export const EcosystemService = {
 
   // Obtener empresas del ecosistema (desde el servicio de backend existente)
   async getCompaniesAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
+    // 🆕 Si está configurado para usar mock data, devolver inmediatamente
+    if (USE_MOCK_DATA) {
+      console.log('🏢 Using mock companies data (configured)');
+      const mockCompanies = this.getMockCompanies();
+      return { 
+        success: true, 
+        data: mockCompanies,
+        message: 'Usando datos de ejemplo (configurado)'
+      };
+    }
+
     try {
-      // 🆕 Intentar primero el endpoint nuevo /companies
-      let response = await fetch(`${API_BASE_URL}/companies`);
+      console.log(`🏢 Trying companies endpoint: ${API_BASE_URL}`);
       
-      // 🆕 Si falla, intentar el endpoint legacy /backend/empresas
-      if (!response.ok) {
-        console.log('🔄 /companies failed, trying legacy /backend/empresas');
-        response = await fetch(`${API_BASE_URL}/backend/empresas`);
+      // 🆕 Lista de endpoints posibles para empresas
+      const possibleEndpoints = [
+        '/companies',
+        '/empresas', 
+        '/Company',
+        '/Empresa',
+        '/backend/empresas',
+        '/api/empresas'
+      ];
+
+      let response: Response | null = null;
+      let usedEndpoint = '';
+
+      // Probar cada endpoint hasta encontrar uno que funcione
+      for (const endpoint of possibleEndpoints) {
+        try {
+          const testUrl = `${API_BASE_URL}${endpoint}`;
+          console.log(`🔍 Trying endpoint: ${testUrl}`);
+          
+          const testResponse = await fetch(testUrl);
+          if (testResponse.ok) {
+            response = testResponse;
+            usedEndpoint = endpoint;
+            console.log(`✅ Found working companies endpoint: ${testUrl}`);
+            break;
+          } else {
+            console.log(`❌ Failed endpoint ${testUrl}: ${testResponse.status}`);
+          }
+        } catch (error) {
+          console.log(`❌ Error with endpoint ${endpoint}:`, error);
+        }
+      }
+
+      if (!response) {
+        console.error('❌ No working companies endpoint found, using mock data');
+        const mockCompanies = this.getMockCompanies();
+        console.log(`🏢 Using ${mockCompanies.length} mock companies`);
+        return { 
+          success: true, 
+          data: mockCompanies,
+          message: 'Usando datos de ejemplo (no se encontró endpoint válido para empresas)'
+        };
       }
       
       const result = await handleResponse<Company[]>(response);
-
-      console.log('🏢 Companies data received:', result);
+      console.log(`🏢 Companies data received from ${usedEndpoint}:`, result);
 
       if (result.success && result.data) {
         const companyItems: EcosystemMapItem[] = result.data
@@ -471,19 +635,65 @@ export const EcosystemService = {
 
   // Obtener convocatorias del ecosistema
   async getConvocatoriasAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
+    // 🆕 Si está configurado para usar mock data, devolver inmediatamente
+    if (USE_MOCK_DATA) {
+      console.log('📢 Using mock convocatorias data (configured)');
+      const mockConvocatorias = this.getMockConvocatorias();
+      return { 
+        success: true, 
+        data: mockConvocatorias,
+        message: 'Usando datos de ejemplo (configurado)'
+      };
+    }
+
     try {
-      // 🆕 Intentar primero el endpoint nuevo /convocatorias
-      let response = await fetch(`${API_BASE_URL}/convocatorias`);
+      console.log(`📢 Trying convocatorias endpoint: ${API_BASE_URL}`);
       
-      // 🆕 Si falla, intentar el endpoint legacy /backend/convocatorias
-      if (!response.ok) {
-        console.log('🔄 /convocatorias failed, trying legacy /backend/convocatorias');
-        response = await fetch(`${API_BASE_URL}/backend/convocatorias`);
+      // 🆕 Lista de endpoints posibles para convocatorias
+      const possibleEndpoints = [
+        '/convocatorias',
+        '/Convocatorias', 
+        '/Convocatoria',
+        '/backend/convocatorias',
+        '/api/convocatorias'
+      ];
+
+      let response: Response | null = null;
+      let usedEndpoint = '';
+
+      // Probar cada endpoint hasta encontrar uno que funcione
+      for (const endpoint of possibleEndpoints) {
+        try {
+          const testUrl = `${API_BASE_URL}${endpoint}`;
+          console.log(`🔍 Trying endpoint: ${testUrl}`);
+          
+          const testResponse = await fetch(testUrl);
+          if (testResponse.ok) {
+            response = testResponse;
+            usedEndpoint = endpoint;
+            console.log(`✅ Found working convocatorias endpoint: ${testUrl}`);
+            break;
+          } else {
+            console.log(`❌ Failed endpoint ${testUrl}: ${testResponse.status}`);
+          }
+        } catch (error) {
+          console.log(`❌ Error with endpoint ${endpoint}:`, error);
+        }
+      }
+
+      if (!response) {
+        console.error('❌ No working convocatorias endpoint found, using mock data');
+        const mockConvocatorias = this.getMockConvocatorias();
+        console.log(`📢 Using ${mockConvocatorias.length} mock convocatorias`);
+        return { 
+          success: true, 
+          data: mockConvocatorias,
+          message: 'Usando datos de ejemplo (no se encontró endpoint válido para convocatorias)'
+        };
       }
       
       const result = await handleResponse<Convocatoria[]>(response);
-
-      console.log('📢 Convocatorias data received:', result);
+      console.log(`📢 Convocatorias data received from ${usedEndpoint}:`, result);
 
       if (result.success && result.data) {
         // 🆕 Las convocatorias probablemente no tienen coordenadas, así que usaremos coordenadas por defecto de Colombia
