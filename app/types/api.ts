@@ -84,22 +84,19 @@ export interface Company {
 // 🆕 ACTUALIZADA - Promotor con campos geográficos
 export interface Promotor {
   id: number;
-  nombre: string;
-  descripcion?: string;
-  tipoPromotor?: string;
-  contacto?: string;
-  ciudad?: string;
-  departamento?: string;
-  latitud?: number;
-  longitud?: number;
+  medio?: string; // StringLength(200) - corresponde al campo Medio del backend
+  descripcion?: string; // corresponde al campo Descripcion del backend
+  enlace?: string; // corresponde al campo Enlace del backend
+  ciudad?: string; // StringLength(100) - corresponde al campo Ciudad del backend
+  departamento?: string; // StringLength(100) - corresponde al campo Departamento del backend
+  latitud?: number; // decimal? - corresponde al campo Latitud del backend
+  longitud?: number; // decimal? - corresponde al campo Longitud del backend
   // Relación
-  companyId?: number;
-  company?: Company;
-  // Campos legacy
-  medio?: string;
-  enlace?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  companyId?: number; // int? - corresponde al campo CompanyId del backend
+  company?: Company; // corresponde a la relación Company del backend
+  // Campos de auditoría
+  createdAt?: string; // DateTime - corresponde al campo CreatedAt del backend
+  updatedAt?: string; // DateTime - corresponde al campo UpdatedAt del backend
 }
 
 // 🆕 ACTUALIZADA - Articulador con campos geográficos
@@ -252,10 +249,14 @@ export interface CreateEmpresaRequest {
 // 🆕 NUEVOS TIPOS DE REQUEST PARA LAS NUEVAS ENTIDADES
 
 export interface CreatePromotorRequest {
-  nombre: string; // Requerido
-  medio?: string;
-  descripcion?: string;
-  enlace?: string;
+  medio?: string; // StringLength(200) - opcional según tu modelo
+  descripcion?: string; // opcional según tu modelo
+  enlace?: string; // opcional según tu modelo
+  ciudad?: string; // StringLength(100) - opcional según tu modelo
+  departamento?: string; // StringLength(100) - opcional según tu modelo
+  latitud?: number; // decimal? - opcional según tu modelo
+  longitud?: number; // decimal? - opcional según tu modelo
+  companyId?: number; // int? - opcional según tu modelo
 }
 
 export interface CreateArticuladorRequest {

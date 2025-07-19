@@ -8,7 +8,7 @@ import {
 } from '../types/api';
 
 // URL base del backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://localhost:7036/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backinovationmap.onrender.com/api';
 
 // 🆕 Configuración para modo fallback
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
@@ -55,7 +55,7 @@ export const PromotorService = {
   // Obtener todos los promotores
   async getAll(): Promise<{ success: boolean; data?: Promotor[]; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/promotores`);
+      const response = await fetch(`${PROXY_BASE_URL}/Promotores`);
       return await handleResponse<Promotor[]>(response);
     } catch (error) {
       return {
@@ -68,7 +68,7 @@ export const PromotorService = {
   // Obtener promotor por ID
   async getById(id: number): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/promotores/${id}`);
+      const response = await fetch(`${PROXY_BASE_URL}/Promotores/${id}`);
       return await handleResponse<Promotor>(response);
     } catch (error) {
       return {
@@ -81,7 +81,7 @@ export const PromotorService = {
   // Crear nuevo promotor
   async create(promotor: Omit<Promotor, 'id'>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/promotores`, {
+      const response = await fetch(`${PROXY_BASE_URL}/Promotores`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export const PromotorService = {
   // Actualizar promotor
   async update(id: number, promotor: Partial<Omit<Promotor, 'id'>>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/promotores?id=${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/Promotores?id=${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ export const PromotorService = {
   // Eliminar promotor
   async delete(id: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/promotores?id=${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/Promotores?id=${id}`, {
         method: 'DELETE',
       });
       return await handleResponse<void>(response);
@@ -161,7 +161,7 @@ export const PromotorService = {
   // Health check
   async health(): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/promotores`);
+      const response = await fetch(`${PROXY_BASE_URL}/Promotores`);
       return await handleResponse<void>(response);
     } catch (error) {
       return {
@@ -367,9 +367,11 @@ export const EcosystemService = {
   // 🆕 Verificar qué endpoints están disponibles
   async checkAvailableEndpoints(): Promise<{ available: string[]; unavailable: string[] }> {
     const endpointsToCheck = [
+      '/Promotores',
       '/promotores',
       '/articuladores', 
       '/portafolioarco',
+      '/api/Companies',
       '/companies',
       '/empresas',
       '/Company',
@@ -488,14 +490,14 @@ export const EcosystemService = {
           if (promotor.latitud && promotor.longitud) {
             ecosystemItems.push({
               id: promotor.id,
-              nombre: promotor.nombre,
+              nombre: promotor.medio || `Promotor ${promotor.id}`, // Usar 'medio' como nombre
               tipo: 'Promotor',
               descripcion: promotor.descripcion,
               ciudad: promotor.ciudad,
               departamento: promotor.departamento,
               latitud: promotor.latitud,
               longitud: promotor.longitud,
-              tipoPromotor: promotor.tipoPromotor
+              tipoPromotor: promotor.medio // Usar 'medio' como tipo de promotor
             });
           }
         });

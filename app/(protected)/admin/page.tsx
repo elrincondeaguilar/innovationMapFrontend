@@ -31,10 +31,11 @@ export default function AdminEntidadesPage() {
 
   // Estados para formularios
   const [nuevoPromotor, setNuevoPromotor] = useState<CreatePromotorRequest>({
-    nombre: "",
     medio: "",
     descripcion: "",
     enlace: "",
+    ciudad: "",
+    departamento: "",
   });
 
   const [nuevoArticulador, setNuevoArticulador] =
@@ -92,10 +93,6 @@ export default function AdminEntidadesPage() {
 
   // Funciones para crear entidades
   const crearPromotor = async () => {
-    if (!nuevoPromotor.nombre?.trim()) {
-      setError("El nombre es requerido");
-      return;
-    }
     if (!nuevoPromotor.medio?.trim()) {
       setError("El medio es requerido");
       return;
@@ -112,10 +109,11 @@ export default function AdminEntidadesPage() {
       if (resultado.success) {
         setSuccess("Promotor creado exitosamente");
         setNuevoPromotor({
-          nombre: "",
           medio: "",
           descripcion: "",
           enlace: "",
+          ciudad: "",
+          departamento: "",
         });
         cargarDatos(); // Recargar datos
       } else {
@@ -360,24 +358,6 @@ export default function AdminEntidadesPage() {
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nombre *
-                          </label>
-                          <input
-                            type="text"
-                            value={nuevoPromotor.nombre}
-                            onChange={(e) =>
-                              setNuevoPromotor({
-                                ...nuevoPromotor,
-                                nombre: e.target.value,
-                              })
-                            }
-                            placeholder="Nombre del promotor"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
                             Medio *
                           </label>
                           <input
@@ -390,6 +370,42 @@ export default function AdminEntidadesPage() {
                               })
                             }
                             placeholder="Ej: Redes sociales, Email, Web"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Ciudad
+                          </label>
+                          <input
+                            type="text"
+                            value={nuevoPromotor.ciudad}
+                            onChange={(e) =>
+                              setNuevoPromotor({
+                                ...nuevoPromotor,
+                                ciudad: e.target.value,
+                              })
+                            }
+                            placeholder="Ciudad"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Departamento
+                          </label>
+                          <input
+                            type="text"
+                            value={nuevoPromotor.departamento}
+                            onChange={(e) =>
+                              setNuevoPromotor({
+                                ...nuevoPromotor,
+                                departamento: e.target.value,
+                              })
+                            }
+                            placeholder="Departamento"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
@@ -454,11 +470,8 @@ export default function AdminEntidadesPage() {
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <h4 className="font-semibold text-gray-800">
-                                  {promotor.nombre || promotor.medio}
+                                  {promotor.medio || `Promotor ${promotor.id}`}
                                 </h4>
-                                {promotor.medio && promotor.nombre && (
-                                  <p className="text-sm text-gray-500">Medio: {promotor.medio}</p>
-                                )}
                                 {promotor.descripcion && (
                                   <p className="text-sm text-gray-600 mt-1">
                                     {promotor.descripcion}
