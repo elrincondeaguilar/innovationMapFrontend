@@ -13,8 +13,22 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_
 // 🆕 Configuración para modo fallback
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+// 🆕 URLs para proxy (evita problemas de CORS en producción)
+const PROXY_BASE_URL = IS_PRODUCTION ? '/api/proxy' : API_BASE_URL;
 
 console.log('🔗 API_BASE_URL configurada:', API_BASE_URL);
+console.log('🔧 PROXY_BASE_URL configurada:', PROXY_BASE_URL);
+console.log('🔧 USE_MOCK_DATA:', USE_MOCK_DATA);
+console.log('🚀 IS_DEVELOPMENT:', IS_DEVELOPMENT);
+console.log('🚀 IS_PRODUCTION:', IS_PRODUCTION);
+console.log('🔍 Environment variables:', {
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  NEXT_PUBLIC_USE_MOCK_DATA: process.env.NEXT_PUBLIC_USE_MOCK_DATA,
+  NODE_ENV: process.env.NODE_ENV
+});
 console.log('� USE_MOCK_DATA:', USE_MOCK_DATA);
 console.log('🚀 IS_DEVELOPMENT:', IS_DEVELOPMENT);
 console.log('�🔍 Environment variables:', {
@@ -50,7 +64,7 @@ export const PromotorService = {
   // Obtener todos los promotores
   async getAll(): Promise<{ success: boolean; data?: Promotor[]; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/promotores`);
+      const response = await fetch(`${PROXY_BASE_URL}/promotores`);
       return await handleResponse<Promotor[]>(response);
     } catch (error) {
       return {
@@ -63,7 +77,7 @@ export const PromotorService = {
   // Obtener promotor por ID
   async getById(id: number): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/promotores/${id}`);
+      const response = await fetch(`${PROXY_BASE_URL}/promotores/${id}`);
       return await handleResponse<Promotor>(response);
     } catch (error) {
       return {
@@ -78,8 +92,9 @@ export const PromotorService = {
     try {
       // 🆕 Log para debug
       console.log('Sending promotor data:', JSON.stringify(promotor, null, 2));
+      console.log('🔗 Using API URL:', `${PROXY_BASE_URL}/promotores`);
       
-      const response = await fetch(`${API_BASE_URL}/promotores`, {
+      const response = await fetch(`${PROXY_BASE_URL}/promotores`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,9 +115,20 @@ export const PromotorService = {
       return await handleResponse<Promotor>(response);
     } catch (error) {
       console.error('Network error:', error);
+      
+      // 🆕 Detectar específicamente errores de CORS
+      const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+      
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('CORS') || errorMessage.includes('Access-Control-Allow-Origin')) {
+        return {
+          success: false,
+          message: `Error CORS: El backend no permite conexiones desde este dominio. Contacta al administrador del backend para agregar: ${window.location.origin} a las políticas de CORS.`
+        };
+      }
+      
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Error de conexión'
+        message: errorMessage
       };
     }
   },
@@ -110,7 +136,7 @@ export const PromotorService = {
   // Actualizar promotor
   async update(id: number, promotor: Partial<Omit<Promotor, 'id'>>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/promotores/${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/promotores?id=${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +155,7 @@ export const PromotorService = {
   // Eliminar promotor
   async delete(id: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/promotores/${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/promotores?id=${id}`, {
         method: 'DELETE',
       });
       return await handleResponse<void>(response);
@@ -144,7 +170,7 @@ export const PromotorService = {
   // Health check
   async health(): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/promotores/health`);
+      const response = await fetch(`${PROXY_BASE_URL}/promotores`);
       return await handleResponse<void>(response);
     } catch (error) {
       return {
@@ -160,7 +186,7 @@ export const ArticuladorService = {
   // Obtener todos los articuladores
   async getAll(): Promise<{ success: boolean; data?: Articulador[]; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/articuladores`);
+      const response = await fetch(`${PROXY_BASE_URL}/articuladores`);
       return await handleResponse<Articulador[]>(response);
     } catch (error) {
       return {
@@ -173,7 +199,7 @@ export const ArticuladorService = {
   // Obtener articulador por ID
   async getById(id: number): Promise<{ success: boolean; data?: Articulador; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/articuladores/${id}`);
+      const response = await fetch(`${PROXY_BASE_URL}/articuladores/${id}`);
       return await handleResponse<Articulador>(response);
     } catch (error) {
       return {
@@ -186,7 +212,7 @@ export const ArticuladorService = {
   // Crear nuevo articulador
   async create(articulador: Omit<Articulador, 'id'>): Promise<{ success: boolean; data?: Articulador; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/articuladores`, {
+      const response = await fetch(`${PROXY_BASE_URL}/articuladores`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,7 +231,7 @@ export const ArticuladorService = {
   // Actualizar articulador
   async update(id: number, articulador: Partial<Omit<Articulador, 'id'>>): Promise<{ success: boolean; data?: Articulador; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/articuladores/${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/articuladores/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -224,7 +250,7 @@ export const ArticuladorService = {
   // Eliminar articulador
   async delete(id: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/articuladores/${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/articuladores?id=${id}`, {
         method: 'DELETE',
       });
       return await handleResponse<void>(response);
@@ -239,7 +265,7 @@ export const ArticuladorService = {
   // Health check
   async health(): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/articuladores/health`);
+      const response = await fetch(`${PROXY_BASE_URL}/articuladores`);
       return await handleResponse<void>(response);
     } catch (error) {
       return {
@@ -255,7 +281,7 @@ export const PortafolioArcoService = {
   // Obtener todos los portafolios
   async getAll(): Promise<{ success: boolean; data?: PortafolioArco[]; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/portafolioarco`);
+      const response = await fetch(`${PROXY_BASE_URL}/portafolioarco`);
       return await handleResponse<PortafolioArco[]>(response);
     } catch (error) {
       return {
@@ -268,7 +294,7 @@ export const PortafolioArcoService = {
   // Obtener portafolio por ID
   async getById(id: number): Promise<{ success: boolean; data?: PortafolioArco; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/portafolioarco/${id}`);
+      const response = await fetch(`${PROXY_BASE_URL}/portafolioarco/${id}`);
       return await handleResponse<PortafolioArco>(response);
     } catch (error) {
       return {
@@ -281,7 +307,7 @@ export const PortafolioArcoService = {
   // Crear nuevo portafolio
   async create(portafolio: Omit<PortafolioArco, 'id'>): Promise<{ success: boolean; data?: PortafolioArco; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/portafolioarco`, {
+      const response = await fetch(`${PROXY_BASE_URL}/portafolioarco`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -300,7 +326,7 @@ export const PortafolioArcoService = {
   // Actualizar portafolio
   async update(id: number, portafolio: Partial<Omit<PortafolioArco, 'id'>>): Promise<{ success: boolean; data?: PortafolioArco; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/portafolioarco/${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/portafolioarco/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -319,7 +345,7 @@ export const PortafolioArcoService = {
   // Eliminar portafolio
   async delete(id: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/portafolioarco/${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/portafolioarco?id=${id}`, {
         method: 'DELETE',
       });
       return await handleResponse<void>(response);
@@ -334,7 +360,7 @@ export const PortafolioArcoService = {
   // Health check
   async health(): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/portafolioarco/health`);
+      const response = await fetch(`${PROXY_BASE_URL}/portafolioarco`);
       return await handleResponse<void>(response);
     } catch (error) {
       return {
