@@ -2,24 +2,24 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
-import { 
-  PromotorService, 
-  ArticuladorService, 
-  PortafolioArcoService 
+import {
+  PromotorService,
+  ArticuladorService,
+  PortafolioArcoService,
 } from "../../services/nuevasEntidadesService";
-import { 
-  Promotor, 
-  Articulador, 
+import {
+  Promotor,
+  Articulador,
   PortafolioArco,
   CreatePromotorRequest,
   CreateArticuladorRequest,
-  CreatePortafolioArcoRequest
+  CreatePortafolioArcoRequest,
 } from "../../types/api";
 
-type TabType = 'promotores' | 'articuladores' | 'portafolio';
+type TabType = "promotores" | "articuladores" | "portafolio";
 
 export default function AdminEntidadesPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('promotores');
+  const [activeTab, setActiveTab] = useState<TabType>("promotores");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -34,37 +34,40 @@ export default function AdminEntidadesPage() {
     nombre: "",
     medio: "",
     descripcion: "",
-    enlace: ""
+    enlace: "",
   });
 
-  const [nuevoArticulador, setNuevoArticulador] = useState<CreateArticuladorRequest>({
-    nombre: "",
-    tipo: "",
-    region: "",
-    contacto: ""
-  });
+  const [nuevoArticulador, setNuevoArticulador] =
+    useState<CreateArticuladorRequest>({
+      nombre: "",
+      tipo: "",
+      region: "",
+      contacto: "",
+    });
 
-  const [nuevoPortafolio, setNuevoPortafolio] = useState<CreatePortafolioArcoRequest>({
-    nombre: "",
-    anio: new Date().getFullYear(),
-    entidad: "",
-    instrumento: "",
-    tipoApoyo: "",
-    objetivo: "",
-    cobertura: "",
-    departamento: "",
-    enlace: ""
-  });
+  const [nuevoPortafolio, setNuevoPortafolio] =
+    useState<CreatePortafolioArcoRequest>({
+      nombre: "",
+      anio: new Date().getFullYear(),
+      entidad: "",
+      instrumento: "",
+      tipoApoyo: "",
+      objetivo: "",
+      cobertura: "",
+      departamento: "",
+      enlace: "",
+    });
 
   // Cargar datos
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const [promotoresRes, articuladoresRes, portafoliosRes] = await Promise.all([
-        PromotorService.getAll(),
-        ArticuladorService.getAll(),
-        PortafolioArcoService.getAll()
-      ]);
+      const [promotoresRes, articuladoresRes, portafoliosRes] =
+        await Promise.all([
+          PromotorService.getAll(),
+          ArticuladorService.getAll(),
+          PortafolioArcoService.getAll(),
+        ]);
 
       if (promotoresRes.success && promotoresRes.data) {
         setPromotores(promotoresRes.data);
@@ -100,16 +103,32 @@ export default function AdminEntidadesPage() {
 
     setLoading(true);
     try {
+      // 🆕 Log para debug
+      console.log("Enviando datos del promotor:", nuevoPromotor);
+
       const resultado = await PromotorService.create(nuevoPromotor);
+      console.log("Resultado del servidor:", resultado);
+
       if (resultado.success) {
         setSuccess("Promotor creado exitosamente");
-        setNuevoPromotor({ nombre: "", medio: "", descripcion: "", enlace: "" });
+        setNuevoPromotor({
+          nombre: "",
+          medio: "",
+          descripcion: "",
+          enlace: "",
+        });
         cargarDatos(); // Recargar datos
       } else {
-        setError(resultado.message || "Error creando promotor");
+        console.error("Error del servidor:", resultado.message);
+        setError(`Error creando promotor: ${resultado.message}`);
       }
-    } catch {
-      setError("Error creando promotor");
+    } catch (error) {
+      console.error("Error inesperado:", error);
+      setError(
+        `Error inesperado: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -162,7 +181,7 @@ export default function AdminEntidadesPage() {
           objetivo: "",
           cobertura: "",
           departamento: "",
-          enlace: ""
+          enlace: "",
         });
         cargarDatos();
       } else {
@@ -186,17 +205,27 @@ export default function AdminEntidadesPage() {
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          
           {/* Header */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-4 flex items-center">
-              <svg className="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <svg
+                className="w-8 h-8 mr-3 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
               </svg>
               Gestión del Ecosistema de Innovación
             </h1>
             <p className="text-gray-600">
-              Administra promotores, articuladores y portafolios del ecosistema INTEIA
+              Administra promotores, articuladores y portafolios del ecosistema
+              INTEIA
             </p>
           </div>
 
@@ -205,31 +234,40 @@ export default function AdminEntidadesPage() {
             <div className="border-b border-gray-200">
               <nav className="flex">
                 <button
-                  onClick={() => { setActiveTab('promotores'); limpiarMensajes(); }}
+                  onClick={() => {
+                    setActiveTab("promotores");
+                    limpiarMensajes();
+                  }}
                   className={`px-6 py-4 text-sm font-medium ${
-                    activeTab === 'promotores'
-                      ? 'border-b-2 border-blue-500 text-blue-600 bg-blue-50'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    activeTab === "promotores"
+                      ? "border-b-2 border-blue-500 text-blue-600 bg-blue-50"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   📢 Promotores ({promotores.length})
                 </button>
                 <button
-                  onClick={() => { setActiveTab('articuladores'); limpiarMensajes(); }}
+                  onClick={() => {
+                    setActiveTab("articuladores");
+                    limpiarMensajes();
+                  }}
                   className={`px-6 py-4 text-sm font-medium ${
-                    activeTab === 'articuladores'
-                      ? 'border-b-2 border-blue-500 text-blue-600 bg-blue-50'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    activeTab === "articuladores"
+                      ? "border-b-2 border-blue-500 text-blue-600 bg-blue-50"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   🤝 Articuladores ({articuladores.length})
                 </button>
                 <button
-                  onClick={() => { setActiveTab('portafolio'); limpiarMensajes(); }}
+                  onClick={() => {
+                    setActiveTab("portafolio");
+                    limpiarMensajes();
+                  }}
                   className={`px-6 py-4 text-sm font-medium ${
-                    activeTab === 'portafolio'
-                      ? 'border-b-2 border-blue-500 text-blue-600 bg-blue-50'
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    activeTab === "portafolio"
+                      ? "border-b-2 border-blue-500 text-blue-600 bg-blue-50"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   📊 Portafolio ARCO ({portafolios.length})
@@ -244,7 +282,7 @@ export default function AdminEntidadesPage() {
                   <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
-              
+
               {success && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
                   <p className="text-green-700 text-sm">{success}</p>
@@ -252,14 +290,15 @@ export default function AdminEntidadesPage() {
               )}
 
               {/* Tab Content */}
-              {activeTab === 'promotores' && (
+              {activeTab === "promotores" && (
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
                     {/* Formulario para crear promotor */}
                     <div className="bg-gray-50 rounded-xl p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Promotor</h3>
-                      
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Crear Nuevo Promotor
+                      </h3>
+
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -268,12 +307,17 @@ export default function AdminEntidadesPage() {
                           <input
                             type="text"
                             value={nuevoPromotor.nombre}
-                            onChange={(e) => setNuevoPromotor({...nuevoPromotor, nombre: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPromotor({
+                                ...nuevoPromotor,
+                                nombre: e.target.value,
+                              })
+                            }
                             placeholder="Nombre del promotor"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Medio *
@@ -281,25 +325,35 @@ export default function AdminEntidadesPage() {
                           <input
                             type="text"
                             value={nuevoPromotor.medio}
-                            onChange={(e) => setNuevoPromotor({...nuevoPromotor, medio: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPromotor({
+                                ...nuevoPromotor,
+                                medio: e.target.value,
+                              })
+                            }
                             placeholder="Ej: Redes sociales, Email, Web"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Descripción
                           </label>
                           <textarea
                             value={nuevoPromotor.descripcion}
-                            onChange={(e) => setNuevoPromotor({...nuevoPromotor, descripcion: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPromotor({
+                                ...nuevoPromotor,
+                                descripcion: e.target.value,
+                              })
+                            }
                             placeholder="Descripción del promotor"
                             rows={3}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Enlace
@@ -307,12 +361,17 @@ export default function AdminEntidadesPage() {
                           <input
                             type="url"
                             value={nuevoPromotor.enlace}
-                            onChange={(e) => setNuevoPromotor({...nuevoPromotor, enlace: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPromotor({
+                                ...nuevoPromotor,
+                                enlace: e.target.value,
+                              })
+                            }
                             placeholder="https://ejemplo.com"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <button
                           onClick={crearPromotor}
                           disabled={loading}
@@ -325,18 +384,27 @@ export default function AdminEntidadesPage() {
 
                     {/* Lista de promotores */}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Promotores Existentes</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Promotores Existentes
+                      </h3>
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                         {promotores.map((promotor) => (
-                          <div key={promotor.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                            <h4 className="font-semibold text-gray-800">{promotor.medio}</h4>
+                          <div
+                            key={promotor.id}
+                            className="bg-white border border-gray-200 rounded-lg p-4"
+                          >
+                            <h4 className="font-semibold text-gray-800">
+                              {promotor.medio}
+                            </h4>
                             {promotor.descripcion && (
-                              <p className="text-sm text-gray-600 mt-1">{promotor.descripcion}</p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {promotor.descripcion}
+                              </p>
                             )}
                             {promotor.enlace && (
-                              <a 
-                                href={promotor.enlace} 
-                                target="_blank" 
+                              <a
+                                href={promotor.enlace}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block"
                               >
@@ -346,7 +414,9 @@ export default function AdminEntidadesPage() {
                           </div>
                         ))}
                         {promotores.length === 0 && (
-                          <p className="text-gray-500 text-center py-4">No hay promotores registrados</p>
+                          <p className="text-gray-500 text-center py-4">
+                            No hay promotores registrados
+                          </p>
                         )}
                       </div>
                     </div>
@@ -354,14 +424,15 @@ export default function AdminEntidadesPage() {
                 </div>
               )}
 
-              {activeTab === 'articuladores' && (
+              {activeTab === "articuladores" && (
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
                     {/* Formulario para crear articulador */}
                     <div className="bg-gray-50 rounded-xl p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Articulador</h3>
-                      
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Crear Nuevo Articulador
+                      </h3>
+
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -370,12 +441,17 @@ export default function AdminEntidadesPage() {
                           <input
                             type="text"
                             value={nuevoArticulador.nombre}
-                            onChange={(e) => setNuevoArticulador({...nuevoArticulador, nombre: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoArticulador({
+                                ...nuevoArticulador,
+                                nombre: e.target.value,
+                              })
+                            }
                             placeholder="Nombre del articulador"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Tipo
@@ -383,12 +459,17 @@ export default function AdminEntidadesPage() {
                           <input
                             type="text"
                             value={nuevoArticulador.tipo}
-                            onChange={(e) => setNuevoArticulador({...nuevoArticulador, tipo: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoArticulador({
+                                ...nuevoArticulador,
+                                tipo: e.target.value,
+                              })
+                            }
                             placeholder="Ej: Universidad, Incubadora, Corporación"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Región
@@ -396,25 +477,35 @@ export default function AdminEntidadesPage() {
                           <input
                             type="text"
                             value={nuevoArticulador.region}
-                            onChange={(e) => setNuevoArticulador({...nuevoArticulador, region: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoArticulador({
+                                ...nuevoArticulador,
+                                region: e.target.value,
+                              })
+                            }
                             placeholder="Ej: Antioquia, Bogotá, Nacional"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Contacto
                           </label>
                           <textarea
                             value={nuevoArticulador.contacto}
-                            onChange={(e) => setNuevoArticulador({...nuevoArticulador, contacto: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoArticulador({
+                                ...nuevoArticulador,
+                                contacto: e.target.value,
+                              })
+                            }
                             placeholder="Información de contacto"
                             rows={3}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <button
                           onClick={crearArticulador}
                           disabled={loading}
@@ -427,22 +518,37 @@ export default function AdminEntidadesPage() {
 
                     {/* Lista de articuladores */}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Articuladores Existentes</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Articuladores Existentes
+                      </h3>
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                         {articuladores.map((articulador) => (
-                          <div key={articulador.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                            <h4 className="font-semibold text-gray-800">{articulador.nombre}</h4>
+                          <div
+                            key={articulador.id}
+                            className="bg-white border border-gray-200 rounded-lg p-4"
+                          >
+                            <h4 className="font-semibold text-gray-800">
+                              {articulador.nombre}
+                            </h4>
                             <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                              {articulador.tipo && <span>🏢 {articulador.tipo}</span>}
-                              {articulador.region && <span>📍 {articulador.region}</span>}
+                              {articulador.tipo && (
+                                <span>🏢 {articulador.tipo}</span>
+                              )}
+                              {articulador.region && (
+                                <span>📍 {articulador.region}</span>
+                              )}
                             </div>
                             {articulador.contacto && (
-                              <p className="text-sm text-gray-600 mt-2">{articulador.contacto}</p>
+                              <p className="text-sm text-gray-600 mt-2">
+                                {articulador.contacto}
+                              </p>
                             )}
                           </div>
                         ))}
                         {articuladores.length === 0 && (
-                          <p className="text-gray-500 text-center py-4">No hay articuladores registrados</p>
+                          <p className="text-gray-500 text-center py-4">
+                            No hay articuladores registrados
+                          </p>
                         )}
                       </div>
                     </div>
@@ -450,14 +556,15 @@ export default function AdminEntidadesPage() {
                 </div>
               )}
 
-              {activeTab === 'portafolio' && (
+              {activeTab === "portafolio" && (
                 <div className="space-y-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
                     {/* Formulario para crear portafolio */}
                     <div className="bg-gray-50 rounded-xl p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Portafolio ARCO</h3>
-                      
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Crear Nuevo Portafolio ARCO
+                      </h3>
+
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -466,12 +573,17 @@ export default function AdminEntidadesPage() {
                           <input
                             type="text"
                             value={nuevoPortafolio.nombre}
-                            onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, nombre: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPortafolio({
+                                ...nuevoPortafolio,
+                                nombre: e.target.value,
+                              })
+                            }
                             placeholder="Nombre del portafolio"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -480,11 +592,16 @@ export default function AdminEntidadesPage() {
                             <input
                               type="number"
                               value={nuevoPortafolio.anio}
-                              onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, anio: parseInt(e.target.value)})}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              onChange={(e) =>
+                                setNuevoPortafolio({
+                                  ...nuevoPortafolio,
+                                  anio: parseInt(e.target.value),
+                                })
+                              }
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                             />
                           </div>
-                          
+
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Departamento
@@ -492,13 +609,18 @@ export default function AdminEntidadesPage() {
                             <input
                               type="text"
                               value={nuevoPortafolio.departamento}
-                              onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, departamento: e.target.value})}
+                              onChange={(e) =>
+                                setNuevoPortafolio({
+                                  ...nuevoPortafolio,
+                                  departamento: e.target.value,
+                                })
+                              }
                               placeholder="Ej: Antioquia"
-                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                             />
                           </div>
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Entidad *
@@ -506,12 +628,17 @@ export default function AdminEntidadesPage() {
                           <input
                             type="text"
                             value={nuevoPortafolio.entidad}
-                            onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, entidad: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPortafolio({
+                                ...nuevoPortafolio,
+                                entidad: e.target.value,
+                              })
+                            }
                             placeholder="Entidad responsable"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -520,12 +647,17 @@ export default function AdminEntidadesPage() {
                             <input
                               type="text"
                               value={nuevoPortafolio.instrumento}
-                              onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, instrumento: e.target.value})}
+                              onChange={(e) =>
+                                setNuevoPortafolio({
+                                  ...nuevoPortafolio,
+                                  instrumento: e.target.value,
+                                })
+                              }
                               placeholder="Instrumento utilizado"
-                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                             />
                           </div>
-                          
+
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Tipo de Apoyo
@@ -533,26 +665,36 @@ export default function AdminEntidadesPage() {
                             <input
                               type="text"
                               value={nuevoPortafolio.tipoApoyo}
-                              onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, tipoApoyo: e.target.value})}
+                              onChange={(e) =>
+                                setNuevoPortafolio({
+                                  ...nuevoPortafolio,
+                                  tipoApoyo: e.target.value,
+                                })
+                              }
                               placeholder="Tipo de apoyo"
-                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                             />
                           </div>
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Objetivo
                           </label>
                           <textarea
                             value={nuevoPortafolio.objetivo}
-                            onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, objetivo: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPortafolio({
+                                ...nuevoPortafolio,
+                                objetivo: e.target.value,
+                              })
+                            }
                             placeholder="Objetivo del portafolio"
                             rows={3}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Enlace
@@ -560,12 +702,17 @@ export default function AdminEntidadesPage() {
                           <input
                             type="url"
                             value={nuevoPortafolio.enlace}
-                            onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, enlace: e.target.value})}
+                            onChange={(e) =>
+                              setNuevoPortafolio({
+                                ...nuevoPortafolio,
+                                enlace: e.target.value,
+                              })
+                            }
                             placeholder="https://ejemplo.com"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
-                        
+
                         <button
                           onClick={crearPortafolio}
                           disabled={loading}
@@ -578,32 +725,49 @@ export default function AdminEntidadesPage() {
 
                     {/* Lista de portafolios */}
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Portafolios Existentes</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Portafolios Existentes
+                      </h3>
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                         {portafolios.map((portafolio) => (
-                          <div key={portafolio.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                          <div
+                            key={portafolio.id}
+                            className="bg-white border border-gray-200 rounded-lg p-4"
+                          >
                             <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-semibold text-gray-800">{portafolio.entidad}</h4>
+                              <h4 className="font-semibold text-gray-800">
+                                {portafolio.entidad}
+                              </h4>
                               <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                 {portafolio.anio}
                               </span>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-2">
-                              {portafolio.instrumento && <span>🔧 {portafolio.instrumento}</span>}
-                              {portafolio.tipoApoyo && <span>🤝 {portafolio.tipoApoyo}</span>}
-                              {portafolio.departamento && <span>📍 {portafolio.departamento}</span>}
-                              {portafolio.cobertura && <span>🌍 {portafolio.cobertura}</span>}
+                              {portafolio.instrumento && (
+                                <span>🔧 {portafolio.instrumento}</span>
+                              )}
+                              {portafolio.tipoApoyo && (
+                                <span>🤝 {portafolio.tipoApoyo}</span>
+                              )}
+                              {portafolio.departamento && (
+                                <span>📍 {portafolio.departamento}</span>
+                              )}
+                              {portafolio.cobertura && (
+                                <span>🌍 {portafolio.cobertura}</span>
+                              )}
                             </div>
-                            
+
                             {portafolio.objetivo && (
-                              <p className="text-sm text-gray-600 mt-2">{portafolio.objetivo}</p>
+                              <p className="text-sm text-gray-600 mt-2">
+                                {portafolio.objetivo}
+                              </p>
                             )}
-                            
+
                             {portafolio.enlace && (
-                              <a 
-                                href={portafolio.enlace} 
-                                target="_blank" 
+                              <a
+                                href={portafolio.enlace}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block"
                               >
@@ -613,7 +777,9 @@ export default function AdminEntidadesPage() {
                           </div>
                         ))}
                         {portafolios.length === 0 && (
-                          <p className="text-gray-500 text-center py-4">No hay portafolios registrados</p>
+                          <p className="text-gray-500 text-center py-4">
+                            No hay portafolios registrados
+                          </p>
                         )}
                       </div>
                     </div>

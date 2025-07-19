@@ -61,6 +61,9 @@ export const PromotorService = {
   // Crear nuevo promotor
   async create(promotor: Omit<Promotor, 'id'>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
+      // 🆕 Log para debug
+      console.log('Sending promotor data:', JSON.stringify(promotor, null, 2));
+      
       const response = await fetch(`${API_BASE_URL}/promotores`, {
         method: 'POST',
         headers: {
@@ -68,8 +71,20 @@ export const PromotorService = {
         },
         body: JSON.stringify(promotor),
       });
+      
+      // 🆕 Log de respuesta
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Backend error response:', errorText);
+        return {
+          success: false,
+          message: `Error ${response.status}: ${errorText}`
+        };
+      }
+      
       return await handleResponse<Promotor>(response);
     } catch (error) {
+      console.error('Network error:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error de conexión'
