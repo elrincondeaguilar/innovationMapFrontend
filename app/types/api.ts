@@ -1,3 +1,23 @@
+// 🆕 INTERFACE ECOSISTEMA UNIFICADO (Nuevo)
+export interface EcosystemMapItem {
+  id: number;
+  nombre: string;
+  tipo: 'Company' | 'Promotor' | 'Articulador' | 'PortafolioArco';
+  descripcion?: string;
+  ciudad?: string;
+  departamento?: string;
+  latitud?: number;
+  longitud?: number;
+  // Campos específicos por tipo
+  industry?: string; // Para Company
+  fundada?: number; // Para Company
+  tipoPromotor?: string; // Para Promotor
+  experiencia?: string; // Para Articulador
+  areasExperiencia?: string; // Para Articulador
+  objetivos?: string; // Para PortafolioArco
+  publico?: string; // Para PortafolioArco
+}
+
 // Tipos para la API del backend
 export interface Convocatoria {
   id?: number; // Corresponde a Id en el backend
@@ -25,27 +45,134 @@ export interface Convocatoria {
   
   // Campos relacionados con la empresa
   companyId?: number; // Corresponde a CompanyId en el backend
-  company?: Empresa; // Información completa de la empresa del backend
+  company?: Company; // Información completa de la empresa del backend
+  // Relaciones con PortafolioArco
+  portfolioArcos?: PortafolioArco[];
+  // Relaciones con Articuladores
+  articuladorConvocatorias?: ArticuladorConvocatoria[];
 }
 
-export interface Empresa {
-  id?: number;
+// 🆕 ACTUALIZADA - Company con campos geográficos
+export interface Company {
+  id: number;
   name: string;
-  url: string;
+  description?: string;
+  industry?: string;
+  founded?: number;
+  website?: string;
+  // Nuevos campos geográficos
+  ciudad?: string;
+  departamento?: string;
+  latitud?: number;
+  longitud?: number;
+  // Campos legacy mantenidos por compatibilidad
+  url?: string;
   logoUrl?: string;
-  sector: string;
-  department: string;
-  description: string;
+  sector?: string;
+  department?: string;
   createdAt?: string;
-  
-  // 🆕 NUEVOS CAMPOS EXTENDIDOS
-  tipoActor?: string; // Tipo de actor de innovación
-  ciudad?: string; // Ciudad específica
-  direccion?: string; // Dirección física
-  contacto?: string; // Información de contacto
-  latitud?: number; // Coordenada de latitud para mapeo preciso
-  longitud?: number; // Coordenada de longitud para mapeo preciso
+  tipoActor?: string;
+  direccion?: string;
+  contacto?: string;
 }
+
+// 🆕 ACTUALIZADA - Promotor con campos geográficos
+export interface Promotor {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  tipoPromotor?: string;
+  contacto?: string;
+  ciudad?: string;
+  departamento?: string;
+  latitud?: number;
+  longitud?: number;
+  // Relación
+  companyId?: number;
+  company?: Company;
+  // Campos legacy
+  medio?: string;
+  enlace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// 🆕 ACTUALIZADA - Articulador con campos geográficos
+export interface Articulador {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  tipo?: string;
+  experiencia?: string;
+  areasExperiencia?: string;
+  contacto?: string;
+  ciudad?: string;
+  departamento?: string;
+  latitud?: number;
+  longitud?: number;
+  // Relaciones
+  articuladorCompanies?: ArticuladorCompany[];
+  articuladorConvocatorias?: ArticuladorConvocatoria[];
+  // Campos legacy
+  region?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// 🆕 ACTUALIZADA - PortafolioArco con campos geográficos
+export interface PortafolioArco {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  objetivos?: string;
+  publico?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  ciudad?: string;
+  departamento?: string;
+  latitud?: number;
+  longitud?: number;
+  // Relación
+  convocatoriaId?: number;
+  convocatoria?: Convocatoria;
+  // Campos legacy
+  anio?: number;
+  entidad?: string;
+  instrumento?: string;
+  tipoApoyo?: string;
+  objetivo?: string;
+  cobertura?: string;
+  enlace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// 🆕 TIPOS DE RELACIONES
+export interface ArticuladorCompany {
+  articuladorId: number;
+  companyId: number;
+  fechaInicio: string;
+  fechaFin?: string;
+  notas?: string;
+  tipoColaboracion?: string;
+  activa: boolean;
+  articulador?: Articulador;
+  company?: Company;
+}
+
+export interface ArticuladorConvocatoria {
+  articuladorId: number;
+  convocatoriaId: number;
+  rol?: string;
+  fechaAsignacion: string;
+  responsabilidades?: string;
+  activo: boolean;
+  articulador?: Articulador;
+  convocatoria?: Convocatoria;
+}
+
+// Alias para compatibilidad con código existente
+export type Empresa = Company;
 
 export interface AnalisisConvocatoria {
   estado: "activa" | "cerrada" | "no_especificada";
@@ -57,41 +184,6 @@ export interface AnalisisConvocatoria {
     cierre?: string; // 🆕 Fecha de cierre
   };
   confianza: number; // 0-100
-}
-
-// 🆕 NUEVAS ENTIDADES DEL BACKEND
-
-export interface Promotor {
-  id: number;
-  medio?: string; // Medio de promoción (max 200 chars)
-  descripcion?: string; // Descripción del promotor
-  enlace?: string; // Enlace/URL del promotor
-  createdAt: string; // Fecha de creación
-  updatedAt: string; // Fecha de actualización
-}
-
-export interface Articulador {
-  id: number;
-  nombre: string; // Nombre del articulador (requerido, max 200 chars)
-  tipo?: string; // Tipo de articulador (max 100 chars)
-  region?: string; // Región de operación (max 100 chars)
-  contacto?: string; // Información de contacto
-  createdAt: string; // Fecha de creación
-  updatedAt: string; // Fecha de actualización
-}
-
-export interface PortafolioArco {
-  id: number;
-  anio?: number; // Año del portafolio
-  entidad?: string; // Entidad responsable (max 200 chars)
-  instrumento?: string; // Instrumento utilizado (max 200 chars)
-  tipoApoyo?: string; // Tipo de apoyo brindado (max 200 chars)
-  objetivo?: string; // Objetivo del portafolio
-  cobertura?: string; // Cobertura geográfica (max 200 chars)
-  departamento?: string; // Departamento (max 100 chars)
-  enlace?: string; // Enlace/URL relacionado
-  createdAt: string; // Fecha de creación
-  updatedAt: string; // Fecha de actualización
 }
 
 export interface Usuario {

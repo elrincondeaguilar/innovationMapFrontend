@@ -2,9 +2,8 @@ import {
   Promotor, 
   Articulador, 
   PortafolioArco,
-  CreatePromotorRequest,
-  CreateArticuladorRequest,
-  CreatePortafolioArcoRequest 
+  EcosystemMapItem,
+  Company
 } from '../types/api';
 
 // URL base del backend
@@ -60,7 +59,7 @@ export const PromotorService = {
   },
 
   // Crear nuevo promotor
-  async create(promotor: CreatePromotorRequest): Promise<{ success: boolean; data?: Promotor; message?: string }> {
+  async create(promotor: Omit<Promotor, 'id'>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/promotores`, {
         method: 'POST',
@@ -79,7 +78,7 @@ export const PromotorService = {
   },
 
   // Actualizar promotor
-  async update(id: number, promotor: Partial<CreatePromotorRequest>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
+  async update(id: number, promotor: Partial<Omit<Promotor, 'id'>>): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/promotores/${id}`, {
         method: 'PUT',
@@ -155,7 +154,7 @@ export const ArticuladorService = {
   },
 
   // Crear nuevo articulador
-  async create(articulador: CreateArticuladorRequest): Promise<{ success: boolean; data?: Articulador; message?: string }> {
+  async create(articulador: Omit<Articulador, 'id'>): Promise<{ success: boolean; data?: Articulador; message?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/articuladores`, {
         method: 'POST',
@@ -174,7 +173,7 @@ export const ArticuladorService = {
   },
 
   // Actualizar articulador
-  async update(id: number, articulador: Partial<CreateArticuladorRequest>): Promise<{ success: boolean; data?: Articulador; message?: string }> {
+  async update(id: number, articulador: Partial<Omit<Articulador, 'id'>>): Promise<{ success: boolean; data?: Articulador; message?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/articuladores/${id}`, {
         method: 'PUT',
@@ -250,7 +249,7 @@ export const PortafolioArcoService = {
   },
 
   // Crear nuevo portafolio
-  async create(portafolio: CreatePortafolioArcoRequest): Promise<{ success: boolean; data?: PortafolioArco; message?: string }> {
+  async create(portafolio: Omit<PortafolioArco, 'id'>): Promise<{ success: boolean; data?: PortafolioArco; message?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/portafolioarco`, {
         method: 'POST',
@@ -269,7 +268,7 @@ export const PortafolioArcoService = {
   },
 
   // Actualizar portafolio
-  async update(id: number, portafolio: Partial<CreatePortafolioArcoRequest>): Promise<{ success: boolean; data?: PortafolioArco; message?: string }> {
+  async update(id: number, portafolio: Partial<Omit<PortafolioArco, 'id'>>): Promise<{ success: boolean; data?: PortafolioArco; message?: string }> {
     try {
       const response = await fetch(`${API_BASE_URL}/portafolioarco/${id}`, {
         method: 'PUT',
@@ -311,6 +310,142 @@ export const PortafolioArcoService = {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Error de conexión'
+      };
+    }
+  }
+};
+
+// 🆕 Servicio unificado para el ecosistema
+export const EcosystemService = {
+  // Obtener todos los elementos del ecosistema en formato unificado para el mapa
+  async getAllEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
+    try {
+      const [promotoressResult, articuladoresResult, portfoliosResult] = await Promise.all([
+        PromotorService.getAll(),
+        ArticuladorService.getAll(),
+        PortafolioArcoService.getAll()
+      ]);
+
+      const ecosystemItems: EcosystemMapItem[] = [];
+
+      // Convertir promotores
+      if (promotoressResult.success && promotoressResult.data) {
+        promotoressResult.data.forEach(promotor => {
+          ecosystemItems.push({
+            id: promotor.id,
+            nombre: promotor.nombre,
+            tipo: 'Promotor',
+            descripcion: promotor.descripcion,
+            ciudad: promotor.ciudad,
+            departamento: promotor.departamento,
+            latitud: promotor.latitud,
+            longitud: promotor.longitud,
+            tipoPromotor: promotor.tipoPromotor
+          });
+        });
+      }
+
+      // Convertir articuladores
+      if (articuladoresResult.success && articuladoresResult.data) {
+        articuladoresResult.data.forEach(articulador => {
+          ecosystemItems.push({
+            id: articulador.id,
+            nombre: articulador.nombre,
+            tipo: 'Articulador',
+            descripcion: articulador.descripcion,
+            ciudad: articulador.ciudad,
+            departamento: articulador.departamento,
+            latitud: articulador.latitud,
+            longitud: articulador.longitud,
+            experiencia: articulador.experiencia,
+            areasExperiencia: articulador.areasExperiencia
+          });
+        });
+      }
+
+      // Convertir portafolios
+      if (portfoliosResult.success && portfoliosResult.data) {
+        portfoliosResult.data.forEach(portfolio => {
+          ecosystemItems.push({
+            id: portfolio.id,
+            nombre: portfolio.nombre,
+            tipo: 'PortafolioArco',
+            descripcion: portfolio.descripcion,
+            ciudad: portfolio.ciudad,
+            departamento: portfolio.departamento,
+            latitud: portfolio.latitud,
+            longitud: portfolio.longitud,
+            objetivos: portfolio.objetivos,
+            publico: portfolio.publico
+          });
+        });
+      }
+
+      return { success: true, data: ecosystemItems };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error obteniendo elementos del ecosistema'
+      };
+    }
+  },
+
+  // Obtener empresas del ecosistema (desde el servicio de backend existente)
+  async getCompaniesAsEcosystemItems(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
+    try {
+      // Usar el endpoint existente de companies
+      const response = await fetch(`${API_BASE_URL}/companies`);
+      const result = await handleResponse<Company[]>(response);
+
+      if (result.success && result.data) {
+        const companyItems: EcosystemMapItem[] = result.data.map(company => ({
+          id: company.id,
+          nombre: company.name,
+          tipo: 'Company' as const,
+          descripcion: company.description,
+          ciudad: company.ciudad,
+          departamento: company.departamento,
+          latitud: company.latitud,
+          longitud: company.longitud,
+          industry: company.industry,
+          fundada: company.founded
+        }));
+
+        return { success: true, data: companyItems };
+      }
+
+      return { success: false, message: result.message || 'No se pudieron obtener las empresas' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error obteniendo empresas'
+      };
+    }
+  },
+
+  // Obtener todos los elementos del ecosistema incluyendo empresas
+  async getAllEcosystemWithCompanies(): Promise<{ success: boolean; data?: EcosystemMapItem[]; message?: string }> {
+    try {
+      const [ecosystemResult, companiesResult] = await Promise.all([
+        this.getAllEcosystemItems(),
+        this.getCompaniesAsEcosystemItems()
+      ]);
+
+      const allItems: EcosystemMapItem[] = [];
+
+      if (ecosystemResult.success && ecosystemResult.data) {
+        allItems.push(...ecosystemResult.data);
+      }
+
+      if (companiesResult.success && companiesResult.data) {
+        allItems.push(...companiesResult.data);
+      }
+
+      return { success: true, data: allItems };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error obteniendo todos los elementos del ecosistema'
       };
     }
   }
