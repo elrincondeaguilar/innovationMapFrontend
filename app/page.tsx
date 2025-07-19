@@ -44,10 +44,14 @@ export default function HomePage() {
 
           // Contar empresas por sector
           empresasResult.data.forEach((empresa: Empresa) => {
-            empresasPorSector[empresa.sector] =
-              (empresasPorSector[empresa.sector] || 0) + 1;
-            empresasPorDepartamento[empresa.department] =
-              (empresasPorDepartamento[empresa.department] || 0) + 1;
+            if (empresa.sector) {
+              empresasPorSector[empresa.sector] =
+                (empresasPorSector[empresa.sector] || 0) + 1;
+            }
+            if (empresa.department) {
+              empresasPorDepartamento[empresa.department] =
+                (empresasPorDepartamento[empresa.department] || 0) + 1;
+            }
           });
         }
 

@@ -100,7 +100,7 @@ function MapController({
   const map = useMap();
 
   useEffect(() => {
-    if (empresaEspecifica && soloEmpresaEspecifica) {
+    if (empresaEspecifica && soloEmpresaEspecifica && empresaEspecifica.department) {
       // Si hay una empresa específica, centrar el mapa en ella con zoom alto
       const coordinates = getCoordinatesByDepartment(
         empresaEspecifica.department
@@ -158,7 +158,7 @@ export default function Mapa({
     // Filtro por sector
     if (filtroSector) {
       filtered = filtered.filter((empresa) =>
-        empresa.sector.toLowerCase().includes(filtroSector.toLowerCase())
+        empresa.sector?.toLowerCase().includes(filtroSector.toLowerCase())
       );
     }
 
@@ -166,7 +166,7 @@ export default function Mapa({
     if (filtroDepartamento) {
       filtered = filtered.filter((empresa) =>
         empresa.department
-          .toLowerCase()
+          ?.toLowerCase()
           .includes(filtroDepartamento.toLowerCase())
       );
     }
@@ -190,7 +190,7 @@ export default function Mapa({
     if (empresaEspecifica && soloEmpresaEspecifica) {
       // Si se pasa una empresa específica, mostrar solo esa
       setEmpresasFiltradas([empresaEspecifica]);
-      setFiltroDepartamento(empresaEspecifica.department);
+      setFiltroDepartamento(empresaEspecifica.department || "");
       setFiltroSector("");
       setBusquedaTexto("");
     } else if (!soloEmpresaEspecifica) {
@@ -215,7 +215,9 @@ export default function Mapa({
         : empresasFiltradas;
 
     empresasParaContar.forEach((empresa) => {
-      contador[empresa.department] = (contador[empresa.department] || 0) + 1;
+      if (empresa.department) {
+        contador[empresa.department] = (contador[empresa.department] || 0) + 1;
+      }
     });
     return contador;
   };
@@ -623,10 +625,10 @@ export default function Mapa({
                                 empresa.id?.toString() || ""
                               );
                               searchParams.set("empresaNombre", empresa.name);
-                              searchParams.set("empresaSector", empresa.sector);
+                              searchParams.set("empresaSector", empresa.sector || "");
                               searchParams.set(
                                 "empresaDepartamento",
-                                empresa.department
+                                empresa.department || ""
                               );
                               if (empresa.description) {
                                 searchParams.set(
@@ -719,7 +721,7 @@ export default function Mapa({
             <Marker
               key={empresaEspecifica.id}
               position={getCoordinatesByDepartment(
-                empresaEspecifica.department
+                empresaEspecifica.department || "Antioquia"
               )}
             >
               <Popup>

@@ -247,6 +247,7 @@ export interface CreateEmpresaRequest {
 // 🆕 NUEVOS TIPOS DE REQUEST PARA LAS NUEVAS ENTIDADES
 
 export interface CreatePromotorRequest {
+  nombre: string; // Requerido
   medio?: string;
   descripcion?: string;
   enlace?: string;
@@ -260,6 +261,7 @@ export interface CreateArticuladorRequest {
 }
 
 export interface CreatePortafolioArcoRequest {
+  nombre: string; // Requerido
   anio?: number;
   entidad?: string;
   instrumento?: string;

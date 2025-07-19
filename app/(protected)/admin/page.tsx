@@ -31,6 +31,7 @@ export default function AdminEntidadesPage() {
 
   // Estados para formularios
   const [nuevoPromotor, setNuevoPromotor] = useState<CreatePromotorRequest>({
+    nombre: "",
     medio: "",
     descripcion: "",
     enlace: ""
@@ -44,6 +45,7 @@ export default function AdminEntidadesPage() {
   });
 
   const [nuevoPortafolio, setNuevoPortafolio] = useState<CreatePortafolioArcoRequest>({
+    nombre: "",
     anio: new Date().getFullYear(),
     entidad: "",
     instrumento: "",
@@ -87,6 +89,10 @@ export default function AdminEntidadesPage() {
 
   // Funciones para crear entidades
   const crearPromotor = async () => {
+    if (!nuevoPromotor.nombre?.trim()) {
+      setError("El nombre es requerido");
+      return;
+    }
     if (!nuevoPromotor.medio?.trim()) {
       setError("El medio es requerido");
       return;
@@ -97,7 +103,7 @@ export default function AdminEntidadesPage() {
       const resultado = await PromotorService.create(nuevoPromotor);
       if (resultado.success) {
         setSuccess("Promotor creado exitosamente");
-        setNuevoPromotor({ medio: "", descripcion: "", enlace: "" });
+        setNuevoPromotor({ nombre: "", medio: "", descripcion: "", enlace: "" });
         cargarDatos(); // Recargar datos
       } else {
         setError(resultado.message || "Error creando promotor");
@@ -133,6 +139,10 @@ export default function AdminEntidadesPage() {
   };
 
   const crearPortafolio = async () => {
+    if (!nuevoPortafolio.nombre?.trim()) {
+      setError("El nombre es requerido");
+      return;
+    }
     if (!nuevoPortafolio.entidad?.trim()) {
       setError("La entidad es requerida");
       return;
@@ -144,6 +154,7 @@ export default function AdminEntidadesPage() {
       if (resultado.success) {
         setSuccess("Portafolio creado exitosamente");
         setNuevoPortafolio({
+          nombre: "",
           anio: new Date().getFullYear(),
           entidad: "",
           instrumento: "",
@@ -250,6 +261,19 @@ export default function AdminEntidadesPage() {
                       <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Promotor</h3>
                       
                       <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre *
+                          </label>
+                          <input
+                            type="text"
+                            value={nuevoPromotor.nombre}
+                            onChange={(e) => setNuevoPromotor({...nuevoPromotor, nombre: e.target.value})}
+                            placeholder="Nombre del promotor"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Medio *
@@ -435,6 +459,19 @@ export default function AdminEntidadesPage() {
                       <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Portafolio ARCO</h3>
                       
                       <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre *
+                          </label>
+                          <input
+                            type="text"
+                            value={nuevoPortafolio.nombre}
+                            onChange={(e) => setNuevoPortafolio({...nuevoPortafolio, nombre: e.target.value})}
+                            placeholder="Nombre del portafolio"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
