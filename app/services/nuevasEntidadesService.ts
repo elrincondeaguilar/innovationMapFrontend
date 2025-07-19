@@ -584,11 +584,11 @@ export const EcosystemService = {
       
       // Lista de endpoints posibles para empresas
       const possibleEndpoints = [
-        '/empresas', 
+        '/api/Companies',  // Endpoint correcto confirmado por el usuario
         '/companies',
+        '/empresas', 
         '/Company',
-        '/Empresa',
-        '/backend/empresas'
+        '/Empresa'
       ];
 
       let response: Response | null = null;

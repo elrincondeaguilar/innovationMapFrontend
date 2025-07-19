@@ -7,6 +7,38 @@ import 'leaflet/dist/leaflet.css';
 import { Company, EcosystemMapItem } from '../types/api';
 import { EcosystemService } from '../services/nuevasEntidadesService';
 
+// Función para agrupar elementos por ubicación
+function groupByLocation(items: EcosystemMapItem[]): Map<string, EcosystemMapItem[]> {
+  const grouped = new Map<string, EcosystemMapItem[]>();
+  
+  items.forEach(item => {
+    if (!item.latitud || !item.longitud) return;
+    
+    // Crear clave única para la ubicación (redondeada a 5 decimales)
+    const locationKey = `${item.latitud.toFixed(5)}_${item.longitud.toFixed(5)}`;
+    
+    if (!grouped.has(locationKey)) {
+      grouped.set(locationKey, []);
+    }
+    grouped.get(locationKey)!.push(item);
+  });
+  
+  return grouped;
+}
+
+// Función para generar offsets pequeños para elementos en la misma ubicación
+function generateOffset(index: number, total: number): [number, number] {
+  if (total === 1) return [0, 0];
+  
+  const radius = 0.0008; // Radio pequeño en grados (aprox. 100 metros)
+  const angle = (2 * Math.PI * index) / total;
+  
+  return [
+    radius * Math.cos(angle),
+    radius * Math.sin(angle)
+  ];
+}
+
 // Props interface
 interface MapaSimpleProps {
   empresaEspecifica?: Company | null;
@@ -275,120 +307,161 @@ export default function MapaSimple({
         />
         
         {/* Renderizar markers para todos los elementos del ecosistema */}
-        {elementosAMostrar.map((item) => {
-          if (!item.latitud || !item.longitud) return null;
+        {(() => {
+          // Agrupar elementos por ubicación
+          const groupedByLocation = groupByLocation(elementosAMostrar);
+          const markers: React.ReactElement[] = [];
 
-          const icon = iconMap[item.tipo as keyof typeof iconMap] || defaultIcon;
+          groupedByLocation.forEach((items) => {
+            items.forEach((item, index) => {
+              if (!item.latitud || !item.longitud) return;
 
-          return (
-            <Marker
-              key={`${item.tipo}-${item.id}`}
-              position={[item.latitud, item.longitud]}
-              icon={icon}
-            >
-              <Popup className="custom-popup" maxWidth={300} minWidth={200}>
-                <div className="p-2 min-w-48 max-w-xs">
-                  <div className="flex items-center mb-2">
-                    <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                      item.tipo === 'Company' ? 'bg-blue-500' :
-                      item.tipo === 'Promotor' ? 'bg-green-500' :
-                      item.tipo === 'Articulador' ? 'bg-orange-500' :
-                      item.tipo === 'Convocatoria' ? 'bg-purple-500' :
-                      'bg-red-500'
-                    }`}></span>
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      {item.tipo}
-                    </span>
-                  </div>
-                  
-                  <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base leading-tight">
-                    {item.nombre}
-                  </h4>
-                  
-                  {item.descripcion && (
-                    <p className="text-xs sm:text-sm text-gray-700 mb-2 leading-relaxed">
-                      {item.descripcion.length > 80 
-                        ? `${item.descripcion.substring(0, 80)}...` 
-                        : item.descripcion
-                      }
-                    </p>
-                  )}
-                  
-                  <div className="text-xs text-gray-500 space-y-1">
-                    {item.ciudad && (
-                      <p className="flex items-start">
-                        <span className="mr-1">📍</span>
-                        <span>{item.ciudad}{item.departamento ? `, ${item.departamento}` : ''}</span>
-                      </p>
-                    )}
-                    
-                    {/* Información específica por tipo - Responsive */}
-                    {item.tipo === 'Company' && item.industry && (
-                      <p className="flex items-start">
-                        <span className="mr-1">🏢</span>
-                        <span>{item.industry}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Company' && item.fundada && (
-                      <p className="flex items-start">
-                        <span className="mr-1">📅</span>
-                        <span>Fundada: {item.fundada}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Promotor' && item.tipoPromotor && (
-                      <p className="flex items-start">
-                        <span className="mr-1">🎯</span>
-                        <span>{item.tipoPromotor}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Articulador' && item.experiencia && (
-                      <p className="flex items-start">
-                        <span className="mr-1">💼</span>
-                        <span>{item.experiencia}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'PortafolioArco' && item.objetivos && (
-                      <p className="flex items-start">
-                        <span className="mr-1">🎯</span>
-                        <span>{item.objetivos.length > 50 ? `${item.objetivos.substring(0, 50)}...` : item.objetivos}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Convocatoria' && item.categoria && (
-                      <p className="flex items-start">
-                        <span className="mr-1">📋</span>
-                        <span>{item.categoria}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Convocatoria' && item.entidad && (
-                      <p className="flex items-start">
-                        <span className="mr-1">🏛️</span>
-                        <span>{item.entidad}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Convocatoria' && item.estado && (
-                      <p className="flex items-start">
-                        <span className="mr-1">📊</span>
-                        <span>Estado: {item.estado}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Convocatoria' && item.fechaInicio && (
-                      <p className="flex items-start">
-                        <span className="mr-1">📅</span>
-                        <span>Inicio: {new Date(item.fechaInicio).toLocaleDateString('es-ES')}</span>
-                      </p>
-                    )}
-                    {item.tipo === 'Convocatoria' && item.fechaFin && (
-                      <p className="flex items-start">
-                        <span className="mr-1">⏰</span>
-                        <span>Fin: {new Date(item.fechaFin).toLocaleDateString('es-ES')}</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+              // Generar offset para evitar superposición
+              const [offsetLat, offsetLng] = generateOffset(index, items.length);
+              const adjustedPosition: [number, number] = [
+                item.latitud + offsetLat,
+                item.longitud + offsetLng
+              ];
+
+              const icon = iconMap[item.tipo as keyof typeof iconMap] || defaultIcon;
+
+              markers.push(
+                <Marker
+                  key={`${item.tipo}-${item.id}-${index}`}
+                  position={adjustedPosition}
+                  icon={icon}
+                >
+                  <Popup className="custom-popup" maxWidth={300} minWidth={200}>
+                    <div className="p-2 min-w-48 max-w-xs">
+                      {items.length > 1 && (
+                        <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-xs text-blue-700 font-medium">
+                            📍 {items.length} elementos en esta ubicación
+                          </p>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {items.map((colocatedItem, idx) => (
+                              <span
+                                key={`${colocatedItem.tipo}-${colocatedItem.id}`}
+                                className={`text-xs px-2 py-1 rounded-full text-white ${
+                                  colocatedItem.tipo === 'Company' ? 'bg-blue-500' :
+                                  colocatedItem.tipo === 'Promotor' ? 'bg-green-500' :
+                                  colocatedItem.tipo === 'Articulador' ? 'bg-orange-500' :
+                                  colocatedItem.tipo === 'Convocatoria' ? 'bg-purple-500' :
+                                  'bg-red-500'
+                                } ${idx === index ? 'ring-2 ring-white' : ''}`}
+                              >
+                                {colocatedItem.tipo}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center mb-2">
+                        <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                          item.tipo === 'Company' ? 'bg-blue-500' :
+                          item.tipo === 'Promotor' ? 'bg-green-500' :
+                          item.tipo === 'Articulador' ? 'bg-orange-500' :
+                          item.tipo === 'Convocatoria' ? 'bg-purple-500' :
+                          'bg-red-500'
+                        }`}></span>
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          {item.tipo}
+                        </span>
+                      </div>
+                      
+                      <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base leading-tight">
+                        {item.nombre}
+                      </h4>
+                      
+                      {item.descripcion && (
+                        <p className="text-xs sm:text-sm text-gray-700 mb-2 leading-relaxed">
+                          {item.descripcion.length > 80 
+                            ? `${item.descripcion.substring(0, 80)}...` 
+                            : item.descripcion
+                          }
+                        </p>
+                      )}
+                      
+                      <div className="text-xs text-gray-500 space-y-1">
+                        {item.ciudad && (
+                          <p className="flex items-start">
+                            <span className="mr-1">📍</span>
+                            <span>{item.ciudad}{item.departamento ? `, ${item.departamento}` : ''}</span>
+                          </p>
+                        )}
+                        
+                        {/* Información específica por tipo - Responsive */}
+                        {item.tipo === 'Company' && item.industry && (
+                          <p className="flex items-start">
+                            <span className="mr-1">🏢</span>
+                            <span>{item.industry}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Company' && item.fundada && (
+                          <p className="flex items-start">
+                            <span className="mr-1">📅</span>
+                            <span>Fundada: {item.fundada}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Promotor' && item.tipoPromotor && (
+                          <p className="flex items-start">
+                            <span className="mr-1">🎯</span>
+                            <span>{item.tipoPromotor}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Articulador' && item.experiencia && (
+                          <p className="flex items-start">
+                            <span className="mr-1">💼</span>
+                            <span>{item.experiencia}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'PortafolioArco' && item.objetivos && (
+                          <p className="flex items-start">
+                            <span className="mr-1">🎯</span>
+                            <span>{item.objetivos.length > 50 ? `${item.objetivos.substring(0, 50)}...` : item.objetivos}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Convocatoria' && item.categoria && (
+                          <p className="flex items-start">
+                            <span className="mr-1">📋</span>
+                            <span>{item.categoria}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Convocatoria' && item.entidad && (
+                          <p className="flex items-start">
+                            <span className="mr-1">🏛️</span>
+                            <span>{item.entidad}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Convocatoria' && item.estado && (
+                          <p className="flex items-start">
+                            <span className="mr-1">📊</span>
+                            <span>Estado: {item.estado}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Convocatoria' && item.fechaInicio && (
+                          <p className="flex items-start">
+                            <span className="mr-1">📅</span>
+                            <span>Inicio: {new Date(item.fechaInicio).toLocaleDateString('es-ES')}</span>
+                          </p>
+                        )}
+                        {item.tipo === 'Convocatoria' && item.fechaFin && (
+                          <p className="flex items-start">
+                            <span className="mr-1">⏰</span>
+                            <span>Fin: {new Date(item.fechaFin).toLocaleDateString('es-ES')}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            });
+          });
+
+          return markers;
+        })()}
       </MapContainer>
 
       {/* Controles de zoom personalizados para móvil */}
