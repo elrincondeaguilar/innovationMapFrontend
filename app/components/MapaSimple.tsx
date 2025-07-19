@@ -26,19 +26,6 @@ function groupByLocation(items: EcosystemMapItem[]): Map<string, EcosystemMapIte
   return grouped;
 }
 
-// Función para generar offsets pequeños para elementos en la misma ubicación
-function generateOffset(index: number, total: number): [number, number] {
-  if (total === 1) return [0, 0];
-  
-  const radius = 0.0008; // Radio pequeño en grados (aprox. 100 metros)
-  const angle = (2 * Math.PI * index) / total;
-  
-  return [
-    radius * Math.cos(angle),
-    radius * Math.sin(angle)
-  ];
-}
-
 // Props interface
 interface MapaSimpleProps {
   empresaEspecifica?: Company | null;
@@ -340,152 +327,158 @@ export default function MapaSimple({
           const groupedByLocation = groupByLocation(elementosAMostrar);
           const markers: React.ReactElement[] = [];
 
-          groupedByLocation.forEach((items) => {
-            items.forEach((item, index) => {
-              if (!item.latitud || !item.longitud) return;
+          // Crear un marker por cada grupo de ubicación (no por cada item individual)
+          Array.from(groupedByLocation.entries()).forEach(([locationKey, items], groupIndex) => {
+            if (!items.length || !items[0].latitud || !items[0].longitud) return;
 
-              // Generar offset para evitar superposición
-              const [offsetLat, offsetLng] = generateOffset(index, items.length);
-              const adjustedPosition: [number, number] = [
-                item.latitud + offsetLat,
-                item.longitud + offsetLng
-              ];
+            // Usar la posición del primer elemento como posición base
+            const basePosition: [number, number] = [items[0].latitud, items[0].longitud];
+            
+            // Usar el icono del primer elemento, o un icono especial si hay múltiples tipos
+            const hasMultipleTypes = new Set(items.map(item => item.tipo)).size > 1;
+            const icon = hasMultipleTypes 
+              ? defaultIcon 
+              : iconMap[items[0].tipo as keyof typeof iconMap] || defaultIcon;
 
-              const icon = iconMap[item.tipo as keyof typeof iconMap] || defaultIcon;
-
-              markers.push(
-                <Marker
-                  key={`${item.tipo}-${item.id}-${index}`}
-                  position={adjustedPosition}
-                  icon={icon}
-                >
-                  <Popup className="custom-popup" maxWidth={300} minWidth={200}>
-                    <div className="p-2 min-w-48 max-w-xs">
-                      {items.length > 1 && (
-                        <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                          <p className="text-xs text-blue-700 font-medium">
-                            📍 {items.length} elementos en esta ubicación
-                          </p>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {items.map((colocatedItem, idx) => (
-                              <span
-                                key={`${colocatedItem.tipo}-${colocatedItem.id}`}
-                                className={`text-xs px-2 py-1 rounded-full text-white ${
-                                  colocatedItem.tipo === 'Company' ? 'bg-blue-500' :
-                                  colocatedItem.tipo === 'Promotor' ? 'bg-green-500' :
-                                  colocatedItem.tipo === 'Articulador' ? 'bg-orange-500' :
-                                  colocatedItem.tipo === 'Convocatoria' ? 'bg-purple-500' :
-                                  'bg-red-500'
-                                } ${idx === index ? 'ring-2 ring-white' : ''}`}
-                              >
-                                {colocatedItem.tipo}
-                              </span>
-                            ))}
+            markers.push(
+              <Marker
+                key={`location-group-${groupIndex}-${locationKey}`}
+                position={basePosition}
+                icon={icon}
+              >
+                <Popup className="custom-popup" maxWidth={400} minWidth={300}>
+                  <div className="p-2 max-w-sm">
+                    {items.length > 1 && (
+                      <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-700 font-medium">
+                          📍 {items.length} elementos en esta ubicación
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {items.map((item) => (
+                            <span
+                              key={`${item.tipo}-${item.id}`}
+                              className={`text-xs px-2 py-1 rounded-full text-white ${
+                                item.tipo === 'Company' ? 'bg-blue-500' :
+                                item.tipo === 'Promotor' ? 'bg-green-500' :
+                                item.tipo === 'Articulador' ? 'bg-orange-500' :
+                                item.tipo === 'Convocatoria' ? 'bg-purple-500' :
+                                'bg-red-500'
+                              }`}
+                            >
+                              {item.tipo}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Mostrar TODOS los elementos en esta ubicación */}
+                    <div className="space-y-4">
+                      {items.map((item, itemIndex) => (
+                        <div key={`${item.tipo}-${item.id}-details`} className={`${itemIndex > 0 ? 'border-t border-gray-200 pt-3' : ''}`}>
+                          <div className="flex items-center mb-2">
+                            <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                              item.tipo === 'Company' ? 'bg-blue-500' :
+                              item.tipo === 'Promotor' ? 'bg-green-500' :
+                              item.tipo === 'Articulador' ? 'bg-orange-500' :
+                              item.tipo === 'Convocatoria' ? 'bg-purple-500' :
+                              'bg-red-500'
+                            }`}></span>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              {item.tipo}
+                            </span>
+                          </div>
+                          
+                          <h4 className="font-bold text-gray-900 mb-1 text-sm leading-tight">
+                            {item.nombre}
+                          </h4>
+                          
+                          {item.descripcion && (
+                            <p className="text-xs text-gray-700 mb-2 leading-relaxed">
+                              {item.descripcion.length > 100 
+                                ? `${item.descripcion.substring(0, 100)}...` 
+                                : item.descripcion
+                              }
+                            </p>
+                          )}
+                          
+                          <div className="text-xs text-gray-500 space-y-1">
+                            {item.ciudad && (
+                              <p className="flex items-start">
+                                <span className="mr-1">📍</span>
+                                <span>{item.ciudad}{item.departamento ? `, ${item.departamento}` : ''}</span>
+                              </p>
+                            )}
+                            
+                            {/* Información específica por tipo */}
+                            {item.tipo === 'Company' && item.industry && (
+                              <p className="flex items-start">
+                                <span className="mr-1">🏢</span>
+                                <span>{item.industry}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Company' && item.fundada && (
+                              <p className="flex items-start">
+                                <span className="mr-1">📅</span>
+                                <span>Fundada: {item.fundada}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Promotor' && item.tipoPromotor && (
+                              <p className="flex items-start">
+                                <span className="mr-1">🎯</span>
+                                <span>{item.tipoPromotor}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Articulador' && item.experiencia && (
+                              <p className="flex items-start">
+                                <span className="mr-1">💼</span>
+                                <span>{item.experiencia}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'PortafolioArco' && item.objetivos && (
+                              <p className="flex items-start">
+                                <span className="mr-1">🎯</span>
+                                <span>{item.objetivos.length > 60 ? `${item.objetivos.substring(0, 60)}...` : item.objetivos}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Convocatoria' && item.categoria && (
+                              <p className="flex items-start">
+                                <span className="mr-1">📋</span>
+                                <span>{item.categoria}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Convocatoria' && item.entidad && (
+                              <p className="flex items-start">
+                                <span className="mr-1">🏛️</span>
+                                <span>{item.entidad}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Convocatoria' && item.estado && (
+                              <p className="flex items-start">
+                                <span className="mr-1">📊</span>
+                                <span>Estado: {item.estado}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Convocatoria' && item.fechaInicio && (
+                              <p className="flex items-start">
+                                <span className="mr-1">📅</span>
+                                <span>Inicio: {new Date(item.fechaInicio).toLocaleDateString('es-ES')}</span>
+                              </p>
+                            )}
+                            {item.tipo === 'Convocatoria' && item.fechaFin && (
+                              <p className="flex items-start">
+                                <span className="mr-1">⏰</span>
+                                <span>Fin: {new Date(item.fechaFin).toLocaleDateString('es-ES')}</span>
+                              </p>
+                            )}
                           </div>
                         </div>
-                      )}
-                      
-                      <div className="flex items-center mb-2">
-                        <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                          item.tipo === 'Company' ? 'bg-blue-500' :
-                          item.tipo === 'Promotor' ? 'bg-green-500' :
-                          item.tipo === 'Articulador' ? 'bg-orange-500' :
-                          item.tipo === 'Convocatoria' ? 'bg-purple-500' :
-                          'bg-red-500'
-                        }`}></span>
-                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                          {item.tipo}
-                        </span>
-                      </div>
-                      
-                      <h4 className="font-bold text-gray-900 mb-1 text-sm sm:text-base leading-tight">
-                        {item.nombre}
-                      </h4>
-                      
-                      {item.descripcion && (
-                        <p className="text-xs sm:text-sm text-gray-700 mb-2 leading-relaxed">
-                          {item.descripcion.length > 80 
-                            ? `${item.descripcion.substring(0, 80)}...` 
-                            : item.descripcion
-                          }
-                        </p>
-                      )}
-                      
-                      <div className="text-xs text-gray-500 space-y-1">
-                        {item.ciudad && (
-                          <p className="flex items-start">
-                            <span className="mr-1">📍</span>
-                            <span>{item.ciudad}{item.departamento ? `, ${item.departamento}` : ''}</span>
-                          </p>
-                        )}
-                        
-                        {/* Información específica por tipo - Responsive */}
-                        {item.tipo === 'Company' && item.industry && (
-                          <p className="flex items-start">
-                            <span className="mr-1">🏢</span>
-                            <span>{item.industry}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Company' && item.fundada && (
-                          <p className="flex items-start">
-                            <span className="mr-1">📅</span>
-                            <span>Fundada: {item.fundada}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Promotor' && item.tipoPromotor && (
-                          <p className="flex items-start">
-                            <span className="mr-1">🎯</span>
-                            <span>{item.tipoPromotor}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Articulador' && item.experiencia && (
-                          <p className="flex items-start">
-                            <span className="mr-1">💼</span>
-                            <span>{item.experiencia}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'PortafolioArco' && item.objetivos && (
-                          <p className="flex items-start">
-                            <span className="mr-1">🎯</span>
-                            <span>{item.objetivos.length > 50 ? `${item.objetivos.substring(0, 50)}...` : item.objetivos}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Convocatoria' && item.categoria && (
-                          <p className="flex items-start">
-                            <span className="mr-1">📋</span>
-                            <span>{item.categoria}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Convocatoria' && item.entidad && (
-                          <p className="flex items-start">
-                            <span className="mr-1">🏛️</span>
-                            <span>{item.entidad}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Convocatoria' && item.estado && (
-                          <p className="flex items-start">
-                            <span className="mr-1">📊</span>
-                            <span>Estado: {item.estado}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Convocatoria' && item.fechaInicio && (
-                          <p className="flex items-start">
-                            <span className="mr-1">📅</span>
-                            <span>Inicio: {new Date(item.fechaInicio).toLocaleDateString('es-ES')}</span>
-                          </p>
-                        )}
-                        {item.tipo === 'Convocatoria' && item.fechaFin && (
-                          <p className="flex items-start">
-                            <span className="mr-1">⏰</span>
-                            <span>Fin: {new Date(item.fechaFin).toLocaleDateString('es-ES')}</span>
-                          </p>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  </Popup>
-                </Marker>
-              );
-            });
+                  </div>
+                </Popup>
+              </Marker>
+            );
           });
 
           return markers;
@@ -538,7 +531,7 @@ export default function MapaSimple({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">Empresas</span>
+                <span className="text-gray-700 font-medium">🏢 Empresas</span>
               </div>
               <span className="text-gray-500 text-xs">
                 {elementosAMostrar.filter(item => item.tipo === 'Company').length}
@@ -547,7 +540,7 @@ export default function MapaSimple({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">Promotores</span>
+                <span className="text-gray-700 font-medium">🎯 Promotores</span>
               </div>
               <span className="text-gray-500 text-xs">
                 {elementosAMostrar.filter(item => item.tipo === 'Promotor').length}
@@ -556,7 +549,7 @@ export default function MapaSimple({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">Articuladores</span>
+                <span className="text-gray-700 font-medium">🤝 Articuladores</span>
               </div>
               <span className="text-gray-500 text-xs">
                 {elementosAMostrar.filter(item => item.tipo === 'Articulador').length}
@@ -565,7 +558,7 @@ export default function MapaSimple({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">Portafolio ARCO</span>
+                <span className="text-gray-700 font-medium">📋 Portafolio ARCO</span>
               </div>
               <span className="text-gray-500 text-xs">
                 {elementosAMostrar.filter(item => item.tipo === 'PortafolioArco').length}
@@ -574,12 +567,23 @@ export default function MapaSimple({
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">Convocatorias</span>
+                <span className="text-gray-700 font-medium">📢 Convocatorias</span>
               </div>
               <span className="text-gray-500 text-xs">
                 {elementosAMostrar.filter(item => item.tipo === 'Convocatoria').length}
               </span>
             </div>
+          </div>
+          
+          {/* Línea separadora e información adicional */}
+          <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+            <div className="flex items-center text-xs">
+              <div className="w-3 h-3 border-2 border-blue-500 rounded-full mr-2"></div>
+              <span className="text-gray-700">Ubicación aproximada</span>
+            </div>
+            <p className="text-xs text-gray-500">
+              Usa los filtros para explorar el ecosistema de innovación
+            </p>
           </div>
           
           {elementosAMostrar.length > 0 && (
