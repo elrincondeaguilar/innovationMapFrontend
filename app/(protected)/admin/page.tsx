@@ -270,7 +270,7 @@ export default function AdminEntidadesPage() {
                             value={nuevoPromotor.nombre}
                             onChange={(e) => setNuevoPromotor({...nuevoPromotor, nombre: e.target.value})}
                             placeholder="Nombre del promotor"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
                         
@@ -283,7 +283,7 @@ export default function AdminEntidadesPage() {
                             value={nuevoPromotor.medio}
                             onChange={(e) => setNuevoPromotor({...nuevoPromotor, medio: e.target.value})}
                             placeholder="Ej: Redes sociales, Email, Web"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
                           />
                         </div>
                         

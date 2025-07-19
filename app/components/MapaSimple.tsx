@@ -79,6 +79,7 @@ export default function MapaSimple({
   const [ecosystemItems, setEcosystemItems] = useState<EcosystemMapItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filtroTipo, setFiltroTipo] = useState<string>('');
 
   // Cargar datos del ecosistema
   useEffect(() => {
@@ -107,7 +108,13 @@ export default function MapaSimple({
     ? ecosystemItems.filter(item => 
         item.tipo === 'Company' && item.id === empresaEspecifica.id
       )
-    : ecosystemItems;
+    : ecosystemItems.filter(item => {
+        // Aplicar filtro por tipo si está seleccionado
+        if (filtroTipo && filtroTipo !== '') {
+          return item.tipo === filtroTipo;
+        }
+        return true;
+      });
 
   // Configuración del mapa
   const centroMapa: [number, number] = empresaEspecifica && empresaEspecifica.latitud && empresaEspecifica.longitud
@@ -145,6 +152,32 @@ export default function MapaSimple({
 
   return (
     <div className="h-full w-full relative">
+      {/* Panel de filtros */}
+      {!soloEmpresaEspecifica && (
+        <div className="absolute top-4 left-4 z-10 bg-white rounded-lg shadow-lg p-4 border border-gray-200 max-w-xs">
+          <h4 className="font-semibold text-gray-800 mb-3 text-sm">Filtrar por tipo</h4>
+          <select
+            value={filtroTipo}
+            onChange={(e) => setFiltroTipo(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-sm"
+          >
+            <option value="">🔍 Todos los tipos</option>
+            <option value="Company">🏢 Empresas</option>
+            <option value="Promotor">🎯 Promotores</option>
+            <option value="Articulador">🤝 Articuladores</option>
+            <option value="PortafolioArco">📋 Portafolio ARCO</option>
+          </select>
+          {filtroTipo && (
+            <button
+              onClick={() => setFiltroTipo('')}
+              className="mt-2 w-full px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
+            >
+              Limpiar filtro
+            </button>
+          )}
+        </div>
+      )}
+
       <MapContainer
         center={centroMapa}
         zoom={zoomInicial}
@@ -227,24 +260,44 @@ export default function MapaSimple({
       </MapContainer>
 
       {/* Leyenda */}
-      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-10 max-w-48">
+      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-10 max-w-48 border border-gray-200">
         <h4 className="font-semibold text-gray-800 mb-3 text-sm">Leyenda</h4>
         <div className="space-y-2">
-          <div className="flex items-center text-xs">
-            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-            <span>Empresas</span>
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+              <span className="text-gray-700 font-medium">Empresas</span>
+            </div>
+            <span className="text-gray-500 text-xs">
+              {elementosAMostrar.filter(item => item.tipo === 'Company').length}
+            </span>
           </div>
-          <div className="flex items-center text-xs">
-            <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-            <span>Promotores</span>
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+              <span className="text-gray-700 font-medium">Promotores</span>
+            </div>
+            <span className="text-gray-500 text-xs">
+              {elementosAMostrar.filter(item => item.tipo === 'Promotor').length}
+            </span>
           </div>
-          <div className="flex items-center text-xs">
-            <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
-            <span>Articuladores</span>
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+              <span className="text-gray-700 font-medium">Articuladores</span>
+            </div>
+            <span className="text-gray-500 text-xs">
+              {elementosAMostrar.filter(item => item.tipo === 'Articulador').length}
+            </span>
           </div>
-          <div className="flex items-center text-xs">
-            <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-            <span>Portafolio ARCO</span>
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+              <span className="text-gray-700 font-medium">Portafolio ARCO</span>
+            </div>
+            <span className="text-gray-500 text-xs">
+              {elementosAMostrar.filter(item => item.tipo === 'PortafolioArco').length}
+            </span>
           </div>
         </div>
         
