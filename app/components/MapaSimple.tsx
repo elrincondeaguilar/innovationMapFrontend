@@ -1,28 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Company, EcosystemMapItem } from '../types/api';
-import { EcosystemService } from '../services/nuevasEntidadesService';
+import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Company, EcosystemMapItem } from "../types/api";
+import { EcosystemService } from "../services/nuevasEntidadesService";
 
 // Función para agrupar elementos por ubicación
-function groupByLocation(items: EcosystemMapItem[]): Map<string, EcosystemMapItem[]> {
+function groupByLocation(
+  items: EcosystemMapItem[]
+): Map<string, EcosystemMapItem[]> {
   const grouped = new Map<string, EcosystemMapItem[]>();
-  
-  items.forEach(item => {
+
+  items.forEach((item) => {
     if (!item.latitud || !item.longitud) return;
-    
+
     // Crear clave única para la ubicación (redondeada a 5 decimales)
-    const locationKey = `${item.latitud.toFixed(5)}_${item.longitud.toFixed(5)}`;
-    
+    const locationKey = `${item.latitud.toFixed(5)}_${item.longitud.toFixed(
+      5
+    )}`;
+
     if (!grouped.has(locationKey)) {
       grouped.set(locationKey, []);
     }
     grouped.get(locationKey)!.push(item);
   });
-  
+
   return grouped;
 }
 
@@ -34,88 +38,107 @@ interface MapaSimpleProps {
 
 // Configurar iconos de Leaflet
 const defaultIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  shadowSize: [41, 41],
 });
 
 // Iconos específicos para cada tipo de entidad
 const iconMap = {
   Company: new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+    shadowSize: [41, 41],
   }),
   Promotor: new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+    shadowSize: [41, 41],
   }),
   Articulador: new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+    shadowSize: [41, 41],
   }),
   PortafolioArco: new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+    shadowSize: [41, 41],
   }),
   Convocatoria: new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  })
+    shadowSize: [41, 41],
+  }),
 };
 
 // Hook para centrar el mapa cuando hay una empresa específica y manejar zoom
-function MapController({ empresaEspecifica, onMapReady }: { 
-  empresaEspecifica?: Company | null; 
+function MapController({
+  empresaEspecifica,
+  onMapReady,
+}: {
+  empresaEspecifica?: Company | null;
   onMapReady?: (map: L.Map) => void;
 }) {
   const map = useMap();
-  
+
   useEffect(() => {
     if (onMapReady) {
       onMapReady(map);
     }
   }, [map, onMapReady]);
-  
+
   useEffect(() => {
-    if (empresaEspecifica && empresaEspecifica.latitud && empresaEspecifica.longitud) {
+    if (
+      empresaEspecifica &&
+      empresaEspecifica.latitud &&
+      empresaEspecifica.longitud
+    ) {
       map.setView([empresaEspecifica.latitud, empresaEspecifica.longitud], 12);
     }
   }, [empresaEspecifica, map]);
-  
+
   return null;
 }
 
-export default function MapaSimple({ 
-  empresaEspecifica = null, 
-  soloEmpresaEspecifica = false 
+export default function MapaSimple({
+  empresaEspecifica = null,
+  soloEmpresaEspecifica = false,
 }: MapaSimpleProps) {
   const [ecosystemItems, setEcosystemItems] = useState<EcosystemMapItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filtroTipo, setFiltroTipo] = useState<string>('');
+  const [filtroTipo, setFiltroTipo] = useState<string>("");
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [mostrarLeyenda, setMostrarLeyenda] = useState(false);
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
@@ -123,37 +146,46 @@ export default function MapaSimple({
   // Cargar datos del ecosistema
   useEffect(() => {
     let isMounted = true;
-    
+
     const cargarDatos = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Usar el servicio que incluye empresas
         const result = await EcosystemService.getAllEcosystemWithCompanies();
-        
+
         // Solo actualizar estado si el componente sigue montado
         if (isMounted) {
           if (result.success && result.data) {
             setEcosystemItems(result.data);
-            if (process.env.NODE_ENV === 'development') {
-              console.log('🗺️ Ecosystem items loaded:', result.data.length);
-              console.log('🗺️ Items by type:', {
-                companies: result.data.filter(item => item.tipo === 'Company').length,
-                promotores: result.data.filter(item => item.tipo === 'Promotor').length,
-                articuladores: result.data.filter(item => item.tipo === 'Articulador').length,
-                portfolios: result.data.filter(item => item.tipo === 'PortafolioArco').length,
-                convocatorias: result.data.filter(item => item.tipo === 'Convocatoria').length
+            if (process.env.NODE_ENV === "development") {
+              console.log("🗺️ Ecosystem items loaded:", result.data.length);
+              console.log("🗺️ Items by type:", {
+                companies: result.data.filter((item) => item.tipo === "Company")
+                  .length,
+                promotores: result.data.filter(
+                  (item) => item.tipo === "Promotor"
+                ).length,
+                articuladores: result.data.filter(
+                  (item) => item.tipo === "Articulador"
+                ).length,
+                portfolios: result.data.filter(
+                  (item) => item.tipo === "PortafolioArco"
+                ).length,
+                convocatorias: result.data.filter(
+                  (item) => item.tipo === "Convocatoria"
+                ).length,
               });
             }
           } else {
-            setError(result.message || 'Error al cargar datos');
+            setError(result.message || "Error al cargar datos");
           }
         }
       } catch (error) {
         if (isMounted) {
-          console.error('Error cargando datos del ecosistema:', error);
-          setError('Error al cargar los datos del mapa');
+          console.error("Error cargando datos del ecosistema:", error);
+          setError("Error al cargar los datos del mapa");
         }
       } finally {
         if (isMounted) {
@@ -163,7 +195,7 @@ export default function MapaSimple({
     };
 
     cargarDatos();
-    
+
     // Cleanup function
     return () => {
       isMounted = false;
@@ -173,36 +205,38 @@ export default function MapaSimple({
   // Cerrar paneles móviles al hacer click en el mapa
   useEffect(() => {
     if (!mapInstance) return;
-    
+
     const handleMapClick = () => {
       setMostrarFiltros(false);
       setMostrarLeyenda(false);
     };
 
-    mapInstance.on('click', handleMapClick);
-    
+    mapInstance.on("click", handleMapClick);
+
     return () => {
-      mapInstance.off('click', handleMapClick);
+      mapInstance.off("click", handleMapClick);
     };
   }, [mapInstance]);
 
   // Filtrar elementos si se especifica una empresa específica
-  const elementosAMostrar = soloEmpresaEspecifica && empresaEspecifica
-    ? ecosystemItems.filter(item => 
-        item.tipo === 'Company' && item.id === empresaEspecifica.id
-      )
-    : ecosystemItems.filter(item => {
-        // Aplicar filtro por tipo si está seleccionado
-        if (filtroTipo && filtroTipo !== '') {
-          return item.tipo === filtroTipo;
-        }
-        return true;
-      });
+  const elementosAMostrar =
+    soloEmpresaEspecifica && empresaEspecifica
+      ? ecosystemItems.filter(
+          (item) => item.tipo === "Company" && item.id === empresaEspecifica.id
+        )
+      : ecosystemItems.filter((item) => {
+          // Aplicar filtro por tipo si está seleccionado
+          if (filtroTipo && filtroTipo !== "") {
+            return item.tipo === filtroTipo;
+          }
+          return true;
+        });
 
   // Configuración del mapa
-  const centroMapa: [number, number] = empresaEspecifica && empresaEspecifica.latitud && empresaEspecifica.longitud
-    ? [empresaEspecifica.latitud, empresaEspecifica.longitud]
-    : [6.2442, -75.5812]; // Medellín como centro por defecto
+  const centroMapa: [number, number] =
+    empresaEspecifica && empresaEspecifica.latitud && empresaEspecifica.longitud
+      ? [empresaEspecifica.latitud, empresaEspecifica.longitud]
+      : [6.2442, -75.5812]; // Medellín como centro por defecto
 
   const zoomInicial = empresaEspecifica ? 12 : 7;
 
@@ -222,8 +256,8 @@ export default function MapaSimple({
       <div className="h-full flex items-center justify-center bg-gray-100">
         <div className="text-center text-red-600">
           <p className="mb-2">⚠️ {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Reintentar
@@ -257,17 +291,25 @@ export default function MapaSimple({
 
       {/* Panel de filtros - Responsive */}
       {!soloEmpresaEspecifica && (
-        <div className={`absolute top-4 z-10 bg-white rounded-lg shadow-lg border border-gray-200 
-          ${mostrarFiltros || filtroTipo ? 'block' : 'hidden sm:block'}
+        <div
+          className={`absolute top-4 z-10 bg-white rounded-lg shadow-lg border border-gray-200 
+          ${mostrarFiltros || filtroTipo ? "block" : "hidden sm:block"}
           left-4 sm:left-4 
           w-full sm:w-auto max-w-xs sm:max-w-xs
           mx-4 sm:mx-0
           transition-all duration-300 ease-in-out
-          ${mostrarFiltros ? 'opacity-100 translate-y-0' : 'opacity-0 sm:opacity-100 translate-y-2 sm:translate-y-0'}
-        `}>
+          ${
+            mostrarFiltros
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 sm:opacity-100 translate-y-2 sm:translate-y-0"
+          }
+        `}
+        >
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-gray-800 text-sm">Filtrar por tipo</h4>
+              <h4 className="font-semibold text-gray-800 text-sm">
+                Filtrar por tipo
+              </h4>
               <button
                 onClick={() => setMostrarFiltros(false)}
                 className="sm:hidden text-gray-500 hover:text-gray-700"
@@ -290,7 +332,7 @@ export default function MapaSimple({
             </select>
             {filtroTipo && (
               <button
-                onClick={() => setFiltroTipo('')}
+                onClick={() => setFiltroTipo("")}
                 className="mt-2 w-full px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
               >
                 Limpiar filtro
@@ -303,7 +345,7 @@ export default function MapaSimple({
       <MapContainer
         center={centroMapa}
         zoom={zoomInicial}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: "100%", width: "100%" }}
         className="z-0 rounded-lg sm:rounded-none"
         zoomControl={false}
         scrollWheelZoom={true}
@@ -315,12 +357,12 @@ export default function MapaSimple({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        
-        <MapController 
-          empresaEspecifica={empresaEspecifica} 
+
+        <MapController
+          empresaEspecifica={empresaEspecifica}
           onMapReady={setMapInstance}
         />
-        
+
         {/* Renderizar markers para todos los elementos del ecosistema */}
         {(() => {
           // Agrupar elementos por ubicación
@@ -328,158 +370,209 @@ export default function MapaSimple({
           const markers: React.ReactElement[] = [];
 
           // Crear un marker por cada grupo de ubicación (no por cada item individual)
-          Array.from(groupedByLocation.entries()).forEach(([locationKey, items], groupIndex) => {
-            if (!items.length || !items[0].latitud || !items[0].longitud) return;
+          Array.from(groupedByLocation.entries()).forEach(
+            ([locationKey, items], groupIndex) => {
+              if (!items.length || !items[0].latitud || !items[0].longitud)
+                return;
 
-            // Usar la posición del primer elemento como posición base
-            const basePosition: [number, number] = [items[0].latitud, items[0].longitud];
-            
-            // Usar el icono del primer elemento, o un icono especial si hay múltiples tipos
-            const hasMultipleTypes = new Set(items.map(item => item.tipo)).size > 1;
-            const icon = hasMultipleTypes 
-              ? defaultIcon 
-              : iconMap[items[0].tipo as keyof typeof iconMap] || defaultIcon;
+              // Usar la posición del primer elemento como posición base
+              const basePosition: [number, number] = [
+                items[0].latitud,
+                items[0].longitud,
+              ];
 
-            markers.push(
-              <Marker
-                key={`location-group-${groupIndex}-${locationKey}`}
-                position={basePosition}
-                icon={icon}
-              >
-                <Popup className="custom-popup" maxWidth={400} minWidth={300}>
-                  <div className="p-2 max-w-sm">
-                    {items.length > 1 && (
-                      <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-xs text-blue-700 font-medium">
-                          📍 {items.length} elementos en esta ubicación
-                        </p>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {items.map((item) => (
-                            <span
-                              key={`${item.tipo}-${item.id}`}
-                              className={`text-xs px-2 py-1 rounded-full text-white ${
-                                item.tipo === 'Company' ? 'bg-blue-500' :
-                                item.tipo === 'Promotor' ? 'bg-green-500' :
-                                item.tipo === 'Articulador' ? 'bg-orange-500' :
-                                item.tipo === 'Convocatoria' ? 'bg-purple-500' :
-                                'bg-red-500'
-                              }`}
-                            >
-                              {item.tipo}
-                            </span>
-                          ))}
+              // Usar el icono del primer elemento, o un icono especial si hay múltiples tipos
+              const hasMultipleTypes =
+                new Set(items.map((item) => item.tipo)).size > 1;
+              const icon = hasMultipleTypes
+                ? defaultIcon
+                : iconMap[items[0].tipo as keyof typeof iconMap] || defaultIcon;
+
+              markers.push(
+                <Marker
+                  key={`location-group-${groupIndex}-${locationKey}`}
+                  position={basePosition}
+                  icon={icon}
+                >
+                  <Popup className="custom-popup" maxWidth={400} minWidth={300}>
+                    <div className="p-2 max-w-sm">
+                      {items.length > 1 && (
+                        <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-xs text-blue-700 font-medium">
+                            📍 {items.length} elementos en esta ubicación
+                          </p>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {items.map((item) => (
+                              <span
+                                key={`${item.tipo}-${item.id}`}
+                                className={`text-xs px-2 py-1 rounded-full text-white ${
+                                  item.tipo === "Company"
+                                    ? "bg-blue-500"
+                                    : item.tipo === "Promotor"
+                                    ? "bg-green-500"
+                                    : item.tipo === "Articulador"
+                                    ? "bg-orange-500"
+                                    : item.tipo === "Convocatoria"
+                                    ? "bg-purple-500"
+                                    : "bg-red-500"
+                                }`}
+                              >
+                                {item.tipo}
+                              </span>
+                            ))}
+                          </div>
                         </div>
+                      )}
+
+                      {/* Mostrar TODOS los elementos en esta ubicación */}
+                      <div className="space-y-4">
+                        {items.map((item, itemIndex) => (
+                          <div
+                            key={`${item.tipo}-${item.id}-details`}
+                            className={`${
+                              itemIndex > 0
+                                ? "border-t border-gray-200 pt-3"
+                                : ""
+                            }`}
+                          >
+                            <div className="flex items-center mb-2">
+                              <span
+                                className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                                  item.tipo === "Company"
+                                    ? "bg-blue-500"
+                                    : item.tipo === "Promotor"
+                                    ? "bg-green-500"
+                                    : item.tipo === "Articulador"
+                                    ? "bg-orange-500"
+                                    : item.tipo === "Convocatoria"
+                                    ? "bg-purple-500"
+                                    : "bg-red-500"
+                                }`}
+                              ></span>
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                {item.tipo}
+                              </span>
+                            </div>
+
+                            <h4 className="font-bold text-gray-900 mb-1 text-sm leading-tight">
+                              {item.nombre}
+                            </h4>
+
+                            {item.descripcion && (
+                              <p className="text-xs text-gray-700 mb-2 leading-relaxed">
+                                {item.descripcion.length > 100
+                                  ? `${item.descripcion.substring(0, 100)}...`
+                                  : item.descripcion}
+                              </p>
+                            )}
+
+                            <div className="text-xs text-gray-500 space-y-1">
+                              {item.ciudad && (
+                                <p className="flex items-start">
+                                  <span className="mr-1">📍</span>
+                                  <span>
+                                    {item.ciudad}
+                                    {item.departamento
+                                      ? `, ${item.departamento}`
+                                      : ""}
+                                  </span>
+                                </p>
+                              )}
+
+                              {/* Información específica por tipo */}
+                              {item.tipo === "Company" && item.industry && (
+                                <p className="flex items-start">
+                                  <span className="mr-1">🏢</span>
+                                  <span>{item.industry}</span>
+                                </p>
+                              )}
+                              {item.tipo === "Company" && item.fundada && (
+                                <p className="flex items-start">
+                                  <span className="mr-1">📅</span>
+                                  <span>Fundada: {item.fundada}</span>
+                                </p>
+                              )}
+                              {item.tipo === "Promotor" &&
+                                item.tipoPromotor && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">🎯</span>
+                                    <span>{item.tipoPromotor}</span>
+                                  </p>
+                                )}
+                              {item.tipo === "Articulador" &&
+                                item.experiencia && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">💼</span>
+                                    <span>{item.experiencia}</span>
+                                  </p>
+                                )}
+                              {item.tipo === "PortafolioArco" &&
+                                item.objetivos && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">🎯</span>
+                                    <span>
+                                      {item.objetivos.length > 60
+                                        ? `${item.objetivos.substring(
+                                            0,
+                                            60
+                                          )}...`
+                                        : item.objetivos}
+                                    </span>
+                                  </p>
+                                )}
+                              {item.tipo === "Convocatoria" &&
+                                item.categoria && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">📋</span>
+                                    <span>{item.categoria}</span>
+                                  </p>
+                                )}
+                              {item.tipo === "Convocatoria" && item.entidad && (
+                                <p className="flex items-start">
+                                  <span className="mr-1">🏛️</span>
+                                  <span>{item.entidad}</span>
+                                </p>
+                              )}
+                              {item.tipo === "Convocatoria" && item.estado && (
+                                <p className="flex items-start">
+                                  <span className="mr-1">📊</span>
+                                  <span>Estado: {item.estado}</span>
+                                </p>
+                              )}
+                              {item.tipo === "Convocatoria" &&
+                                item.fechaInicio && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">📅</span>
+                                    <span>
+                                      Inicio:{" "}
+                                      {new Date(
+                                        item.fechaInicio
+                                      ).toLocaleDateString("es-ES")}
+                                    </span>
+                                  </p>
+                                )}
+                              {item.tipo === "Convocatoria" &&
+                                item.fechaFin && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">⏰</span>
+                                    <span>
+                                      Fin:{" "}
+                                      {new Date(
+                                        item.fechaFin
+                                      ).toLocaleDateString("es-ES")}
+                                    </span>
+                                  </p>
+                                )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                    
-                    {/* Mostrar TODOS los elementos en esta ubicación */}
-                    <div className="space-y-4">
-                      {items.map((item, itemIndex) => (
-                        <div key={`${item.tipo}-${item.id}-details`} className={`${itemIndex > 0 ? 'border-t border-gray-200 pt-3' : ''}`}>
-                          <div className="flex items-center mb-2">
-                            <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                              item.tipo === 'Company' ? 'bg-blue-500' :
-                              item.tipo === 'Promotor' ? 'bg-green-500' :
-                              item.tipo === 'Articulador' ? 'bg-orange-500' :
-                              item.tipo === 'Convocatoria' ? 'bg-purple-500' :
-                              'bg-red-500'
-                            }`}></span>
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                              {item.tipo}
-                            </span>
-                          </div>
-                          
-                          <h4 className="font-bold text-gray-900 mb-1 text-sm leading-tight">
-                            {item.nombre}
-                          </h4>
-                          
-                          {item.descripcion && (
-                            <p className="text-xs text-gray-700 mb-2 leading-relaxed">
-                              {item.descripcion.length > 100 
-                                ? `${item.descripcion.substring(0, 100)}...` 
-                                : item.descripcion
-                              }
-                            </p>
-                          )}
-                          
-                          <div className="text-xs text-gray-500 space-y-1">
-                            {item.ciudad && (
-                              <p className="flex items-start">
-                                <span className="mr-1">📍</span>
-                                <span>{item.ciudad}{item.departamento ? `, ${item.departamento}` : ''}</span>
-                              </p>
-                            )}
-                            
-                            {/* Información específica por tipo */}
-                            {item.tipo === 'Company' && item.industry && (
-                              <p className="flex items-start">
-                                <span className="mr-1">🏢</span>
-                                <span>{item.industry}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Company' && item.fundada && (
-                              <p className="flex items-start">
-                                <span className="mr-1">📅</span>
-                                <span>Fundada: {item.fundada}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Promotor' && item.tipoPromotor && (
-                              <p className="flex items-start">
-                                <span className="mr-1">🎯</span>
-                                <span>{item.tipoPromotor}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Articulador' && item.experiencia && (
-                              <p className="flex items-start">
-                                <span className="mr-1">💼</span>
-                                <span>{item.experiencia}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'PortafolioArco' && item.objetivos && (
-                              <p className="flex items-start">
-                                <span className="mr-1">🎯</span>
-                                <span>{item.objetivos.length > 60 ? `${item.objetivos.substring(0, 60)}...` : item.objetivos}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Convocatoria' && item.categoria && (
-                              <p className="flex items-start">
-                                <span className="mr-1">📋</span>
-                                <span>{item.categoria}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Convocatoria' && item.entidad && (
-                              <p className="flex items-start">
-                                <span className="mr-1">🏛️</span>
-                                <span>{item.entidad}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Convocatoria' && item.estado && (
-                              <p className="flex items-start">
-                                <span className="mr-1">📊</span>
-                                <span>Estado: {item.estado}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Convocatoria' && item.fechaInicio && (
-                              <p className="flex items-start">
-                                <span className="mr-1">📅</span>
-                                <span>Inicio: {new Date(item.fechaInicio).toLocaleDateString('es-ES')}</span>
-                              </p>
-                            )}
-                            {item.tipo === 'Convocatoria' && item.fechaFin && (
-                              <p className="flex items-start">
-                                <span className="mr-1">⏰</span>
-                                <span>Fin: {new Date(item.fechaFin).toLocaleDateString('es-ES')}</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          });
+                  </Popup>
+                </Marker>
+              );
+            }
+          );
 
           return markers;
         })()}
@@ -508,17 +601,25 @@ export default function MapaSimple({
       </div>
 
       {/* Leyenda - Responsive */}
-      <div className={`absolute z-10 bg-white rounded-lg shadow-lg border border-gray-200 
-        ${mostrarLeyenda ? 'block' : 'hidden sm:block'}
+      <div
+        className={`absolute z-10 bg-white rounded-lg shadow-lg border border-gray-200 
+        ${mostrarLeyenda ? "block" : "hidden sm:block"}
         top-4 right-4 sm:top-4 sm:right-4 
         w-full sm:w-auto max-w-48 sm:max-w-48
         mx-4 sm:mx-0
         transition-all duration-300 ease-in-out
-        ${mostrarLeyenda ? 'opacity-100 translate-y-0' : 'opacity-0 sm:opacity-100 translate-y-2 sm:translate-y-0'}
-      `}>
+        ${
+          mostrarLeyenda
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 sm:opacity-100 translate-y-2 sm:translate-y-0"
+        }
+      `}
+      >
         <div className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-gray-800 text-sm">Leyenda del Ecosistema</h4>
+            <h4 className="font-semibold text-gray-800 text-sm">
+              Leyenda del Ecosistema
+            </h4>
             <button
               onClick={() => setMostrarLeyenda(false)}
               className="sm:hidden text-gray-500 hover:text-gray-700"
@@ -534,7 +635,10 @@ export default function MapaSimple({
                 <span className="text-gray-700 font-medium">🏢 Empresas</span>
               </div>
               <span className="text-gray-500 text-xs">
-                {elementosAMostrar.filter(item => item.tipo === 'Company').length}
+                {
+                  elementosAMostrar.filter((item) => item.tipo === "Company")
+                    .length
+                }
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
@@ -543,38 +647,59 @@ export default function MapaSimple({
                 <span className="text-gray-700 font-medium">🎯 Promotores</span>
               </div>
               <span className="text-gray-500 text-xs">
-                {elementosAMostrar.filter(item => item.tipo === 'Promotor').length}
+                {
+                  elementosAMostrar.filter((item) => item.tipo === "Promotor")
+                    .length
+                }
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">🤝 Articuladores</span>
+                <span className="text-gray-700 font-medium">
+                  🤝 Articuladores
+                </span>
               </div>
               <span className="text-gray-500 text-xs">
-                {elementosAMostrar.filter(item => item.tipo === 'Articulador').length}
+                {
+                  elementosAMostrar.filter(
+                    (item) => item.tipo === "Articulador"
+                  ).length
+                }
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">📋 Portafolio ARCO</span>
+                <span className="text-gray-700 font-medium">
+                  📋 Portafolio ARCO
+                </span>
               </div>
               <span className="text-gray-500 text-xs">
-                {elementosAMostrar.filter(item => item.tipo === 'PortafolioArco').length}
+                {
+                  elementosAMostrar.filter(
+                    (item) => item.tipo === "PortafolioArco"
+                  ).length
+                }
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">📢 Convocatorias</span>
+                <span className="text-gray-700 font-medium">
+                  📢 Convocatorias
+                </span>
               </div>
               <span className="text-gray-500 text-xs">
-                {elementosAMostrar.filter(item => item.tipo === 'Convocatoria').length}
+                {
+                  elementosAMostrar.filter(
+                    (item) => item.tipo === "Convocatoria"
+                  ).length
+                }
               </span>
             </div>
           </div>
-          
+
           {/* Línea separadora e información adicional */}
           <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
             <div className="flex items-center text-xs">
@@ -585,11 +710,12 @@ export default function MapaSimple({
               Usa los filtros para explorar el ecosistema de innovación
             </p>
           </div>
-          
+
           {elementosAMostrar.length > 0 && (
             <div className="mt-3 pt-3 border-t border-gray-200">
               <p className="text-xs text-gray-600 text-center">
-                <span className="font-medium">{elementosAMostrar.length}</span> elementos del ecosistema
+                <span className="font-medium">{elementosAMostrar.length}</span>{" "}
+                elementos del ecosistema
               </p>
             </div>
           )}

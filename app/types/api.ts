@@ -2,7 +2,12 @@
 export interface EcosystemMapItem {
   id: number;
   nombre: string;
-  tipo: 'Company' | 'Promotor' | 'Articulador' | 'PortafolioArco' | 'Convocatoria';
+  tipo:
+    | "Company"
+    | "Promotor"
+    | "Articulador"
+    | "PortafolioArco"
+    | "Convocatoria";
   descripcion?: string;
   ciudad?: string;
   departamento?: string;
@@ -39,7 +44,7 @@ export interface Convocatoria {
   requisitos: string[]; // Corresponde a Requisitos (List<string>)
   createdAt?: string; // Corresponde a CreatedAt (DateTime, default: DateTime.UtcNow)
   updatedAt?: string; // Corresponde a UpdatedAt (DateTime, default: DateTime.UtcNow)
-  
+
   // 🆕 NUEVOS CAMPOS EXTENDIDOS
   enlace?: string; // URL/enlace de la convocatoria
   clasificacion?: string; // Clasificación de la convocatoria
@@ -47,7 +52,7 @@ export interface Convocatoria {
   palabrasClave?: string; // Palabras clave relacionadas
   fechaApertura?: string; // Fecha de apertura
   fechaCierre?: string; // Fecha de cierre
-  
+
   // Campos relacionados con la empresa
   companyId?: number; // Corresponde a CompanyId en el backend
   company?: Company; // Información completa de la empresa del backend
@@ -219,7 +224,7 @@ export interface CreateConvocatoriaRequest {
   estadoManual?: boolean; // Indica si el estado se establece manualmente
   requisitos: string[]; // Array de strings para coincidir con List<string>
   companyId?: number; // ID de la empresa asociada
-  
+
   // 🆕 NUEVOS CAMPOS EXTENDIDOS
   enlace?: string;
   clasificacion?: string;
@@ -236,7 +241,7 @@ export interface CreateEmpresaRequest {
   sector: string;
   department: string;
   description: string;
-  
+
   // 🆕 NUEVOS CAMPOS EXTENDIDOS
   tipoActor?: string;
   ciudad?: string;

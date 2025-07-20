@@ -194,8 +194,9 @@ export default function AdminEntidadesPage() {
 
   // 🆕 Funciones para eliminar entidades
   const eliminarPromotor = async (id: number) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este promotor?")) return;
-    
+    if (!confirm("¿Estás seguro de que quieres eliminar este promotor?"))
+      return;
+
     setLoading(true);
     try {
       const resultado = await PromotorService.delete(id);
@@ -206,15 +207,20 @@ export default function AdminEntidadesPage() {
         setError(`Error eliminando promotor: ${resultado.message}`);
       }
     } catch (error) {
-      setError(`Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setError(
+        `Error inesperado: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const eliminarArticulador = async (id: number) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este articulador?")) return;
-    
+    if (!confirm("¿Estás seguro de que quieres eliminar este articulador?"))
+      return;
+
     setLoading(true);
     try {
       const resultado = await ArticuladorService.delete(id);
@@ -225,15 +231,20 @@ export default function AdminEntidadesPage() {
         setError(`Error eliminando articulador: ${resultado.message}`);
       }
     } catch (error) {
-      setError(`Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setError(
+        `Error inesperado: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const eliminarPortafolio = async (id: number) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este portafolio?")) return;
-    
+    if (!confirm("¿Estás seguro de que quieres eliminar este portafolio?"))
+      return;
+
     setLoading(true);
     try {
       const resultado = await PortafolioArcoService.delete(id);
@@ -244,7 +255,11 @@ export default function AdminEntidadesPage() {
         setError(`Error eliminando portafolio: ${resultado.message}`);
       }
     } catch (error) {
-      setError(`Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      setError(
+        `Error inesperado: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -636,7 +651,9 @@ export default function AdminEntidadesPage() {
                               </div>
                               <div className="flex gap-2 ml-4">
                                 <button
-                                  onClick={() => eliminarArticulador(articulador.id)}
+                                  onClick={() =>
+                                    eliminarArticulador(articulador.id)
+                                  }
                                   disabled={loading}
                                   className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm rounded-lg transition-colors duration-200"
                                   title="Eliminar articulador"
@@ -847,7 +864,9 @@ export default function AdminEntidadesPage() {
                               </div>
                               <div className="flex gap-2 ml-4">
                                 <button
-                                  onClick={() => eliminarPortafolio(portafolio.id)}
+                                  onClick={() =>
+                                    eliminarPortafolio(portafolio.id)
+                                  }
                                   disabled={loading}
                                   className="px-3 py-1 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm rounded-lg transition-colors duration-200"
                                   title="Eliminar portafolio"

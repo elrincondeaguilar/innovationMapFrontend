@@ -100,7 +100,11 @@ function MapController({
   const map = useMap();
 
   useEffect(() => {
-    if (empresaEspecifica && soloEmpresaEspecifica && empresaEspecifica.department) {
+    if (
+      empresaEspecifica &&
+      soloEmpresaEspecifica &&
+      empresaEspecifica.department
+    ) {
       // Si hay una empresa específica, centrar el mapa en ella con zoom alto
       const coordinates = getCoordinatesByDepartment(
         empresaEspecifica.department
@@ -625,7 +629,10 @@ export default function Mapa({
                                 empresa.id?.toString() || ""
                               );
                               searchParams.set("empresaNombre", empresa.name);
-                              searchParams.set("empresaSector", empresa.sector || "");
+                              searchParams.set(
+                                "empresaSector",
+                                empresa.sector || ""
+                              );
                               searchParams.set(
                                 "empresaDepartamento",
                                 empresa.department || ""

@@ -468,7 +468,10 @@ export default function EmpresasPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => editandoEmpresa.url && extractLogoFromUrl(editandoEmpresa.url)}
+                      onClick={() =>
+                        editandoEmpresa.url &&
+                        extractLogoFromUrl(editandoEmpresa.url)
+                      }
                       disabled={!editandoEmpresa.url || logoLoading}
                       className="absolute inset-y-0 right-0 pr-3 flex items-center text-emerald-600 hover:text-emerald-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
                       title="Extraer logo automáticamente"
