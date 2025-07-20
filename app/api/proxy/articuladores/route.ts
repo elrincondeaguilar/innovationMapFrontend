@@ -4,7 +4,7 @@ const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backino
 
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/articuladores`);
+    const response = await fetch(`${BACKEND_BASE_URL}/Articuladores`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -19,7 +19,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const response = await fetch(`${BACKEND_BASE_URL}/articuladores`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/Articuladores`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

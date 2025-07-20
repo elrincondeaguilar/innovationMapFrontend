@@ -6,7 +6,7 @@ const BACKEND_BASE_URL =
 
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/convocatorias`);
+    const response = await fetch(`${BACKEND_BASE_URL}/Convocatorias`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_BASE_URL}/convocatorias`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/Convocatorias`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -68,7 +68,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_BASE_URL}/convocatorias/${id}`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/Convocatorias/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -103,7 +103,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const response = await fetch(`${BACKEND_BASE_URL}/convocatorias/${id}`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/Convocatorias/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
