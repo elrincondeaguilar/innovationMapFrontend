@@ -68,7 +68,7 @@ export const PromotorService = {
     message?: string;
   }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/Promotores`);
+      const response = await fetch(`${PROXY_BASE_URL}/promotores`);
       return await handleResponse<Promotor[]>(response);
     } catch (error) {
       return {
@@ -83,7 +83,7 @@ export const PromotorService = {
     id: number
   ): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/Promotores/${id}`);
+      const response = await fetch(`${PROXY_BASE_URL}/promotores/${id}`);
       return await handleResponse<Promotor>(response);
     } catch (error) {
       return {
@@ -98,7 +98,7 @@ export const PromotorService = {
     promotor: Omit<Promotor, "id">
   ): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/Promotores`, {
+      const response = await fetch(`${PROXY_BASE_URL}/promotores`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -152,7 +152,7 @@ export const PromotorService = {
     promotor: Partial<Omit<Promotor, "id">>
   ): Promise<{ success: boolean; data?: Promotor; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/Promotores?id=${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/promotores?id=${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +171,7 @@ export const PromotorService = {
   // Eliminar promotor
   async delete(id: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/Promotores?id=${id}`, {
+      const response = await fetch(`${PROXY_BASE_URL}/promotores?id=${id}`, {
         method: "DELETE",
       });
       return await handleResponse<void>(response);
@@ -186,7 +186,7 @@ export const PromotorService = {
   // Health check
   async health(): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await fetch(`${PROXY_BASE_URL}/Promotores`);
+      const response = await fetch(`${PROXY_BASE_URL}/promotores`);
       return await handleResponse<void>(response);
     } catch (error) {
       return {
@@ -420,7 +420,7 @@ export const EcosystemService = {
     unavailable: string[];
   }> {
     const endpointsToCheck = [
-      "/Promotores",
+      "/promotores",
       "/articuladores",
       "/portafolioarco",
       "/api/Companies",
