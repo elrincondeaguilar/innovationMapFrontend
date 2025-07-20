@@ -7,7 +7,15 @@ const BACKEND_BASE_URL =
 export async function GET() {
   try {
     console.log("Articuladores proxy: Making request to backend...");
-    const response = await fetch(`${BACKEND_BASE_URL}/Articuladores`);
+    const response = await fetch(`${BACKEND_BASE_URL}/Articuladores`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      // Agregar timeout de 30 segundos
+      signal: AbortSignal.timeout(30000)
+    });
     console.log("Articuladores proxy: Backend response status:", response.status);
     
     if (!response.ok) {
