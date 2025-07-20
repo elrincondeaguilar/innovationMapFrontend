@@ -6,16 +6,22 @@ const BACKEND_BASE_URL =
 
 export async function GET() {
   try {
+    console.log("PortafolioArco proxy: Making request to backend...");
     const response = await fetch(`${BACKEND_BASE_URL}/PortafolioArco`);
+    console.log("PortafolioArco proxy: Backend response status:", response.status);
+    
     if (!response.ok) {
+      console.error("PortafolioArco proxy: Backend error:", response.status, response.statusText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+    
     const data = await response.json();
+    console.log("PortafolioArco proxy: Data received:", data?.length || 0, "items");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Proxy error:", error);
+    console.error("PortafolioArco proxy error:", error);
     return NextResponse.json(
-      { error: "Failed to connect to backend" },
+      { error: "Failed to connect to backend", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
@@ -39,9 +45,9 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Proxy error:", error);
+    console.error("PortafolioArco POST proxy error:", error);
     return NextResponse.json(
-      { error: "Failed to connect to backend" },
+      { error: "Failed to connect to backend", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
