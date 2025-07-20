@@ -8,28 +8,42 @@ export async function GET() {
   try {
     console.log("Articuladores proxy: Making request to backend...");
     const response = await fetch(`${BACKEND_BASE_URL}/Articuladores`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       // Agregar timeout de 30 segundos
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(30000),
     });
-    console.log("Articuladores proxy: Backend response status:", response.status);
-    
+    console.log(
+      "Articuladores proxy: Backend response status:",
+      response.status
+    );
+
     if (!response.ok) {
-      console.error("Articuladores proxy: Backend error:", response.status, response.statusText);
+      console.error(
+        "Articuladores proxy: Backend error:",
+        response.status,
+        response.statusText
+      );
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    console.log("Articuladores proxy: Data received:", data?.length || 0, "items");
+    console.log(
+      "Articuladores proxy: Data received:",
+      data?.length || 0,
+      "items"
+    );
     return NextResponse.json(data);
   } catch (error) {
     console.error("Articuladores proxy error:", error);
     return NextResponse.json(
-      { error: "Failed to connect to backend", details: error instanceof Error ? error.message : "Unknown error" },
+      {
+        error: "Failed to connect to backend",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
@@ -55,7 +69,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Articuladores POST proxy error:", error);
     return NextResponse.json(
-      { error: "Failed to connect to backend", details: error instanceof Error ? error.message : "Unknown error" },
+      {
+        error: "Failed to connect to backend",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
