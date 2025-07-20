@@ -9,43 +9,45 @@ const BACKEND_BASE_URL =
 
 export async function GET() {
   try {
-    console.log("Articuladores proxy: Making request to backend...");
-    const response = await fetch(`${BACKEND_BASE_URL}/Articuladores`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      // Agregar timeout de 30 segundos
-      signal: AbortSignal.timeout(30000),
-    });
-    console.log(
-      "Articuladores proxy: Backend response status:",
-      response.status
-    );
+    // Debug logging
+    console.log("=== PROMOTORES PROXY DEBUG ===");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("NEXT_PUBLIC_BACKEND_URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+    console.log("BACKEND_BASE_URL:", BACKEND_BASE_URL);
+    console.log("Full URL:", `${BACKEND_BASE_URL}/Promotores`);
+    console.log("=== END DEBUG ===");
 
+    // Simple fetch without timeout first
+    const response = await fetch(`${BACKEND_BASE_URL}/Promotores`);
+    
+    console.log("Response status:", response.status);
+    console.log("Response ok:", response.ok);
+    
     if (!response.ok) {
-      console.error(
-        "Articuladores proxy: Backend error:",
-        response.status,
-        response.statusText
+      const errorText = await response.text();
+      console.error("Backend error text:", errorText);
+      return NextResponse.json(
+        { 
+          error: `Backend error: ${response.status}`, 
+          details: errorText,
+          url: `${BACKEND_BASE_URL}/Promotores`
+        },
+        { status: response.status }
       );
-      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log(
-      "Articuladores proxy: Data received:",
-      data?.length || 0,
-      "items"
-    );
+    console.log("Data received, length:", data?.length || 0);
+    
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Articuladores proxy error:", error);
+    console.error("Promotores proxy error:", error);
     return NextResponse.json(
-      {
-        error: "Failed to connect to backend",
+      { 
+        error: "Failed to connect to backend", 
         details: error instanceof Error ? error.message : "Unknown error",
+        url: `${BACKEND_BASE_URL}/Promotores`,
+        backendBaseUrl: BACKEND_BASE_URL
       },
       { status: 500 }
     );
@@ -55,7 +57,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const response = await fetch(`${BACKEND_BASE_URL}/Articuladores`, {
+    const response = await fetch(`${BACKEND_BASE_URL}/Promotores`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Articuladores POST proxy error:", error);
+    console.error("Promotores POST proxy error:", error);
     return NextResponse.json(
       {
         error: "Failed to connect to backend",
