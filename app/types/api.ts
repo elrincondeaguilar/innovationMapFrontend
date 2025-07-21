@@ -202,9 +202,14 @@ export interface CreateEmpresaRequest {
 
 export interface CreateArticuladorRequest {
   nombre: string; // Requerido
+  descripcion?: string;
   tipo?: string;
-  region?: string;
+  experiencia?: string;
+  areasExperiencia?: string;
   contacto?: string;
+  ciudad?: string;
+  departamento?: string;
+  region?: string; // Legacy field
 }
 
 export interface UpdateConvocatoriaRequest

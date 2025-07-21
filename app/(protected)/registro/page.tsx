@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Navbar from "../../components/Navbar";
-import { CreateEmpresaRequest } from "../../types/api";
+import { CreateEmpresaRequest, CreateArticuladorRequest } from "../../types/api";
 import { EmpresaService } from "../../services/backendService";
+import { ArticuladorService } from "../../services/nuevasEntidadesService";
 
 export default function RegistroPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
+  const [tipoEntidad, setTipoEntidad] = useState<"empresa" | "articulador">("empresa");
   const [formData, setFormData] = useState<CreateEmpresaRequest>({
     name: "",
     url: "",
@@ -18,6 +20,16 @@ export default function RegistroPage() {
     sector: "",
     department: "",
     description: "",
+  });
+  const [articuladorData, setArticuladorData] = useState<CreateArticuladorRequest>({
+    nombre: "",
+    descripcion: "",
+    tipo: "",
+    experiencia: "",
+    areasExperiencia: "",
+    contacto: "",
+    ciudad: "",
+    departamento: "",
   });
 
   // Función para extraer el logo automáticamente
@@ -77,42 +89,63 @@ export default function RegistroPage() {
     >
   ) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (tipoEntidad === "empresa") {
+      setFormData({ ...formData, [name]: value });
+    } else {
+      setArticuladorData({ ...articuladorData, [name]: value });
+    }
   };
 
   // Efecto para extraer logo automáticamente cuando cambia la URL
   useEffect(() => {
-    if (formData.url && formData.url.trim()) {
+    if (tipoEntidad === "empresa" && formData.url && formData.url.trim()) {
       const timeoutId = setTimeout(() => {
         extractLogoFromUrl(formData.url.trim());
       }, 1500); // Esperar 1.5 segundos después de que deje de escribir
 
       return () => clearTimeout(timeoutId);
     }
-  }, [formData.url]);
+  }, [formData.url, tipoEntidad]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Validar URL
-      if (formData.url && !formData.url.startsWith("http")) {
-        setFormData((prev) => ({ ...prev, url: `https://${prev.url}` }));
-      }
+      if (tipoEntidad === "empresa") {
+        // Validar URL
+        if (formData.url && !formData.url.startsWith("http")) {
+          setFormData((prev) => ({ ...prev, url: `https://${prev.url}` }));
+        }
 
-      const resultado = await EmpresaService.crearEmpresa(formData);
+        const resultado = await EmpresaService.crearEmpresa(formData);
 
-      if (resultado.success) {
-        alert("Empresa registrada con éxito");
-        router.push("/mapa");
+        if (resultado.success) {
+          alert("Empresa registrada con éxito");
+          router.push("/mapa");
+        } else {
+          console.error("Error del servidor:", resultado.message);
+          alert(
+            `Error al registrar empresa: ${
+              resultado.message || "Error desconocido"
+            }`
+          );
+        }
       } else {
-        console.error("Error del servidor:", resultado.message);
-        alert(
-          `Error al registrar empresa: ${
-            resultado.message || "Error desconocido"
-          }`
-        );
+        // Registrar articulador
+        const resultado = await ArticuladorService.create(articuladorData);
+
+        if (resultado.success) {
+          alert("Articulador registrado con éxito");
+          router.push("/mapa");
+        } else {
+          console.error("Error del servidor:", resultado.message);
+          alert(
+            `Error al registrar articulador: ${
+              resultado.message || "Error desconocido"
+            }`
+          );
+        }
       }
     } catch (error) {
       console.error("Error de conexión:", error);
@@ -156,16 +189,82 @@ export default function RegistroPage() {
             </svg>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Registrar Nueva Empresa
+            Registrar Nueva Entidad
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Añade tu empresa al ecosistema de innovación colombiano
+            Añade tu {tipoEntidad === "empresa" ? "empresa" : "perfil como articulador"} al ecosistema de innovación colombiano
           </p>
         </div>
 
         {/* Form Container */}
         <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-2xl rounded-3xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Selector de tipo de entidad */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                ¿Qué quieres registrar? *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setTipoEntidad("empresa")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                    tipoEntidad === "empresa"
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-purple-300 hover:bg-purple-25"
+                  }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <svg
+                      className="w-8 h-8 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                    <span className="font-semibold">Empresa</span>
+                    <span className="text-xs mt-1 opacity-75">Organización o startup</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTipoEntidad("articulador")}
+                  className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                    tipoEntidad === "articulador"
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-purple-300 hover:bg-purple-25"
+                  }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <svg
+                      className="w-8 h-8 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    <span className="font-semibold">Articulador</span>
+                    <span className="text-xs mt-1 opacity-75">Facilitador del ecosistema</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {tipoEntidad === "empresa" ? (
+              // Formulario para Empresas
+              <>
             {/* Nombre de la empresa */}
             <div className="group">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -399,6 +498,250 @@ export default function RegistroPage() {
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
               />
             </div>
+            </>
+            ) : (
+              // Formulario para Articuladores
+              <>
+            {/* Nombre del articulador */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nombre completo *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  name="nombre"
+                  type="text"
+                  placeholder="Ejemplo: Juan Carlos Pérez"
+                  value={articuladorData.nombre}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                />
+              </div>
+            </div>
+
+            {/* Tipo de articulador */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de articulador *
+              </label>
+              <select
+                name="tipo"
+                value={articuladorData.tipo}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
+              >
+                <option value="">Selecciona un tipo</option>
+                <option value="Consultor">Consultor</option>
+                <option value="Mentor">Mentor</option>
+                <option value="Inversionista">Inversionista</option>
+                <option value="Acelerador">Acelerador</option>
+                <option value="Academia">Academia</option>
+                <option value="Gobierno">Gobierno</option>
+                <option value="Corporativo">Corporativo</option>
+                <option value="Hub/Centro de innovación">Hub/Centro de innovación</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+
+            {/* Áreas de experiencia */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Áreas de experiencia *
+              </label>
+              <select
+                name="areasExperiencia"
+                value={articuladorData.areasExperiencia}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
+              >
+                <option value="">Selecciona un área</option>
+                <option value="Tecnología">Tecnología</option>
+                <option value="Educación">Educación</option>
+                <option value="Salud">Salud</option>
+                <option value="Energía">Energía</option>
+                <option value="Fintech">Fintech</option>
+                <option value="Agroindustria">Agroindustria</option>
+                <option value="Manufactura">Manufactura</option>
+                <option value="Servicios">Servicios</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Ventas">Ventas</option>
+                <option value="Finanzas">Finanzas</option>
+                <option value="Operaciones">Operaciones</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+
+            {/* Ciudad */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Ciudad *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </div>
+                <input
+                  name="ciudad"
+                  type="text"
+                  placeholder="Ejemplo: Medellín"
+                  value={articuladorData.ciudad}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                />
+              </div>
+            </div>
+
+            {/* Departamento para articuladores */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Departamento *
+              </label>
+              <select
+                name="departamento"
+                value={articuladorData.departamento}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
+              >
+                <option value="">Selecciona un departamento</option>
+                <option value="Amazonas">Amazonas</option>
+                <option value="Antioquia">Antioquia</option>
+                <option value="Arauca">Arauca</option>
+                <option value="Atlántico">Atlántico</option>
+                <option value="Bolívar">Bolívar</option>
+                <option value="Boyacá">Boyacá</option>
+                <option value="Caldas">Caldas</option>
+                <option value="Caquetá">Caquetá</option>
+                <option value="Casanare">Casanare</option>
+                <option value="Cauca">Cauca</option>
+                <option value="Cesar">Cesar</option>
+                <option value="Chocó">Chocó</option>
+                <option value="Córdoba">Córdoba</option>
+                <option value="Cundinamarca">Cundinamarca</option>
+                <option value="Guainía">Guainía</option>
+                <option value="Guaviare">Guaviare</option>
+                <option value="Huila">Huila</option>
+                <option value="La Guajira">La Guajira</option>
+                <option value="Magdalena">Magdalena</option>
+                <option value="Meta">Meta</option>
+                <option value="Nariño">Nariño</option>
+                <option value="Norte de Santander">Norte de Santander</option>
+                <option value="Putumayo">Putumayo</option>
+                <option value="Quindío">Quindío</option>
+                <option value="Risaralda">Risaralda</option>
+                <option value="San Andrés y Providencia">
+                  San Andrés y Providencia
+                </option>
+                <option value="Santander">Santander</option>
+                <option value="Sucre">Sucre</option>
+                <option value="Tolima">Tolima</option>
+                <option value="Valle del Cauca">Valle del Cauca</option>
+                <option value="Vaupés">Vaupés</option>
+                <option value="Vichada">Vichada</option>
+              </select>
+            </div>
+
+            {/* Contacto */}
+            <div className="group">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Información de contacto
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                    />
+                  </svg>
+                </div>
+                <input
+                  name="contacto"
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  value={articuladorData.contacto}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                />
+              </div>
+            </div>
+
+            {/* Experiencia */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Experiencia profesional
+              </label>
+              <textarea
+                name="experiencia"
+                rows={3}
+                placeholder="Describe brevemente tu experiencia profesional y logros relevantes..."
+                value={articuladorData.experiencia}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
+              />
+            </div>
+
+            {/* Descripción */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descripción y servicios *
+              </label>
+              <textarea
+                name="descripcion"
+                rows={4}
+                placeholder="Describe los servicios que ofreces como articulador del ecosistema de innovación..."
+                value={articuladorData.descripcion}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
+              />
+            </div>
+            </>
+            )}
 
             <button
               type="submit"
@@ -409,7 +752,7 @@ export default function RegistroPage() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
-                    Registrando empresa...
+                    Registrando {tipoEntidad}...
                   </>
                 ) : (
                   <>
@@ -426,7 +769,7 @@ export default function RegistroPage() {
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                    Registrar Empresa
+                    Registrar {tipoEntidad === "empresa" ? "Empresa" : "Articulador"}
                   </>
                 )}
               </div>

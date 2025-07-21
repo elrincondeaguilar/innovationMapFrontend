@@ -109,7 +109,7 @@ export default function EmpresasPage() {
   // Función para extraer el logo automáticamente
   const extractLogoFromUrl = useCallback(
     async (url: string) => {
-      if (!url) return;
+      if (!url || url === "string" || url.length < 3) return;
 
       try {
         setLogoLoading(true);
@@ -120,8 +120,22 @@ export default function EmpresasPage() {
           formattedUrl = `https://${url}`;
         }
 
+        // Validar que la URL sea válida antes de continuar
+        try {
+          new URL(formattedUrl);
+        } catch {
+          console.warn("Invalid URL for logo extraction:", url);
+          return;
+        }
+
         // Extraer dominio
         const domain = new URL(formattedUrl).hostname;
+        
+        // Skip si el dominio es inválido
+        if (!domain || domain === "string" || domain.length < 3) {
+          console.warn("Invalid domain for logo extraction:", domain);
+          return;
+        }
 
         // Opciones de logos en orden de prioridad
         const logoOptions = [
@@ -136,6 +150,9 @@ export default function EmpresasPage() {
         // Probar cada opción hasta encontrar una que funcione
         for (const logoUrl of logoOptions) {
           try {
+            // Skip URLs que contengan "string" literal
+            if (logoUrl.includes("/string")) continue;
+            
             const response = await fetch(logoUrl, { method: "HEAD" });
             if (response.ok && editandoEmpresa) {
               setEditandoEmpresa((prev) =>
