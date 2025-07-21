@@ -4,9 +4,7 @@ export interface EcosystemMapItem {
   nombre: string;
   tipo:
     | "Company"
-    | "Promotor"
     | "Articulador"
-    | "PortafolioArco"
     | "Convocatoria";
   descripcion?: string;
   ciudad?: string;
@@ -16,11 +14,8 @@ export interface EcosystemMapItem {
   // Campos específicos por tipo
   industry?: string; // Para Company
   fundada?: number; // Para Company
-  tipoPromotor?: string; // Para Promotor
   experiencia?: string; // Para Articulador
   areasExperiencia?: string; // Para Articulador
-  objetivos?: string; // Para PortafolioArco
-  publico?: string; // Para PortafolioArco
   categoria?: string; // Para Convocatoria
   entidad?: string; // Para Convocatoria
   fechaInicio?: string; // Para Convocatoria
@@ -56,8 +51,6 @@ export interface Convocatoria {
   // Campos relacionados con la empresa
   companyId?: number; // Corresponde a CompanyId en el backend
   company?: Company; // Información completa de la empresa del backend
-  // Relaciones con PortafolioArco
-  portfolioArcos?: PortafolioArco[];
   // Relaciones con Articuladores
   articuladorConvocatorias?: ArticuladorConvocatoria[];
 }
@@ -86,24 +79,6 @@ export interface Company {
   contacto?: string;
 }
 
-// 🆕 ACTUALIZADA - Promotor con campos geográficos
-export interface Promotor {
-  id: number;
-  medio?: string; // StringLength(200) - corresponde al campo Medio del backend
-  descripcion?: string; // corresponde al campo Descripcion del backend
-  enlace?: string; // corresponde al campo Enlace del backend
-  ciudad?: string; // StringLength(100) - corresponde al campo Ciudad del backend
-  departamento?: string; // StringLength(100) - corresponde al campo Departamento del backend
-  latitud?: number; // decimal? - corresponde al campo Latitud del backend
-  longitud?: number; // decimal? - corresponde al campo Longitud del backend
-  // Relación
-  companyId?: number; // int? - corresponde al campo CompanyId del backend
-  company?: Company; // corresponde a la relación Company del backend
-  // Campos de auditoría
-  createdAt?: string; // DateTime - corresponde al campo CreatedAt del backend
-  updatedAt?: string; // DateTime - corresponde al campo UpdatedAt del backend
-}
-
 // 🆕 ACTUALIZADA - Articulador con campos geográficos
 export interface Articulador {
   id: number;
@@ -122,34 +97,6 @@ export interface Articulador {
   articuladorConvocatorias?: ArticuladorConvocatoria[];
   // Campos legacy
   region?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// 🆕 ACTUALIZADA - PortafolioArco con campos geográficos
-export interface PortafolioArco {
-  id: number;
-  nombre: string;
-  descripcion?: string;
-  objetivos?: string;
-  publico?: string;
-  fechaInicio?: string;
-  fechaFin?: string;
-  ciudad?: string;
-  departamento?: string;
-  latitud?: number;
-  longitud?: number;
-  // Relación
-  convocatoriaId?: number;
-  convocatoria?: Convocatoria;
-  // Campos legacy
-  anio?: number;
-  entidad?: string;
-  instrumento?: string;
-  tipoApoyo?: string;
-  objetivo?: string;
-  cobertura?: string;
-  enlace?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -253,34 +200,11 @@ export interface CreateEmpresaRequest {
 
 // 🆕 NUEVOS TIPOS DE REQUEST PARA LAS NUEVAS ENTIDADES
 
-export interface CreatePromotorRequest {
-  medio?: string; // StringLength(200) - opcional según tu modelo
-  descripcion?: string; // opcional según tu modelo
-  enlace?: string; // opcional según tu modelo
-  ciudad?: string; // StringLength(100) - opcional según tu modelo
-  departamento?: string; // StringLength(100) - opcional según tu modelo
-  latitud?: number; // decimal? - opcional según tu modelo
-  longitud?: number; // decimal? - opcional según tu modelo
-  companyId?: number; // int? - opcional según tu modelo
-}
-
 export interface CreateArticuladorRequest {
   nombre: string; // Requerido
   tipo?: string;
   region?: string;
   contacto?: string;
-}
-
-export interface CreatePortafolioArcoRequest {
-  nombre: string; // Requerido
-  anio?: number;
-  entidad?: string;
-  instrumento?: string;
-  tipoApoyo?: string;
-  objetivo?: string;
-  cobertura?: string;
-  departamento?: string;
-  enlace?: string;
 }
 
 export interface UpdateConvocatoriaRequest
@@ -368,4 +292,12 @@ export interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+}
+
+// Tipo genérico para respuestas de servicios
+export interface ServiceResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
 }

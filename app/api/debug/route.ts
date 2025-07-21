@@ -12,7 +12,7 @@ export async function GET() {
     environment: process.env.NODE_ENV,
     rawEnvVar: process.env.NEXT_PUBLIC_BACKEND_URL,
     constructedBackendUrl: BACKEND_BASE_URL,
-    fullPromotoresUrl: `${BACKEND_BASE_URL}/Promotores`,
+    fullArticuladoresUrl: `${BACKEND_BASE_URL}/Articuladores`,
     allEnvVars: {
       NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
       NODE_ENV: process.env.NODE_ENV,

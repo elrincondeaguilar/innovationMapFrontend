@@ -60,29 +60,10 @@ const iconMap = {
     popupAnchor: [1, -34],
     shadowSize: [41, 41],
   }),
-  Promotor: new L.Icon({
-    iconUrl:
-      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-  }),
+
   Articulador: new L.Icon({
     iconUrl:
       "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-  }),
-  PortafolioArco: new L.Icon({
-    iconUrl:
-      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
     shadowUrl:
       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
     iconSize: [25, 41],
@@ -152,29 +133,21 @@ export default function MapaSimple({
         setLoading(true);
         setError(null);
 
-        // Usar el servicio que incluye empresas
-        const result = await EcosystemService.getAllEcosystemWithCompanies();
-
-        // Solo actualizar estado si el componente sigue montado
+      // Usar el servicio que incluye empresas
+      const result = await EcosystemService.getAllEcosystemItems();        // Solo actualizar estado si el componente sigue montado
         if (isMounted) {
           if (result.success && result.data) {
             setEcosystemItems(result.data);
             if (process.env.NODE_ENV === "development") {
               console.log("🗺️ Ecosystem items loaded:", result.data.length);
               console.log("🗺️ Items by type:", {
-                companies: result.data.filter((item) => item.tipo === "Company")
+                companies: result.data.filter((item: EcosystemMapItem) => item.tipo === "Company")
                   .length,
-                promotores: result.data.filter(
-                  (item) => item.tipo === "Promotor"
-                ).length,
                 articuladores: result.data.filter(
-                  (item) => item.tipo === "Articulador"
-                ).length,
-                portfolios: result.data.filter(
-                  (item) => item.tipo === "PortafolioArco"
+                  (item: EcosystemMapItem) => item.tipo === "Articulador"
                 ).length,
                 convocatorias: result.data.filter(
-                  (item) => item.tipo === "Convocatoria"
+                  (item: EcosystemMapItem) => item.tipo === "Convocatoria"
                 ).length,
               });
             }
@@ -325,9 +298,7 @@ export default function MapaSimple({
             >
               <option value="">🔍 Todos los tipos</option>
               <option value="Company">🏢 Empresas</option>
-              <option value="Promotor">🎯 Promotores</option>
               <option value="Articulador">🤝 Articuladores</option>
-              <option value="PortafolioArco">📋 Portafolio ARCO</option>
               <option value="Convocatoria">📢 Convocatorias</option>
             </select>
             {filtroTipo && (
@@ -408,8 +379,6 @@ export default function MapaSimple({
                                 className={`text-xs px-2 py-1 rounded-full text-white ${
                                   item.tipo === "Company"
                                     ? "bg-blue-500"
-                                    : item.tipo === "Promotor"
-                                    ? "bg-green-500"
                                     : item.tipo === "Articulador"
                                     ? "bg-orange-500"
                                     : item.tipo === "Convocatoria"
@@ -440,8 +409,6 @@ export default function MapaSimple({
                                 className={`inline-block w-3 h-3 rounded-full mr-2 ${
                                   item.tipo === "Company"
                                     ? "bg-blue-500"
-                                    : item.tipo === "Promotor"
-                                    ? "bg-green-500"
                                     : item.tipo === "Articulador"
                                     ? "bg-orange-500"
                                     : item.tipo === "Convocatoria"
@@ -492,32 +459,11 @@ export default function MapaSimple({
                                   <span>Fundada: {item.fundada}</span>
                                 </p>
                               )}
-                              {item.tipo === "Promotor" &&
-                                item.tipoPromotor && (
-                                  <p className="flex items-start">
-                                    <span className="mr-1">🎯</span>
-                                    <span>{item.tipoPromotor}</span>
-                                  </p>
-                                )}
                               {item.tipo === "Articulador" &&
                                 item.experiencia && (
                                   <p className="flex items-start">
                                     <span className="mr-1">💼</span>
                                     <span>{item.experiencia}</span>
-                                  </p>
-                                )}
-                              {item.tipo === "PortafolioArco" &&
-                                item.objetivos && (
-                                  <p className="flex items-start">
-                                    <span className="mr-1">🎯</span>
-                                    <span>
-                                      {item.objetivos.length > 60
-                                        ? `${item.objetivos.substring(
-                                            0,
-                                            60
-                                          )}...`
-                                        : item.objetivos}
-                                    </span>
                                   </p>
                                 )}
                               {item.tipo === "Convocatoria" &&
@@ -643,18 +589,6 @@ export default function MapaSimple({
             </div>
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">🎯 Promotores</span>
-              </div>
-              <span className="text-gray-500 text-xs">
-                {
-                  elementosAMostrar.filter((item) => item.tipo === "Promotor")
-                    .length
-                }
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center">
                 <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
                 <span className="text-gray-700 font-medium">
                   🤝 Articuladores
@@ -664,21 +598,6 @@ export default function MapaSimple({
                 {
                   elementosAMostrar.filter(
                     (item) => item.tipo === "Articulador"
-                  ).length
-                }
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                <span className="text-gray-700 font-medium">
-                  📋 Portafolio ARCO
-                </span>
-              </div>
-              <span className="text-gray-500 text-xs">
-                {
-                  elementosAMostrar.filter(
-                    (item) => item.tipo === "PortafolioArco"
                   ).length
                 }
               </span>
