@@ -9,25 +9,47 @@ import {
 
 // Servicio para el ecosistema unificado
 export class EcosystemService {
-  // Coordenadas por defecto para departamentos de Colombia
-  private static readonly DEPARTAMENTO_COORDS: {
-    [key: string]: { lat: number; lng: number };
-  } = {
-    antioquia: { lat: 6.2442, lng: -75.5812 },
-    bogota: { lat: 4.711, lng: -74.0721 },
-    cundinamarca: { lat: 4.711, lng: -74.0721 },
-    "valle del cauca": { lat: 3.4516, lng: -76.532 },
-    atlantico: { lat: 10.9685, lng: -74.7813 },
-    santander: { lat: 7.1193, lng: -73.1227 },
-    bolivar: { lat: 10.391, lng: -75.4794 },
-    cordoba: { lat: 8.7569, lng: -75.8814 },
-    tolima: { lat: 4.4389, lng: -75.2322 },
-    default: { lat: 4.5709, lng: -74.2973 }, // Centro de Colombia
+  // Coordenadas por defecto para todos los departamentos de Colombia
+  private static readonly DEPARTAMENTO_COORDS: { [key: string]: { lat: number; lng: number } } = {
+    "amazonas": { lat: -1.4429, lng: -70.4848 },
+    "antioquia": { lat: 6.2442, lng: -75.5812 },
+    "arauca": { lat: 7.0835, lng: -70.7617 },
+    "atlantico": { lat: 10.9685, lng: -74.7813 },
+    "bogota": { lat: 4.7110, lng: -74.0721 },
+    "bolivar": { lat: 10.3910, lng: -75.4794 },
+    "boyaca": { lat: 5.4545, lng: -73.3620 },
+    "caldas": { lat: 5.0703, lng: -75.5138 },
+    "caqueta": { lat: 0.8698, lng: -73.8419 },
+    "casanare": { lat: 5.7589, lng: -71.5724 },
+    "cauca": { lat: 2.7014, lng: -76.8260 },
+    "cesar": { lat: 9.3373, lng: -73.6536 },
+    "choco": { lat: 5.6947, lng: -76.6610 },
+    "cordoba": { lat: 8.7569, lng: -75.8814 },
+    "cundinamarca": { lat: 4.7110, lng: -74.0721 },
+    "guainia": { lat: 2.5854, lng: -69.8571 },
+    "guaviare": { lat: 2.0432, lng: -72.3311 },
+    "huila": { lat: 2.5359, lng: -75.5277 },
+    "la guajira": { lat: 11.3548, lng: -72.5203 },
+    "magdalena": { lat: 10.4113, lng: -74.4057 },
+    "meta": { lat: 4.0925, lng: -73.6895 },
+    "narino": { lat: 1.2892, lng: -77.3577 },
+    "norte de santander": { lat: 7.9071, lng: -72.8988 },
+    "putumayo": { lat: 0.4359, lng: -76.6460 },
+    "quindio": { lat: 4.5339, lng: -75.6828 },
+    "risaralda": { lat: 5.0637, lng: -75.5007 },
+    "san andres y providencia": { lat: 12.5847, lng: -81.7006 },
+    "santander": { lat: 7.1193, lng: -73.1227 },
+    "sucre": { lat: 9.3047, lng: -75.3978 },
+    "tolima": { lat: 4.4389, lng: -75.2322 },
+    "valle del cauca": { lat: 3.4516, lng: -76.5320 },
+    "vaupes": { lat: 1.1451, lng: -70.7369 },
+    "vichada": { lat: 4.4234, lng: -69.2878 },
+    "default": { lat: 4.5709, lng: -74.2973 } // Centro de Colombia
   };
 
   private static getCoordinatesForLocation(
-    latitud?: number | null,
-    longitud?: number | null,
+    latitud?: number | null, 
+    longitud?: number | null, 
     departamento?: string | null
   ): { latitud: number; longitud: number } {
     // Si tenemos coordenadas válidas, usarlas
@@ -37,41 +59,37 @@ export class EcosystemService {
 
     // Si no, usar coordenadas por departamento
     const dept = (departamento || "").toLowerCase().trim();
-    const coords =
-      this.DEPARTAMENTO_COORDS[dept] || this.DEPARTAMENTO_COORDS["default"];
-
+    const coords = this.DEPARTAMENTO_COORDS[dept] || this.DEPARTAMENTO_COORDS["default"];
+    
     // Agregar pequeña variación aleatoria para evitar superposición
     const randomOffset = () => (Math.random() - 0.5) * 0.01; // ±0.005 grados
-
+    
     return {
       latitud: coords.lat + randomOffset(),
-      longitud: coords.lng + randomOffset(),
+      longitud: coords.lng + randomOffset()
     };
   }
 
-  static async getAllEcosystemItems(): Promise<
-    ServiceResponse<EcosystemMapItem[]>
-  > {
+  static async getAllEcosystemItems(): Promise<ServiceResponse<EcosystemMapItem[]>> {
     try {
       // Obtener datos de articuladores, convocatorias y empresas
-      const [articuladoresRes, convocatoriasRes, empresasRes] =
-        await Promise.all([
-          ArticuladorService.getAll(),
-          fetch("/api/proxy/convocatorias").then((res) => res.json()),
-          fetch("/api/proxy/companies").then((res) => res.json()),
-        ]);
+      const [articuladoresRes, convocatoriasRes, empresasRes] = await Promise.all([
+        ArticuladorService.getAll(),
+        fetch("/api/proxy/convocatorias").then(res => res.json()),
+        fetch("/api/proxy/companies").then(res => res.json())
+      ]);
 
       const ecosystemItems: EcosystemMapItem[] = [];
 
       // Procesar articuladores
       if (articuladoresRes.success && articuladoresRes.data) {
-        articuladoresRes.data.forEach((art) => {
+        articuladoresRes.data.forEach(art => {
           const coords = this.getCoordinatesForLocation(
-            art.latitud,
-            art.longitud,
+            art.latitud, 
+            art.longitud, 
             art.departamento || art.region
           );
-
+          
           ecosystemItems.push({
             id: art.id || 0,
             nombre: art.nombre,
@@ -82,7 +100,7 @@ export class EcosystemService {
             latitud: coords.latitud,
             longitud: coords.longitud,
             experiencia: art.tipo,
-            areasExperiencia: art.tipo,
+            areasExperiencia: art.tipo
           });
         });
       }
@@ -92,10 +110,10 @@ export class EcosystemService {
         empresasRes.forEach((empresa: Company) => {
           // Skip empresas de test/dummy
           if (empresa.name === "string" || empresa.url === "string") return;
-
+          
           const coords = this.getCoordinatesForLocation(
-            empresa.latitud,
-            empresa.longitud,
+            empresa.latitud, 
+            empresa.longitud, 
             empresa.departamento || empresa.department
           );
 
@@ -109,7 +127,7 @@ export class EcosystemService {
             latitud: coords.latitud,
             longitud: coords.longitud,
             industry: empresa.industry || empresa.sector,
-            fundada: empresa.founded,
+            fundada: empresa.founded
           });
         });
       }
@@ -118,8 +136,8 @@ export class EcosystemService {
       if (Array.isArray(convocatoriasRes)) {
         convocatoriasRes.forEach((conv: Convocatoria) => {
           const coords = this.getCoordinatesForLocation(
-            undefined,
-            undefined,
+            undefined, 
+            undefined, 
             "antioquia" // Default para convocatorias
           );
 
@@ -134,7 +152,7 @@ export class EcosystemService {
             entidad: conv.entidad,
             fechaInicio: conv.fechaInicio,
             fechaFin: conv.fechaFin,
-            estado: conv.estado,
+            estado: conv.estado
           });
         });
       }
