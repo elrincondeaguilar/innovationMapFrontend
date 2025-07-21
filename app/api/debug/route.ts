@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
-    ? process.env.NEXT_PUBLIC_BACKEND_URL.endsWith('/api')
+    ? process.env.NEXT_PUBLIC_BACKEND_URL.endsWith("/api")
       ? process.env.NEXT_PUBLIC_BACKEND_URL
       : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api`
     : "https://backinovationmap.onrender.com/api";
@@ -16,6 +16,6 @@ export async function GET() {
     allEnvVars: {
       NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
       NODE_ENV: process.env.NODE_ENV,
-    }
+    },
   });
 }

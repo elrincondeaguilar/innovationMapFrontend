@@ -2,10 +2,7 @@
 export interface EcosystemMapItem {
   id: number;
   nombre: string;
-  tipo:
-    | "Company"
-    | "Articulador"
-    | "Convocatoria";
+  tipo: "Company" | "Articulador" | "Convocatoria";
   descripcion?: string;
   ciudad?: string;
   departamento?: string;

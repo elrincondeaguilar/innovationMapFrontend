@@ -133,8 +133,8 @@ export default function MapaSimple({
         setLoading(true);
         setError(null);
 
-      // Usar el servicio que incluye empresas
-      const result = await EcosystemService.getAllEcosystemItems();        // Solo actualizar estado si el componente sigue montado
+        // Usar el servicio que incluye empresas
+        const result = await EcosystemService.getAllEcosystemItems(); // Solo actualizar estado si el componente sigue montado
         if (isMounted) {
           if (result.success && result.data) {
             setEcosystemItems(result.data);
@@ -142,8 +142,9 @@ export default function MapaSimple({
               console.log("🗺️ Ecosystem items loaded:", result.data.length);
               console.log("🗺️ Raw ecosystem data:", result.data);
               console.log("🗺️ Items by type:", {
-                companies: result.data.filter((item: EcosystemMapItem) => item.tipo === "Company")
-                  .length,
+                companies: result.data.filter(
+                  (item: EcosystemMapItem) => item.tipo === "Company"
+                ).length,
                 articuladores: result.data.filter(
                   (item: EcosystemMapItem) => item.tipo === "Articulador"
                 ).length,
@@ -151,12 +152,19 @@ export default function MapaSimple({
                   (item: EcosystemMapItem) => item.tipo === "Convocatoria"
                 ).length,
               });
-              
+
               // Debug de coordenadas
-              const itemsWithCoords = result.data.filter(item => item.latitud && item.longitud);
-              const itemsWithoutCoords = result.data.filter(item => !item.latitud || !item.longitud);
+              const itemsWithCoords = result.data.filter(
+                (item) => item.latitud && item.longitud
+              );
+              const itemsWithoutCoords = result.data.filter(
+                (item) => !item.latitud || !item.longitud
+              );
               console.log("🗺️ Items WITH coordinates:", itemsWithCoords.length);
-              console.log("🗺️ Items WITHOUT coordinates:", itemsWithoutCoords.length);
+              console.log(
+                "🗺️ Items WITHOUT coordinates:",
+                itemsWithoutCoords.length
+              );
               console.log("🗺️ Items WITH coordinates:", itemsWithCoords);
               console.log("🗺️ Items WITHOUT coordinates:", itemsWithoutCoords);
             }

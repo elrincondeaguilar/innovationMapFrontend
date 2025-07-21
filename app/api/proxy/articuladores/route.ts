@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL
-    ? process.env.NEXT_PUBLIC_BACKEND_URL.endsWith('/api')
-      ? process.env.NEXT_PUBLIC_BACKEND_URL
-      : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api`
-    : "https://backinovationmap.onrender.com/api";
+const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+  ? process.env.NEXT_PUBLIC_BACKEND_URL.endsWith("/api")
+    ? process.env.NEXT_PUBLIC_BACKEND_URL
+    : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api`
+  : "https://backinovationmap.onrender.com/api";
 
 export async function GET() {
   try {
@@ -84,8 +83,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const id = url.searchParams.get('id');
-    
+    const id = url.searchParams.get("id");
+
     if (!id) {
       return NextResponse.json(
         { error: "ID parameter is required" },
@@ -97,7 +96,7 @@ export async function DELETE(request: NextRequest) {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       return NextResponse.json(
@@ -105,8 +104,11 @@ export async function DELETE(request: NextRequest) {
         { status: response.status }
       );
     }
-    
-    const data = response.status === 204 ? { message: "Deleted successfully" } : await response.json();
+
+    const data =
+      response.status === 204
+        ? { message: "Deleted successfully" }
+        : await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Articuladores DELETE proxy error:", error);
@@ -123,8 +125,8 @@ export async function DELETE(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const id = url.searchParams.get('id');
-    
+    const id = url.searchParams.get("id");
+
     if (!id) {
       return NextResponse.json(
         { error: "ID parameter is required" },
@@ -138,7 +140,7 @@ export async function PUT(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       return NextResponse.json(
@@ -146,7 +148,7 @@ export async function PUT(request: NextRequest) {
         { status: response.status }
       );
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {

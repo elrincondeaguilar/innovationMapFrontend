@@ -2,12 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
-import {
-  ArticuladorService,
-} from "../../services/nuevasEntidadesService";
-import {
-  Articulador,
-} from "../../types/api";
+import { ArticuladorService } from "../../services/nuevasEntidadesService";
+import { Articulador } from "../../types/api";
 
 export default function ArticuladoresPage() {
   const [loading, setLoading] = useState(false);
@@ -16,11 +12,16 @@ export default function ArticuladoresPage() {
 
   // Estados para articuladores
   const [articuladores, setArticuladores] = useState<Articulador[]>([]);
-  const [ordenamiento, setOrdenamiento] = useState<"recientes" | "antiguas" | "alfabetico">("recientes");
-  const [articuladoresOrdenados, setArticuladoresOrdenados] = useState<Articulador[]>([]);
+  const [ordenamiento, setOrdenamiento] = useState<
+    "recientes" | "antiguas" | "alfabetico"
+  >("recientes");
+  const [articuladoresOrdenados, setArticuladoresOrdenados] = useState<
+    Articulador[]
+  >([]);
 
   // Estados para edición
-  const [editandoArticulador, setEditandoArticulador] = useState<Articulador | null>(null);
+  const [editandoArticulador, setEditandoArticulador] =
+    useState<Articulador | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
 
   // Función para ordenar articuladores
@@ -36,7 +37,9 @@ export default function ArticuladoresPage() {
       case "antiguas":
         return articuladoresCopia.sort((a, b) => (a.id || 0) - (b.id || 0));
       case "alfabetico":
-        return articuladoresCopia.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        return articuladoresCopia.sort((a, b) =>
+          a.nombre.localeCompare(b.nombre)
+        );
       default:
         return articuladoresCopia;
     }
@@ -45,7 +48,10 @@ export default function ArticuladoresPage() {
   // Efecto para aplicar ordenamiento
   useEffect(() => {
     if (articuladores.length > 0) {
-      const articuladoresOrdenados = ordenarArticuladores(articuladores, ordenamiento);
+      const articuladoresOrdenados = ordenarArticuladores(
+        articuladores,
+        ordenamiento
+      );
       setArticuladoresOrdenados(articuladoresOrdenados);
     }
   }, [articuladores, ordenamiento]);
@@ -111,10 +117,16 @@ export default function ArticuladoresPage() {
   };
 
   // Función para manejar cambios en formularios de edición
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     if (!editandoArticulador) return;
     const { name, value } = e.target;
-    setEditandoArticulador(prev => prev ? { ...prev, [name]: value } : null);
+    setEditandoArticulador((prev) =>
+      prev ? { ...prev, [name]: value } : null
+    );
   };
 
   // Función para guardar cambios
@@ -260,8 +272,8 @@ export default function ArticuladoresPage() {
                 />
               </svg>
               <span>
-                Mostrando {articuladoresOrdenados.length} de {articuladores.length}{" "}
-                articuladores
+                Mostrando {articuladoresOrdenados.length} de{" "}
+                {articuladores.length} articuladores
               </span>
             </div>
           </div>
@@ -323,7 +335,9 @@ export default function ArticuladoresPage() {
                     <option value="Academia">Academia</option>
                     <option value="Gobierno">Gobierno</option>
                     <option value="Corporativo">Corporativo</option>
-                    <option value="Hub/Centro de innovación">Hub/Centro de innovación</option>
+                    <option value="Hub/Centro de innovación">
+                      Hub/Centro de innovación
+                    </option>
                     <option value="Otros">Otros</option>
                   </select>
                 </div>
@@ -361,11 +375,15 @@ export default function ArticuladoresPage() {
                     <option value="Magdalena">Magdalena</option>
                     <option value="Meta">Meta</option>
                     <option value="Nariño">Nariño</option>
-                    <option value="Norte de Santander">Norte de Santander</option>
+                    <option value="Norte de Santander">
+                      Norte de Santander
+                    </option>
                     <option value="Putumayo">Putumayo</option>
                     <option value="Quindío">Quindío</option>
                     <option value="Risaralda">Risaralda</option>
-                    <option value="San Andrés y Providencia">San Andrés y Providencia</option>
+                    <option value="San Andrés y Providencia">
+                      San Andrés y Providencia
+                    </option>
                     <option value="Santander">Santander</option>
                     <option value="Sucre">Sucre</option>
                     <option value="Tolima">Tolima</option>

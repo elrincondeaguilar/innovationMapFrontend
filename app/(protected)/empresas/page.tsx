@@ -130,7 +130,7 @@ export default function EmpresasPage() {
 
         // Extraer dominio
         const domain = new URL(formattedUrl).hostname;
-        
+
         // Skip si el dominio es inválido
         if (!domain || domain === "string" || domain.length < 3) {
           console.warn("Invalid domain for logo extraction:", domain);
@@ -152,7 +152,7 @@ export default function EmpresasPage() {
           try {
             // Skip URLs que contengan "string" literal
             if (logoUrl.includes("/string")) continue;
-            
+
             const response = await fetch(logoUrl, { method: "HEAD" });
             if (response.ok && editandoEmpresa) {
               setEditandoEmpresa((prev) =>

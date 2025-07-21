@@ -4,7 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Navbar from "../../components/Navbar";
-import { CreateEmpresaRequest, CreateArticuladorRequest } from "../../types/api";
+import {
+  CreateEmpresaRequest,
+  CreateArticuladorRequest,
+} from "../../types/api";
 import { EmpresaService } from "../../services/backendService";
 import { ArticuladorService } from "../../services/nuevasEntidadesService";
 
@@ -12,7 +15,9 @@ export default function RegistroPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [logoLoading, setLogoLoading] = useState(false);
-  const [tipoEntidad, setTipoEntidad] = useState<"empresa" | "articulador">("empresa");
+  const [tipoEntidad, setTipoEntidad] = useState<"empresa" | "articulador">(
+    "empresa"
+  );
   const [formData, setFormData] = useState<CreateEmpresaRequest>({
     name: "",
     url: "",
@@ -21,16 +26,17 @@ export default function RegistroPage() {
     department: "",
     description: "",
   });
-  const [articuladorData, setArticuladorData] = useState<CreateArticuladorRequest>({
-    nombre: "",
-    descripcion: "",
-    tipo: "",
-    experiencia: "",
-    areasExperiencia: "",
-    contacto: "",
-    ciudad: "",
-    departamento: "",
-  });
+  const [articuladorData, setArticuladorData] =
+    useState<CreateArticuladorRequest>({
+      nombre: "",
+      descripcion: "",
+      tipo: "",
+      experiencia: "",
+      areasExperiencia: "",
+      contacto: "",
+      ciudad: "",
+      departamento: "",
+    });
 
   // Función para extraer el logo automáticamente
   const extractLogoFromUrl = async (url: string) => {
@@ -192,7 +198,9 @@ export default function RegistroPage() {
             Registrar Nueva Entidad
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Añade tu {tipoEntidad === "empresa" ? "empresa" : "perfil como articulador"} al ecosistema de innovación colombiano
+            Añade tu{" "}
+            {tipoEntidad === "empresa" ? "empresa" : "perfil como articulador"}{" "}
+            al ecosistema de innovación colombiano
           </p>
         </div>
 
@@ -229,7 +237,9 @@ export default function RegistroPage() {
                       />
                     </svg>
                     <span className="font-semibold">Empresa</span>
-                    <span className="text-xs mt-1 opacity-75">Organización o startup</span>
+                    <span className="text-xs mt-1 opacity-75">
+                      Organización o startup
+                    </span>
                   </div>
                 </button>
                 <button
@@ -256,7 +266,9 @@ export default function RegistroPage() {
                       />
                     </svg>
                     <span className="font-semibold">Articulador</span>
-                    <span className="text-xs mt-1 opacity-75">Facilitador del ecosistema</span>
+                    <span className="text-xs mt-1 opacity-75">
+                      Facilitador del ecosistema
+                    </span>
                   </div>
                 </button>
               </div>
@@ -265,482 +277,490 @@ export default function RegistroPage() {
             {tipoEntidad === "empresa" ? (
               // Formulario para Empresas
               <>
-            {/* Nombre de la empresa */}
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Nombre de la empresa *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                {/* Nombre de la empresa */}
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nombre de la empresa *
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      name="name"
+                      type="text"
+                      placeholder="Ejemplo: Innovación Tech SAS"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                     />
-                  </svg>
+                  </div>
                 </div>
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Ejemplo: Innovación Tech SAS"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
-                />
-              </div>
-            </div>
 
-            {/* URL del sitio web */}
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                URL del sitio web *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                {/* URL del sitio web */}
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    URL del sitio web *
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      name="url"
+                      type="url"
+                      placeholder="https://www.empresa.com"
+                      value={formData.url}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                     />
-                  </svg>
+                  </div>
                 </div>
-                <input
-                  name="url"
-                  type="url"
-                  placeholder="https://www.empresa.com"
-                  value={formData.url}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
-                />
-              </div>
-            </div>
 
-            {/* URL del logo */}
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                URL del logo (opcional)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  {logoLoading ? (
-                    <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <svg
-                      className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                {/* URL del logo */}
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    URL del logo (opcional)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      {logoLoading ? (
+                        <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <svg
+                          className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <input
+                      name="logoUrl"
+                      type="url"
+                      placeholder={
+                        logoLoading
+                          ? "Extrayendo logo automáticamente..."
+                          : "https://www.empresa.com/logo.png"
+                      }
+                      value={formData.logoUrl}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-32 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => extractLogoFromUrl(formData.url)}
+                      disabled={!formData.url || logoLoading}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                      title="Extraer logo automáticamente"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  {formData.logoUrl && (
+                    <div className="mt-3 flex items-center space-x-3">
+                      <span className="text-sm text-gray-600">
+                        Vista previa:
+                      </span>
+                      <Image
+                        src={formData.logoUrl}
+                        alt="Logo preview"
+                        width={32}
+                        height={32}
+                        className="object-contain rounded border border-gray-200"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
                       />
-                    </svg>
+                    </div>
                   )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 El logo se extraerá automáticamente cuando ingreses la
+                    URL de la empresa
+                  </p>
                 </div>
-                <input
-                  name="logoUrl"
-                  type="url"
-                  placeholder={
-                    logoLoading
-                      ? "Extrayendo logo automáticamente..."
-                      : "https://www.empresa.com/logo.png"
-                  }
-                  value={formData.logoUrl}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-32 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => extractLogoFromUrl(formData.url)}
-                  disabled={!formData.url || logoLoading}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                  title="Extraer logo automáticamente"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sector *
+                  </label>
+                  <select
+                    name="sector"
+                    value={formData.sector}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                </button>
-              </div>
-              {formData.logoUrl && (
-                <div className="mt-3 flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">Vista previa:</span>
-                  <Image
-                    src={formData.logoUrl}
-                    alt="Logo preview"
-                    width={32}
-                    height={32}
-                    className="object-contain rounded border border-gray-200"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
+                    <option value="">Selecciona un sector</option>
+                    <option value="Tecnología">Tecnología</option>
+                    <option value="Educación">Educación</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Energía">Energía</option>
+                    <option value="Fintech">Fintech</option>
+                    <option value="Agroindustria">Agroindustria</option>
+                    <option value="Manufactura">Manufactura</option>
+                    <option value="Servicios">Servicios</option>
+                    <option value="Otros">Otros</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Departamento *
+                  </label>
+                  <select
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
+                  >
+                    <option value="">Selecciona un departamento</option>
+                    <option value="Amazonas">Amazonas</option>
+                    <option value="Antioquia">Antioquia</option>
+                    <option value="Arauca">Arauca</option>
+                    <option value="Atlántico">Atlántico</option>
+                    <option value="Bolívar">Bolívar</option>
+                    <option value="Boyacá">Boyacá</option>
+                    <option value="Caldas">Caldas</option>
+                    <option value="Caquetá">Caquetá</option>
+                    <option value="Casanare">Casanare</option>
+                    <option value="Cauca">Cauca</option>
+                    <option value="Cesar">Cesar</option>
+                    <option value="Chocó">Chocó</option>
+                    <option value="Córdoba">Córdoba</option>
+                    <option value="Cundinamarca">Cundinamarca</option>
+                    <option value="Guainía">Guainía</option>
+                    <option value="Guaviare">Guaviare</option>
+                    <option value="Huila">Huila</option>
+                    <option value="La Guajira">La Guajira</option>
+                    <option value="Magdalena">Magdalena</option>
+                    <option value="Meta">Meta</option>
+                    <option value="Nariño">Nariño</option>
+                    <option value="Norte de Santander">
+                      Norte de Santander
+                    </option>
+                    <option value="Putumayo">Putumayo</option>
+                    <option value="Quindío">Quindío</option>
+                    <option value="Risaralda">Risaralda</option>
+                    <option value="San Andrés y Providencia">
+                      San Andrés y Providencia
+                    </option>
+                    <option value="Santander">Santander</option>
+                    <option value="Sucre">Sucre</option>
+                    <option value="Tolima">Tolima</option>
+                    <option value="Valle del Cauca">Valle del Cauca</option>
+                    <option value="Vaupés">Vaupés</option>
+                    <option value="Vichada">Vichada</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descripción de la empresa *
+                  </label>
+                  <textarea
+                    name="description"
+                    rows={4}
+                    placeholder="Describe brevemente los productos o servicios de tu empresa..."
+                    value={formData.description}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
                   />
                 </div>
-              )}
-              <p className="text-xs text-gray-500 mt-2">
-                💡 El logo se extraerá automáticamente cuando ingreses la URL de
-                la empresa
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sector *
-              </label>
-              <select
-                name="sector"
-                value={formData.sector}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-              >
-                <option value="">Selecciona un sector</option>
-                <option value="Tecnología">Tecnología</option>
-                <option value="Educación">Educación</option>
-                <option value="Salud">Salud</option>
-                <option value="Energía">Energía</option>
-                <option value="Fintech">Fintech</option>
-                <option value="Agroindustria">Agroindustria</option>
-                <option value="Manufactura">Manufactura</option>
-                <option value="Servicios">Servicios</option>
-                <option value="Otros">Otros</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Departamento *
-              </label>
-              <select
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-              >
-                <option value="">Selecciona un departamento</option>
-                <option value="Amazonas">Amazonas</option>
-                <option value="Antioquia">Antioquia</option>
-                <option value="Arauca">Arauca</option>
-                <option value="Atlántico">Atlántico</option>
-                <option value="Bolívar">Bolívar</option>
-                <option value="Boyacá">Boyacá</option>
-                <option value="Caldas">Caldas</option>
-                <option value="Caquetá">Caquetá</option>
-                <option value="Casanare">Casanare</option>
-                <option value="Cauca">Cauca</option>
-                <option value="Cesar">Cesar</option>
-                <option value="Chocó">Chocó</option>
-                <option value="Córdoba">Córdoba</option>
-                <option value="Cundinamarca">Cundinamarca</option>
-                <option value="Guainía">Guainía</option>
-                <option value="Guaviare">Guaviare</option>
-                <option value="Huila">Huila</option>
-                <option value="La Guajira">La Guajira</option>
-                <option value="Magdalena">Magdalena</option>
-                <option value="Meta">Meta</option>
-                <option value="Nariño">Nariño</option>
-                <option value="Norte de Santander">Norte de Santander</option>
-                <option value="Putumayo">Putumayo</option>
-                <option value="Quindío">Quindío</option>
-                <option value="Risaralda">Risaralda</option>
-                <option value="San Andrés y Providencia">
-                  San Andrés y Providencia
-                </option>
-                <option value="Santander">Santander</option>
-                <option value="Sucre">Sucre</option>
-                <option value="Tolima">Tolima</option>
-                <option value="Valle del Cauca">Valle del Cauca</option>
-                <option value="Vaupés">Vaupés</option>
-                <option value="Vichada">Vichada</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción de la empresa *
-              </label>
-              <textarea
-                name="description"
-                rows={4}
-                placeholder="Describe brevemente los productos o servicios de tu empresa..."
-                value={formData.description}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
-              />
-            </div>
-            </>
+              </>
             ) : (
               // Formulario para Articuladores
               <>
-            {/* Nombre del articulador */}
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Nombre completo *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                {/* Nombre del articulador */}
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nombre completo *
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      name="nombre"
+                      type="text"
+                      placeholder="Ejemplo: Juan Carlos Pérez"
+                      value={articuladorData.nombre}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
                     />
-                  </svg>
+                  </div>
                 </div>
-                <input
-                  name="nombre"
-                  type="text"
-                  placeholder="Ejemplo: Juan Carlos Pérez"
-                  value={articuladorData.nombre}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
-                />
-              </div>
-            </div>
 
-            {/* Tipo de articulador */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de articulador *
-              </label>
-              <select
-                name="tipo"
-                value={articuladorData.tipo}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-              >
-                <option value="">Selecciona un tipo</option>
-                <option value="Consultor">Consultor</option>
-                <option value="Mentor">Mentor</option>
-                <option value="Inversionista">Inversionista</option>
-                <option value="Acelerador">Acelerador</option>
-                <option value="Academia">Academia</option>
-                <option value="Gobierno">Gobierno</option>
-                <option value="Corporativo">Corporativo</option>
-                <option value="Hub/Centro de innovación">Hub/Centro de innovación</option>
-                <option value="Otros">Otros</option>
-              </select>
-            </div>
-
-            {/* Áreas de experiencia */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Áreas de experiencia *
-              </label>
-              <select
-                name="areasExperiencia"
-                value={articuladorData.areasExperiencia}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-              >
-                <option value="">Selecciona un área</option>
-                <option value="Tecnología">Tecnología</option>
-                <option value="Educación">Educación</option>
-                <option value="Salud">Salud</option>
-                <option value="Energía">Energía</option>
-                <option value="Fintech">Fintech</option>
-                <option value="Agroindustria">Agroindustria</option>
-                <option value="Manufactura">Manufactura</option>
-                <option value="Servicios">Servicios</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Ventas">Ventas</option>
-                <option value="Finanzas">Finanzas</option>
-                <option value="Operaciones">Operaciones</option>
-                <option value="Otros">Otros</option>
-              </select>
-            </div>
-
-            {/* Ciudad */}
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Ciudad *
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {/* Tipo de articulador */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo de articulador *
+                  </label>
+                  <select
+                    name="tipo"
+                    value={articuladorData.tipo}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                    <option value="">Selecciona un tipo</option>
+                    <option value="Consultor">Consultor</option>
+                    <option value="Mentor">Mentor</option>
+                    <option value="Inversionista">Inversionista</option>
+                    <option value="Acelerador">Acelerador</option>
+                    <option value="Academia">Academia</option>
+                    <option value="Gobierno">Gobierno</option>
+                    <option value="Corporativo">Corporativo</option>
+                    <option value="Hub/Centro de innovación">
+                      Hub/Centro de innovación
+                    </option>
+                    <option value="Otros">Otros</option>
+                  </select>
                 </div>
-                <input
-                  name="ciudad"
-                  type="text"
-                  placeholder="Ejemplo: Medellín"
-                  value={articuladorData.ciudad}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
-                />
-              </div>
-            </div>
 
-            {/* Departamento para articuladores */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Departamento *
-              </label>
-              <select
-                name="departamento"
-                value={articuladorData.departamento}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-              >
-                <option value="">Selecciona un departamento</option>
-                <option value="Amazonas">Amazonas</option>
-                <option value="Antioquia">Antioquia</option>
-                <option value="Arauca">Arauca</option>
-                <option value="Atlántico">Atlántico</option>
-                <option value="Bolívar">Bolívar</option>
-                <option value="Boyacá">Boyacá</option>
-                <option value="Caldas">Caldas</option>
-                <option value="Caquetá">Caquetá</option>
-                <option value="Casanare">Casanare</option>
-                <option value="Cauca">Cauca</option>
-                <option value="Cesar">Cesar</option>
-                <option value="Chocó">Chocó</option>
-                <option value="Córdoba">Córdoba</option>
-                <option value="Cundinamarca">Cundinamarca</option>
-                <option value="Guainía">Guainía</option>
-                <option value="Guaviare">Guaviare</option>
-                <option value="Huila">Huila</option>
-                <option value="La Guajira">La Guajira</option>
-                <option value="Magdalena">Magdalena</option>
-                <option value="Meta">Meta</option>
-                <option value="Nariño">Nariño</option>
-                <option value="Norte de Santander">Norte de Santander</option>
-                <option value="Putumayo">Putumayo</option>
-                <option value="Quindío">Quindío</option>
-                <option value="Risaralda">Risaralda</option>
-                <option value="San Andrés y Providencia">
-                  San Andrés y Providencia
-                </option>
-                <option value="Santander">Santander</option>
-                <option value="Sucre">Sucre</option>
-                <option value="Tolima">Tolima</option>
-                <option value="Valle del Cauca">Valle del Cauca</option>
-                <option value="Vaupés">Vaupés</option>
-                <option value="Vichada">Vichada</option>
-              </select>
-            </div>
-
-            {/* Contacto */}
-            <div className="group">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Información de contacto
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {/* Áreas de experiencia */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Áreas de experiencia *
+                  </label>
+                  <select
+                    name="areasExperiencia"
+                    value={articuladorData.areasExperiencia}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                    />
-                  </svg>
+                    <option value="">Selecciona un área</option>
+                    <option value="Tecnología">Tecnología</option>
+                    <option value="Educación">Educación</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Energía">Energía</option>
+                    <option value="Fintech">Fintech</option>
+                    <option value="Agroindustria">Agroindustria</option>
+                    <option value="Manufactura">Manufactura</option>
+                    <option value="Servicios">Servicios</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Ventas">Ventas</option>
+                    <option value="Finanzas">Finanzas</option>
+                    <option value="Operaciones">Operaciones</option>
+                    <option value="Otros">Otros</option>
+                  </select>
                 </div>
-                <input
-                  name="contacto"
-                  type="email"
-                  placeholder="correo@ejemplo.com"
-                  value={articuladorData.contacto}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
-                />
-              </div>
-            </div>
 
-            {/* Experiencia */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Experiencia profesional
-              </label>
-              <textarea
-                name="experiencia"
-                rows={3}
-                placeholder="Describe brevemente tu experiencia profesional y logros relevantes..."
-                value={articuladorData.experiencia}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
-              />
-            </div>
+                {/* Ciudad */}
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Ciudad *
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      name="ciudad"
+                      type="text"
+                      placeholder="Ejemplo: Medellín"
+                      value={articuladorData.ciudad}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                    />
+                  </div>
+                </div>
 
-            {/* Descripción */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción y servicios *
-              </label>
-              <textarea
-                name="descripcion"
-                rows={4}
-                placeholder="Describe los servicios que ofreces como articulador del ecosistema de innovación..."
-                value={articuladorData.descripcion}
-                onChange={handleChange}
-                required
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
-              />
-            </div>
-            </>
+                {/* Departamento para articuladores */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Departamento *
+                  </label>
+                  <select
+                    name="departamento"
+                    value={articuladorData.departamento}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
+                  >
+                    <option value="">Selecciona un departamento</option>
+                    <option value="Amazonas">Amazonas</option>
+                    <option value="Antioquia">Antioquia</option>
+                    <option value="Arauca">Arauca</option>
+                    <option value="Atlántico">Atlántico</option>
+                    <option value="Bolívar">Bolívar</option>
+                    <option value="Boyacá">Boyacá</option>
+                    <option value="Caldas">Caldas</option>
+                    <option value="Caquetá">Caquetá</option>
+                    <option value="Casanare">Casanare</option>
+                    <option value="Cauca">Cauca</option>
+                    <option value="Cesar">Cesar</option>
+                    <option value="Chocó">Chocó</option>
+                    <option value="Córdoba">Córdoba</option>
+                    <option value="Cundinamarca">Cundinamarca</option>
+                    <option value="Guainía">Guainía</option>
+                    <option value="Guaviare">Guaviare</option>
+                    <option value="Huila">Huila</option>
+                    <option value="La Guajira">La Guajira</option>
+                    <option value="Magdalena">Magdalena</option>
+                    <option value="Meta">Meta</option>
+                    <option value="Nariño">Nariño</option>
+                    <option value="Norte de Santander">
+                      Norte de Santander
+                    </option>
+                    <option value="Putumayo">Putumayo</option>
+                    <option value="Quindío">Quindío</option>
+                    <option value="Risaralda">Risaralda</option>
+                    <option value="San Andrés y Providencia">
+                      San Andrés y Providencia
+                    </option>
+                    <option value="Santander">Santander</option>
+                    <option value="Sucre">Sucre</option>
+                    <option value="Tolima">Tolima</option>
+                    <option value="Valle del Cauca">Valle del Cauca</option>
+                    <option value="Vaupés">Vaupés</option>
+                    <option value="Vichada">Vichada</option>
+                  </select>
+                </div>
+
+                {/* Contacto */}
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Información de contacto
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg
+                        className="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                        />
+                      </svg>
+                    </div>
+                    <input
+                      name="contacto"
+                      type="email"
+                      placeholder="correo@ejemplo.com"
+                      value={articuladorData.contacto}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Experiencia */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Experiencia profesional
+                  </label>
+                  <textarea
+                    name="experiencia"
+                    rows={3}
+                    placeholder="Describe brevemente tu experiencia profesional y logros relevantes..."
+                    value={articuladorData.experiencia}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
+                  />
+                </div>
+
+                {/* Descripción */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descripción y servicios *
+                  </label>
+                  <textarea
+                    name="descripcion"
+                    rows={4}
+                    placeholder="Describe los servicios que ofreces como articulador del ecosistema de innovación..."
+                    value={articuladorData.descripcion}
+                    onChange={handleChange}
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
+                  />
+                </div>
+              </>
             )}
 
             <button
@@ -769,7 +789,8 @@ export default function RegistroPage() {
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                    Registrar {tipoEntidad === "empresa" ? "Empresa" : "Articulador"}
+                    Registrar{" "}
+                    {tipoEntidad === "empresa" ? "Empresa" : "Articulador"}
                   </>
                 )}
               </div>
