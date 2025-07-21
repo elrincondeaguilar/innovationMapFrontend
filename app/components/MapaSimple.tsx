@@ -140,6 +140,7 @@ export default function MapaSimple({
             setEcosystemItems(result.data);
             if (process.env.NODE_ENV === "development") {
               console.log("🗺️ Ecosystem items loaded:", result.data.length);
+              console.log("🗺️ Raw ecosystem data:", result.data);
               console.log("🗺️ Items by type:", {
                 companies: result.data.filter((item: EcosystemMapItem) => item.tipo === "Company")
                   .length,
@@ -150,6 +151,14 @@ export default function MapaSimple({
                   (item: EcosystemMapItem) => item.tipo === "Convocatoria"
                 ).length,
               });
+              
+              // Debug de coordenadas
+              const itemsWithCoords = result.data.filter(item => item.latitud && item.longitud);
+              const itemsWithoutCoords = result.data.filter(item => !item.latitud || !item.longitud);
+              console.log("🗺️ Items WITH coordinates:", itemsWithCoords.length);
+              console.log("🗺️ Items WITHOUT coordinates:", itemsWithoutCoords.length);
+              console.log("🗺️ Items WITH coordinates:", itemsWithCoords);
+              console.log("🗺️ Items WITHOUT coordinates:", itemsWithoutCoords);
             }
           } else {
             setError(result.message || "Error al cargar datos");

@@ -4,16 +4,18 @@ import {
   ServiceResponse,
   EcosystemMapItem,
   Convocatoria,
+  Company,
 } from "../types/api";
 
 // Servicio para el ecosistema unificado
 export class EcosystemService {
   static async getAllEcosystemItems(): Promise<ServiceResponse<EcosystemMapItem[]>> {
     try {
-      // Obtener datos de articuladores y convocatorias
-      const [articuladoresRes, convocatoriasRes] = await Promise.all([
+      // Obtener datos de articuladores, convocatorias y empresas
+      const [articuladoresRes, convocatoriasRes, empresasRes] = await Promise.all([
         ArticuladorService.getAll(),
-        fetch("/api/proxy/convocatorias").then(res => res.json())
+        fetch("/api/proxy/convocatorias").then(res => res.json()),
+        fetch("/api/proxy/companies").then(res => res.json())
       ]);
 
       const ecosystemItems: EcosystemMapItem[] = [];
@@ -26,17 +28,35 @@ export class EcosystemService {
             nombre: art.nombre,
             tipo: "Articulador",
             descripcion: art.contacto,
-            ciudad: undefined,
-            departamento: art.region,
-            latitud: undefined,
-            longitud: undefined,
+            ciudad: art.ciudad,
+            departamento: art.departamento || art.region,
+            latitud: art.latitud,
+            longitud: art.longitud,
             experiencia: art.tipo,
             areasExperiencia: art.tipo
           });
         });
       }
 
-      // Procesar convocatorias (assuming we have them)
+      // Procesar empresas
+      if (Array.isArray(empresasRes)) {
+        empresasRes.forEach((empresa: Company) => {
+          ecosystemItems.push({
+            id: empresa.id || 0,
+            nombre: empresa.name,
+            tipo: "Company",
+            descripcion: empresa.description,
+            ciudad: empresa.ciudad,
+            departamento: empresa.departamento || empresa.department,
+            latitud: empresa.latitud,
+            longitud: empresa.longitud,
+            industry: empresa.industry || empresa.sector,
+            fundada: empresa.founded
+          });
+        });
+      }
+
+      // Procesar convocatorias
       if (Array.isArray(convocatoriasRes)) {
         convocatoriasRes.forEach((conv: Convocatoria) => {
           ecosystemItems.push({
