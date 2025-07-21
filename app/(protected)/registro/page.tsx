@@ -29,13 +29,9 @@ export default function RegistroPage() {
   const [articuladorData, setArticuladorData] =
     useState<CreateArticuladorRequest>({
       nombre: "",
-      descripcion: "",
       tipo: "",
-      experiencia: "",
-      areasExperiencia: "",
+      region: "",
       contacto: "",
-      ciudad: "",
-      departamento: "",
     });
 
   // Función para extraer el logo automáticamente
@@ -578,34 +574,7 @@ export default function RegistroPage() {
                   </select>
                 </div>
 
-                {/* Áreas de experiencia */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Áreas de experiencia *
-                  </label>
-                  <select
-                    name="areasExperiencia"
-                    value={articuladorData.areasExperiencia}
-                    onChange={handleChange}
-                    required
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900"
-                  >
-                    <option value="">Selecciona un área</option>
-                    <option value="Tecnología">Tecnología</option>
-                    <option value="Educación">Educación</option>
-                    <option value="Salud">Salud</option>
-                    <option value="Energía">Energía</option>
-                    <option value="Fintech">Fintech</option>
-                    <option value="Agroindustria">Agroindustria</option>
-                    <option value="Manufactura">Manufactura</option>
-                    <option value="Servicios">Servicios</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Ventas">Ventas</option>
-                    <option value="Finanzas">Finanzas</option>
-                    <option value="Operaciones">Operaciones</option>
-                    <option value="Otros">Otros</option>
-                  </select>
-                </div>
+                
 
                 {/* Ciudad */}
                 <div className="group">
@@ -730,20 +699,7 @@ export default function RegistroPage() {
                   </div>
                 </div>
 
-                {/* Experiencia */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Experiencia profesional
-                  </label>
-                  <textarea
-                    name="experiencia"
-                    rows={3}
-                    placeholder="Describe brevemente tu experiencia profesional y logros relevantes..."
-                    value={articuladorData.experiencia}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
-                  />
-                </div>
+                
 
                 {/* Descripción */}
                 <div>
@@ -754,7 +710,7 @@ export default function RegistroPage() {
                     name="descripcion"
                     rows={4}
                     placeholder="Describe los servicios que ofreces como articulador del ecosistema de innovación..."
-                    value={articuladorData.descripcion}
+                    value={articuladorData.Descripcion}
                     onChange={handleChange}
                     required
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-900 placeholder-gray-500 resize-none"

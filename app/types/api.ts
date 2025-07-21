@@ -199,14 +199,47 @@ export interface CreateEmpresaRequest {
 
 export interface CreateArticuladorRequest {
   nombre: string; // Requerido
-  descripcion?: string;
   tipo?: string;
-  experiencia?: string;
-  areasExperiencia?: string;
+  region?: string;
   contacto?: string;
   ciudad?: string;
   departamento?: string;
-  region?: string; // Legacy field
+  latitud?: number;
+  longitud?: number;
+
+  // --- CAMPOS EXTENDIDOS ---
+  Anio?: number;
+  Codigo?: string;
+  Sector?: string;
+  Entidad?: string;
+  InstrumentosOfertados?: string;
+  AntiguedadOferta?: number;
+  Pagina?: string;
+  Descripcion?: string;
+  UsuariosEmprendedores?: string;
+  UsuariosMiPymes?: string;
+  UsuariosGrandesEmpresas?: string;
+  UsuariosAcademia?: string;
+  UsuariosEntidadesGobierno?: string;
+  UsuariosOrganizacionesSoporte?: string;
+  UsuariosPersonasNaturales?: string;
+  // Tipos de apoyo
+  ApoyoFinanciero?: boolean;
+  AsistenciaTecnica?: boolean;
+  FormacionTalentoHumano?: boolean;
+  IncentivosTributarios?: boolean;
+  Eventos?: boolean;
+  CompraPublica?: boolean;
+  RedesColaboracion?: boolean;
+  BonosBouchers?: boolean;
+  SistemasInformacion?: boolean;
+  PremiosReconocimientos?: boolean;
+  InstrumentosRegulatorios?: boolean;
+  // Fechas
+  FechaApertura?: Date;
+  FechaCierre?: Date;
+  Cobertura?: string;
+  DepartamentosMunicipios?: string;
 }
 
 export interface UpdateConvocatoriaRequest
@@ -214,9 +247,55 @@ export interface UpdateConvocatoriaRequest
   estado?: "activa" | "cerrada" | "pendiente"; // Actualizado para coincidir con el backend
 }
 
-export interface AnalizarConvocatoriaRequest {
-  texto: string;
+// 🆕 ACTUALIZADA - Articulador con campos geográficos
+export interface Articulador {
+  id: number;
+  nombre: string;
+  tipo?: string;
+  region?: string;
+  contacto?: string;
+  ciudad?: string;
+  departamento?: string;
+  latitud?: number;
+  longitud?: number;
+  createdAt?: string;
+  updatedAt?: string;
+
+  // --- CAMPOS EXTENDIDOS ---
+  Anio?: number;
+  Codigo?: string;
+  Sector?: string;
+  Entidad?: string;
+  InstrumentosOfertados?: string;
+  AntiguedadOferta?: number;
+  Pagina?: string;
+  Descripcion?: string;
+  UsuariosEmprendedores?: string;
+  UsuariosMiPymes?: string;
+  UsuariosGrandesEmpresas?: string;
+  UsuariosAcademia?: string;
+  UsuariosEntidadesGobierno?: string;
+  UsuariosOrganizacionesSoporte?: string;
+  UsuariosPersonasNaturales?: string;
+  // Tipos de apoyo
+  ApoyoFinanciero: boolean;
+  AsistenciaTecnica: boolean;
+  FormacionTalentoHumano: boolean;
+  IncentivosTributarios: boolean;
+  Eventos: boolean;
+  CompraPublica: boolean;
+  RedesColaboracion: boolean;
+  BonosBouchers: boolean;
+  SistemasInformacion: boolean;
+  PremiosReconocimientos: boolean;
+  InstrumentosRegulatorios: boolean;
+  // Fechas
+  FechaApertura?: string;
+  FechaCierre?: string;
+  Cobertura?: string;
+  DepartamentosMunicipios?: string;
 }
+
 
 // Tipos para responses
 export interface PaginatedResponse<T> {
