@@ -195,19 +195,17 @@ export interface CreateEmpresaRequest {
   longitud?: number;
 }
 
-// 🆕 NUEVOS TIPOS DE REQUEST PARA LAS NUEVAS ENTIDADES
-
 export interface CreateArticuladorRequest {
-  nombre: string; // Requerido
+  nombre: string;
   tipo?: string;
   region?: string;
   contacto?: string;
-  ciudad?: string;
-  departamento?: string;
-  latitud?: number;
-  longitud?: number;
 
-  // --- CAMPOS EXTENDIDOS ---
+  Ciudad?: string;
+  Departamento?: string;
+  Latitud?: number;
+  Longitud?: number;
+
   Anio?: number;
   Codigo?: string;
   Sector?: string;
@@ -216,6 +214,7 @@ export interface CreateArticuladorRequest {
   AntiguedadOferta?: number;
   Pagina?: string;
   Descripcion?: string;
+
   UsuariosEmprendedores?: string;
   UsuariosMiPymes?: string;
   UsuariosGrandesEmpresas?: string;
@@ -223,7 +222,7 @@ export interface CreateArticuladorRequest {
   UsuariosEntidadesGobierno?: string;
   UsuariosOrganizacionesSoporte?: string;
   UsuariosPersonasNaturales?: string;
-  // Tipos de apoyo
+
   ApoyoFinanciero?: boolean;
   AsistenciaTecnica?: boolean;
   FormacionTalentoHumano?: boolean;
@@ -235,11 +234,75 @@ export interface CreateArticuladorRequest {
   SistemasInformacion?: boolean;
   PremiosReconocimientos?: boolean;
   InstrumentosRegulatorios?: boolean;
-  // Fechas
+
   FechaApertura?: Date;
   FechaCierre?: Date;
+
   Cobertura?: string;
   DepartamentosMunicipios?: string;
+
+  ObjetivoFormacionCapitalHumano?: string;
+  PorcentajeFormacionCapitalHumano?: number;
+  ObjetivoComercioElectronico?: string;
+  PorcentajeComercioElectronico?: number;
+  ObjetivoInnovacion?: string;
+  PorcentajeInnovacion?: number;
+  ObjetivoEmprendimiento?: string;
+  PorcentajeEmprendimiento?: number;
+  ObjetivoTransferenciaConocimientoTecnologia?: string;
+  PorcentajeTransferenciaConocimientoTecnologia?: number;
+  ObjetivoInvestigacion?: string;
+  PorcentajeInvestigacion?: number;
+  ObjetivoCalidad?: string;
+  PorcentajeCalidad?: number;
+  ObjetivoClusterEncadenamientos?: string;
+  PorcentajeClusterEncadenamientos?: number;
+  ObjetivoFinanciacion?: string;
+  PorcentajeFinanciacion?: number;
+  ObjetivoComercializacion?: string;
+  PorcentajeComercializacion?: number;
+  ObjetivoFormalizacion?: string;
+  PorcentajeFormalizacion?: number;
+  ObjetivoCrecimientoSostenible?: string;
+  PorcentajeCrecimientoSostenible?: number;
+  ObjetivoInclusionFinanciera?: string;
+  PorcentajeInclusionFinanciera?: number;
+
+  RecursosPGN?: number;
+  RecursosCooperacion?: number;
+  RecursosSGR?: number;
+  RecursosEsfuerzoFiscal?: number;
+  RecursosParafiscales?: number;
+  RecursosOtros?: number;
+  RecursosPrivado?: number;
+
+  DisenadoPorLeyOJuez?: boolean;
+  DisenadoPorPolitica?: boolean;
+  DescritoDocumentoInterno?: boolean;
+  OrigenInstrumento?: string;
+  SolucionaFallaMercadoGobiernoArticulacion?: boolean;
+  ExistenAlternativasInstrumento?: boolean;
+  ObjetivosFormulacionInstrumento?: string;
+  TieneMarcoLogico?: boolean;
+  InsumosFormulacionImplementacion?: string;
+  ActividadesFormulacionImplementacion?: string;
+  ProductosGeneradosInstrumento?: string;
+  ResultadosImpactosEsperados?: string;
+  PoblacionObjetivo?: string;
+  CriteriosFocalizacionBeneficiarios?: string;
+  AdaptaDiferenciasTerritorios?: boolean;
+  SeleccionBeneficiarios?: string;
+  AccesoBeneficiarios?: string;
+  TrazabilidadBeneficiarios?: boolean;
+  DisponibilidadRecursos?: boolean;
+  GestionOrganizativa?: string;
+  PersonalApoyoFormulacionImplementacion?: string;
+  GestionInformacionInstrumento?: string;
+  MonitoreoEvaluacionInstrumento?: string;
+  GestionAprendizajesInstrumento?: string;
+  RelacionConOtrosInstrumentos?: string;
+  ConsideraCoordinacionOtrasEntidades?: boolean;
+  BarrerasFuncionamientoInstrumento?: string;
 }
 
 export interface UpdateConvocatoriaRequest
@@ -295,7 +358,6 @@ export interface Articulador {
   Cobertura?: string;
   DepartamentosMunicipios?: string;
 }
-
 
 // Tipos para responses
 export interface PaginatedResponse<T> {
@@ -380,5 +442,6 @@ export interface ServiceResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
+  details?: string;
   error?: string;
 }
