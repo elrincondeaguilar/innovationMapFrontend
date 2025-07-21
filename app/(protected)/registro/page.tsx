@@ -123,7 +123,7 @@ export default function AdminEntidadesPage() {
 
   const [scrapingYear, setScrapingYear] = useState<string>("");
   const [scrapedData, setScrapedData] = useState<ScrapedArticulador[]>([]);
-  const [scrapingLoading, setScrapingLoading] = useState(false);
+  const [scrapingLoading, setLoadingScrape] = useState(false); // Renombrado para evitar conflicto con loading general
   const [scrapingError, setScrapingError] = useState<string>("");
 
   const [logoLoading, setLogoLoading] = useState(false);
@@ -268,7 +268,7 @@ export default function AdminEntidadesPage() {
       return;
     }
 
-    setLoading(true);
+    setLoading(true); // Usa el loading general para esta operación de guardado
     try {
       const resultado = await ArticuladorService.create(articuladorData);
       if (resultado.success) {
@@ -300,7 +300,7 @@ export default function AdminEntidadesPage() {
   };
 
   const handleScrape = async () => {
-    setScrapingLoading(true);
+    setLoadingScrape(true); // Usa el loading específico de scrape
     setScrapingError("");
     setScrapedData([]);
     limpiarMensajes();
@@ -308,7 +308,7 @@ export default function AdminEntidadesPage() {
       const response = await fetch(`/api/scrape/arco?year=${scrapingYear}`);
       const result = response.ok
         ? await response.json()
-        : { success: false, message: `HTTP error! Status: ${response.status}` }; // Handle non-ok responses
+        : { success: false, message: `HTTP error! Status: ${response.status}` };
 
       if (result.success) {
         if (result.data && result.data.length > 0) {
@@ -321,17 +321,15 @@ export default function AdminEntidadesPage() {
           setScrapedData([]);
         }
       } else {
-        // Muestra el mensaje de error del backend del scrape (proxy)
         setScrapingError(
           result.message || result.details || "Error en el scraping"
         );
       }
     } catch (err) {
-      // Catch network or JSON parsing errors
       console.error("Error en handleScrape:", err);
       setScrapingError("Error de red o en el servidor al realizar el scrapeo.");
     } finally {
-      setScrapingLoading(false);
+      setLoadingScrape(false);
     }
   };
 
@@ -1390,6 +1388,159 @@ export default function AdminEntidadesPage() {
                       </button>
                     </form>
                   </div>
+                </div>
+              )}
+              {activeTab === "scraping" && (
+                <div className="space-y-8">
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Scraping de Articuladores (ArCo)
+                    </h3>
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="number"
+                        value={scrapingYear}
+                        onChange={(e) => setScrapingYear(e.target.value)}
+                        placeholder="Año"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
+                      />
+                      <button
+                        onClick={handleScrape}
+                        disabled={scrapingLoading}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-200"
+                      >
+                        {scrapingLoading ? "Buscando..." : "Buscar"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {scrapingError && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                      <p className="text-red-700 text-sm">{scrapingError}</p>
+                    </div>
+                  )}
+
+                  {scrapedData.length > 0 && (
+                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                      {scrapedData.map((item, index) => (
+                        <div
+                          key={index}
+                          className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200"
+                        >
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <h4 className="text-xl font-bold text-gray-800 mb-2">
+                                {item.instrumentos_ofertados ||
+                                  "Sin Nombre de Instrumento"}
+                              </h4>
+                              <p className="text-sm text-gray-700">
+                                <span className="font-semibold">Entidad:</span>{" "}
+                                {item.entidad || "N/A"}
+                              </p>
+                              <p className="text-sm text-gray-700">
+                                <span className="font-semibold">Tipo:</span>{" "}
+                                {"N/A"}{" "}
+                                {/* Este campo no viene de la API, se muestra N/A */}
+                              </p>
+                              <p className="text-sm text-gray-700">
+                                <span className="font-semibold">
+                                  Cobertura:
+                                </span>{" "}
+                                {item.cobertura || "N/A"}
+                              </p>
+                              {item.p_gina && (
+                                <p className="text-sm text-blue-600 hover:underline mt-1">
+                                  <a
+                                    href={item.p_gina}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    Ver Instrumento
+                                  </a>
+                                </p>
+                              )}
+                            </div>
+                            <div className="ml-4">
+                              <button
+                                onClick={() =>
+                                  handleSelectScrapedArticuladorForRegistration(
+                                    item
+                                  )
+                                }
+                                disabled={loading}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-semibold rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                                title="Pre-llenar formulario de registro"
+                              >
+                                Pre-llenar y Guardar
+                              </button>
+                            </div>
+                          </div>
+
+                          <details className="mt-4 border-t border-gray-100 pt-4">
+                            <summary className="text-sm font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors duration-200">
+                              Ver más detalles
+                            </summary>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 mt-4 text-sm text-gray-600">
+                              <p>
+                                <span className="font-semibold">
+                                  Año de Corte:
+                                </span>{" "}
+                                {item.a_o || "N/A"}
+                              </p>
+                              <p>
+                                <span className="font-semibold">Código:</span>{" "}
+                                {item.c_digo || "N/A"}
+                              </p>
+                              <p>
+                                <span className="font-semibold">Sector:</span>{" "}
+                                {item.sector || "N/A"}
+                              </p>
+                              <p>
+                                <span className="font-semibold">
+                                  Instrumentos Ofertados:
+                                </span>{" "}
+                                {item.instrumentos_ofertados || "N/A"}
+                              </p>
+                              <p>
+                                <span className="font-semibold">
+                                  Antigüedad de la Oferta:
+                                </span>{" "}
+                                {item.antig_edad_oferta || "N/A"}
+                              </p>
+                              <p>
+                                <span className="font-semibold">
+                                  Fecha de Apertura:
+                                </span>{" "}
+                                {item.fecha_apertura || "N/A"}
+                              </p>
+                              <p>
+                                <span className="font-semibold">
+                                  Fecha de Cierre:
+                                </span>{" "}
+                                {item.fecha_cierre || "N/A"}
+                              </p>
+                              <p>
+                                <span className="font-semibold">
+                                  Dptos/Mpios Beneficiados:
+                                </span>{" "}
+                                {item.departamentos_y_municipios || "N/A"}
+                              </p>
+                              {item.descripci_n && (
+                                <div className="col-span-full mt-2">
+                                  <p className="font-semibold mb-1">
+                                    Descripción:
+                                  </p>
+                                  <p className="whitespace-pre-wrap">
+                                    {item.descripci_n}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </details>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

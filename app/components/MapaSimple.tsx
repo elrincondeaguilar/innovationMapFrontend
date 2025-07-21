@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Company, EcosystemMapItem } from "../types/api";
 import { EcosystemService } from "../services/nuevasEntidadesService";
+import { useSearchParams } from "next/navigation";
 
 // Función para agrupar elementos por ubicación
 function groupByLocation(
@@ -123,6 +124,9 @@ export default function MapaSimple({
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [mostrarLeyenda, setMostrarLeyenda] = useState(false);
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  //recargar los datos
+  const searchParams = useSearchParams();
+  const lastUpdate = searchParams.get("lastUpdate");
 
   // Cargar datos del ecosistema
   useEffect(() => {
@@ -190,7 +194,7 @@ export default function MapaSimple({
     return () => {
       isMounted = false;
     };
-  }, []); // Sin dependencias para evitar recargas innecesarias
+  }, [lastUpdate]); // Sin dependencias para evitar recargas innecesarias
 
   // Cerrar paneles móviles al hacer click en el mapa
   useEffect(() => {
