@@ -82,6 +82,14 @@ const getEstadoDisplayText = (estado: string): string => {
   }
 };
 
+function safeToISOString(dateStr: string | undefined, fallback: Date): string {
+  if (!dateStr || ["null", "No especificada", ""].includes(dateStr)) {
+    return fallback.toISOString();
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? fallback.toISOString() : d.toISOString();
+}
+
 export default function ConvocatoriasPage() {
   const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -107,6 +115,7 @@ export default function ConvocatoriasPage() {
     requisitos: [],
     presupuesto: undefined, // Incluir presupuesto en el estado inicial
     companyId: undefined, // Nuevo campo para la empresa
+    enlace: "",
   });
 
   // Función helper para formatear fechas de manera segura
@@ -216,10 +225,27 @@ export default function ConvocatoriasPage() {
 
       if (editingConvocatoria) {
         // Editar convocatoria existente
-        resultado = await ConvocatoriaService.actualizarConvocatoria(
-          editingConvocatoria.id!,
-          formData
-        );
+        const payload = {
+          titulo: formData.titulo,
+          descripcion: formData.descripcion,
+          fechaInicio: safeToISOString(
+            formData.fechaInicio,
+            new Date()
+          ),
+          fechaFin: safeToISOString(
+            formData.fechaFin,
+            new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          ),
+          categoria: formData.categoria,
+          entidad: formData.entidad,
+          enlace: formData.enlace || "", // siempre string
+          estado: formData.estado,
+          estadoManual: formData.estadoManual,
+          requisitos: formData.requisitos,
+          ...(typeof formData.companyId === 'number' && { companyId: formData.companyId }),
+          ...(typeof formData.presupuesto === 'number' && { presupuesto: formData.presupuesto })
+        };
+        resultado = await ConvocatoriaService.actualizarConvocatoria(editingConvocatoria.id!, payload);
       } else {
         // Crear nueva convocatoria
         resultado = await ConvocatoriaService.crearConvocatoria(formData);
@@ -240,6 +266,7 @@ export default function ConvocatoriasPage() {
           requisitos: [],
           presupuesto: undefined,
           companyId: undefined,
+          enlace: "",
         });
         cargarConvocatorias(); // Recargar la lista
       } else {
@@ -276,6 +303,7 @@ export default function ConvocatoriasPage() {
       requisitos: convocatoria.requisitos || [],
       presupuesto: convocatoria.presupuesto || undefined, // Incluir presupuesto
       companyId: convocatoria.companyId || undefined, // Incluir companyId
+      enlace: convocatoria.enlace || "",
     };
 
     setFormData(formDataToSet);
@@ -296,6 +324,7 @@ export default function ConvocatoriasPage() {
       requisitos: [],
       presupuesto: undefined, // Incluir presupuesto en el reset
       companyId: undefined, // Incluir companyId en el reset
+      enlace: "",
     });
     setShowForm(false);
   };
@@ -880,6 +909,20 @@ export default function ConvocatoriasPage() {
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                   />
                 </div>
+                <div className="group">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Enlace de la convocatoria (opcional)
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.enlace || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, enlace: e.target.value })
+                    }
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900 placeholder-gray-500"
+                    placeholder="https://ejemplo.com/convocatoria"
+                  />
+                </div>
               </div>
 
               <div className="group">
@@ -1064,9 +1107,36 @@ export default function ConvocatoriasPage() {
                       />
                     </svg>
                     <span className="text-sm text-gray-600">
-                      {convocatoria.categoria}
+                      {convocatoria.lineaOportunidad || "Sin línea"}
                     </span>
                   </div>
+
+                  {/* Enlace de la convocatoria */}
+                  {convocatoria.enlace && (
+                    <div className="flex items-center">
+                      <svg
+                        className="w-4 h-4 text-blue-400 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.828 10.172a4 4 0 010 5.656m-1.414-1.414a2 2 0 010-2.828m-2.828 2.828a4 4 0 010-5.656m1.414 1.414a2 2 0 010 2.828"
+                        />
+                      </svg>
+                      <a
+                        href={convocatoria.enlace}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline hover:text-blue-800 text-sm break-all"
+                      >
+                        Ver convocatoria
+                      </a>
+                    </div>
+                  )}
 
                   <div className="flex items-center">
                     <svg

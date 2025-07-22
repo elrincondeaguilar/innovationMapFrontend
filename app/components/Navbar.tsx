@@ -27,10 +27,10 @@ export default function Navbar() {
     { href: "/", label: "Inicio", icon: "🏠" },
     { href: "/registro", label: "Registrar", icon: "🏢" },
     { href: "/empresas", label: "Empresas", icon: "📋" },
-    { href: "/mapa", label: "Mapa", icon: "🗺️" },
-    { href: "/analizar", label: "Analizar", icon: "🔍" },
     { href: "/convocatorias", label: "Convocatorias", icon: "📢" },
     { href: "/articuladores", label: "Articuladores", icon: "🤝" },
+    { href: "/mapa", label: "Mapa", icon: "🗺️" },
+    { href: "/analizar", label: "Analizar", icon: "🔍" },
   ];
 
   return (

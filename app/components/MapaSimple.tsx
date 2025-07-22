@@ -4,6 +4,9 @@ import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import MarkerClusterGroup from 'react-leaflet-markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { Company, EcosystemMapItem } from "../types/api";
 import { EcosystemService } from "../services/nuevasEntidadesService";
 import { useSearchParams } from "next/navigation";
@@ -35,6 +38,7 @@ function groupByLocation(
 interface MapaSimpleProps {
   empresaEspecifica?: Company | null;
   soloEmpresaEspecifica?: boolean;
+  setOcultarTitulo?: (v: boolean) => void;
 }
 
 // Configurar iconos de Leaflet
@@ -148,6 +152,7 @@ function MapController({
 export default function MapaSimple({
   empresaEspecifica = null,
   soloEmpresaEspecifica = false,
+  setOcultarTitulo,
 }: MapaSimpleProps) {
   const [ecosystemItems, setEcosystemItems] = useState<EcosystemMapItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,9 +161,21 @@ export default function MapaSimple({
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [mostrarLeyenda, setMostrarLeyenda] = useState(false);
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState<EcosystemMapItem | null>(null);
+  const [entidadesEnUbicacion, setEntidadesEnUbicacion] = useState<EcosystemMapItem[]>([]);
   //recargar los datos
   const searchParams = useSearchParams();
   const lastUpdate = searchParams.get("lastUpdate");
+
+  // useEffect para ocultar el título del mapa cuando el panel lateral esté abierto
+  useEffect(() => {
+    if (!setOcultarTitulo) return;
+    if (empresaSeleccionada || entidadesEnUbicacion.length > 1) {
+      setOcultarTitulo(true);
+    } else {
+      setOcultarTitulo(false);
+    }
+  }, [empresaSeleccionada, entidadesEnUbicacion.length, setOcultarTitulo]);
 
   // Cargar datos del ecosistema
   useEffect(() => {
@@ -366,6 +383,128 @@ export default function MapaSimple({
         </div>
       )}
 
+      {/* Panel lateral de detalles o selección de entidad - DISEÑO MEJORADO */}
+      {(entidadesEnUbicacion.length > 1 || empresaSeleccionada) && (
+        <div className="fixed sm:absolute top-0 right-0 sm:top-4 sm:right-4 z-30 w-full sm:w-96 max-w-full sm:max-w-sm h-full sm:h-auto bg-white rounded-none sm:rounded-2xl shadow-2xl border border-gray-200 p-0 sm:p-6 overflow-y-auto animate-fade-in">
+          {/* Lista de entidades */}
+          {entidadesEnUbicacion.length > 1 && !empresaSeleccionada && (
+            <>
+              <h3 className="font-bold text-xl mb-4 text-blue-700 flex items-center gap-2">
+                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01" />
+                </svg>
+                Elementos en esta ubicación
+              </h3>
+              <ul className="divide-y divide-gray-100">
+                {entidadesEnUbicacion.map((entidad) => (
+                  <li
+                    key={entidad.id + '-' + entidad.tipo}
+                    className="flex items-center gap-3 py-3 px-2 cursor-pointer rounded-lg hover:bg-blue-50 transition"
+                    onClick={() => setEmpresaSeleccionada(entidad)}
+                  >
+                    <span className={`w-10 h-10 flex items-center justify-center rounded-full text-xl
+                      ${entidad.tipo === "Company"
+                        ? "bg-blue-100 text-blue-600"
+                        : entidad.tipo === "Articulador"
+                        ? "bg-orange-100 text-orange-600"
+                        : entidad.tipo === "Convocatoria"
+                        ? "bg-purple-100 text-purple-600"
+                        : "bg-gray-200 text-gray-600"
+                    }`}>
+                      {entidad.tipo === "Company" && "🏢"}
+                      {entidad.tipo === "Articulador" && "🤝"}
+                      {entidad.tipo === "Convocatoria" && "📢"}
+                    </span>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-800">{entidad.nombre}</div>
+                      <div className="text-xs text-gray-500">{entidad.tipo}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <button
+                className="mt-4 w-full px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition"
+                onClick={() => {
+                  setEntidadesEnUbicacion([]);
+                  setEmpresaSeleccionada(null);
+                }}
+              >
+                Cerrar
+              </button>
+            </>
+          )}
+
+          {/* Detalle de entidad */}
+          {empresaSeleccionada && (
+            <div className="animate-fade-in">
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`w-12 h-12 flex items-center justify-center rounded-full text-2xl
+                  ${empresaSeleccionada.tipo === "Company"
+                    ? "bg-blue-100 text-blue-600"
+                    : empresaSeleccionada.tipo === "Articulador"
+                    ? "bg-orange-100 text-orange-600"
+                    : empresaSeleccionada.tipo === "Convocatoria"
+                    ? "bg-purple-100 text-purple-600"
+                    : "bg-gray-200 text-gray-600"
+                  }`}>
+                  {empresaSeleccionada.tipo === "Company" && "🏢"}
+                  {empresaSeleccionada.tipo === "Articulador" && "🤝"}
+                  {empresaSeleccionada.tipo === "Convocatoria" && "📢"}
+                </span>
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900">{empresaSeleccionada.nombre}</h3>
+                  <div className="text-xs text-gray-500">{empresaSeleccionada.tipo}</div>
+                </div>
+              </div>
+              {empresaSeleccionada.descripcion && (
+                <p className="text-sm text-gray-700 mb-2">{empresaSeleccionada.descripcion}</p>
+              )}
+              {empresaSeleccionada.tipo === "Company" && (
+                <>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">🏷️</span>Sector: {empresaSeleccionada.industry || '-'}</div>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">📍</span>Departamento: {empresaSeleccionada.departamento || '-'}</div>
+                </>
+              )}
+              {empresaSeleccionada.tipo === "Articulador" && (
+                <>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">💼</span>Experiencia: {empresaSeleccionada.experiencia}</div>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">📍</span>Departamento: {empresaSeleccionada.departamento}</div>
+                </>
+              )}
+              {empresaSeleccionada.tipo === "Convocatoria" && (
+                <>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">📋</span>Categoría: {empresaSeleccionada.categoria}</div>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">🏛️</span>Entidad: {empresaSeleccionada.entidad}</div>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">📊</span>Estado: {empresaSeleccionada.estado}</div>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">📅</span>Fecha inicio: {empresaSeleccionada.fechaInicio && new Date(empresaSeleccionada.fechaInicio).toLocaleDateString("es-ES")}</div>
+                  <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">⏰</span>Fecha fin: {empresaSeleccionada.fechaFin && new Date(empresaSeleccionada.fechaFin).toLocaleDateString("es-ES")}</div>
+                </>
+              )}
+              {empresaSeleccionada.tipo === "Convocatoria" && empresaSeleccionada.enlace && (
+                <div className="flex items-center text-xs text-blue-600 mb-1">
+                  <span className="mr-2">🔗</span>
+                  <a
+                    href={empresaSeleccionada.enlace}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-800 break-all"
+                  >
+                    Ver enlace
+                  </a>
+                </div>
+              )}
+              <button
+                className="mt-4 w-full px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition"
+                onClick={() => setEmpresaSeleccionada(null)}
+              >
+                Volver a la lista
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <MapContainer
         center={centroMapa}
         zoom={zoomInicial}
@@ -387,175 +526,184 @@ export default function MapaSimple({
           onMapReady={setMapInstance}
         />
 
-        {/* Renderizar markers para todos los elementos del ecosistema */}
-        {(() => {
-          // Agrupar elementos por ubicación
-          const groupedByLocation = groupByLocation(elementosAMostrar);
-          const markers: React.ReactElement[] = [];
+        {/* Agrupación de marcadores con spiderfy */}
+        <MarkerClusterGroup
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom={true}
+          maxClusterRadius={40}
+        >
+          {(() => {
+            // Agrupar elementos por ubicación
+            const groupedByLocation = groupByLocation(elementosAMostrar);
+            const markers: React.ReactElement[] = [];
 
-          // Crear un marker por cada grupo de ubicación (no por cada item individual)
-          Array.from(groupedByLocation.entries()).forEach(
-            ([locationKey, items], groupIndex) => {
-              if (!items.length || !items[0].latitud || !items[0].longitud)
-                return;
+            // Crear un marker por cada grupo de ubicación (no por cada item individual)
+            Array.from(groupedByLocation.entries()).forEach(
+              ([locationKey, items], groupIndex) => {
+                if (!items.length || !items[0].latitud || !items[0].longitud)
+                  return;
 
-              // Usar la posición del primer elemento como posición base
-              const basePosition: [number, number] = [
-                items[0].latitud,
-                items[0].longitud,
-              ];
+                // Usar la posición del primer elemento como posición base
+                const basePosition: [number, number] = [
+                  items[0].latitud,
+                  items[0].longitud,
+                ];
 
-              // Usar el icono del primer elemento, o un icono especial si hay múltiples tipos
-              const hasMultipleTypes =
-                new Set(items.map((item) => item.tipo)).size > 1;
-              const baseIcon = hasMultipleTypes
-                ? defaultIcon
-                : iconMap[items[0].tipo as keyof typeof iconMap] || defaultIcon;
+                // Usar el icono del primer elemento, o un icono especial si hay múltiples tipos
+                const hasMultipleTypes =
+                  new Set(items.map((item) => item.tipo)).size > 1;
+                const baseIcon = hasMultipleTypes
+                  ? defaultIcon
+                  : iconMap[items[0].tipo as keyof typeof iconMap] || defaultIcon;
 
-              // Si hay más de un elemento, mostrar el icono con número
-              // Mostrar el icono con número SIEMPRE
-              const icon = getClusterIcon(items.length, baseIcon);
+                // Mostrar el icono con número SIEMPRE
+                const icon = getClusterIcon(items.length, baseIcon);
 
-              markers.push(
-                <Marker
-                  key={`location-group-${groupIndex}-${locationKey}`}
-                  position={basePosition}
-                  icon={icon}
-                >
-                  <Popup className="custom-popup" maxWidth={400} minWidth={300}>
-                    <div className="p-2 max-w-sm">
-                      {items.length > 1 && (
-                        <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                          <p className="text-xs text-blue-700 font-medium">
-                            📍 {items.length} elementos en esta ubicación
-                          </p>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {items.map((item) => (
-                              <span
-                                key={`${item.tipo}-${item.id}`}
-                                className={`text-xs px-2 py-1 rounded-full text-white ${
-                                  item.tipo === "Company"
-                                    ? "bg-blue-500"
-                                    : item.tipo === "Articulador"
-                                    ? "bg-orange-500"
-                                    : item.tipo === "Convocatoria"
-                                    ? "bg-purple-500"
-                                    : "bg-red-500"
-                                }`}
-                              >
-                                {item.tipo}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Mostrar TODOS los elementos en esta ubicación */}
-                      <div className="space-y-4">
-                        {items.map((item, itemIndex) => (
-                          <div
-                            key={`${item.tipo}-${item.id}-details`}
-                            className={`${
-                              itemIndex > 0
-                                ? "border-t border-gray-200 pt-3"
-                                : ""
-                            }`}
-                          >
-                            <div className="flex items-center mb-2">
-                              <span
-                                className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                                  item.tipo === "Company"
-                                    ? "bg-blue-500"
-                                    : item.tipo === "Articulador"
-                                    ? "bg-orange-500"
-                                    : item.tipo === "Convocatoria"
-                                    ? "bg-purple-500"
-                                    : "bg-red-500"
-                                }`}
-                              ></span>
-                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                {item.tipo}
-                              </span>
+                markers.push(
+                  <Marker
+                    key={`location-group-${groupIndex}-${locationKey}`}
+                    position={basePosition}
+                    icon={icon}
+                    eventHandlers={{
+                      click: () => {
+                        // Mostrar todas las entidades agrupadas en la ubicación
+                        setEntidadesEnUbicacion(items);
+                        setEmpresaSeleccionada(null);
+                      }
+                    }}
+                  >
+                    <Popup className="custom-popup" maxWidth={400} minWidth={300}>
+                      <div className="p-2 max-w-sm">
+                        {items.length > 1 && (
+                          <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                            <p className="text-xs text-blue-700 font-medium">
+                              📍 {items.length} elementos en esta ubicación
+                            </p>
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {items.map((item) => (
+                                <span
+                                  key={`${item.tipo}-${item.id}`}
+                                  className={`text-xs px-2 py-1 rounded-full text-white ${
+                                    item.tipo === "Company"
+                                      ? "bg-blue-500"
+                                      : item.tipo === "Articulador"
+                                      ? "bg-orange-500"
+                                      : item.tipo === "Convocatoria"
+                                      ? "bg-purple-500"
+                                      : "bg-red-500"
+                                  }`}
+                                >
+                                  {item.tipo}
+                                </span>
+                              ))}
                             </div>
+                          </div>
+                        )}
+                        {/* Mostrar TODOS los elementos en esta ubicación */}
+                        <div className="space-y-4">
+                          {items.map((item, itemIndex) => (
+                            <div
+                              key={`${item.tipo}-${item.id}-details`}
+                              className={`${
+                                itemIndex > 0
+                                  ? "border-t border-gray-200 pt-3"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-center mb-2">
+                                <span
+                                  className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                                    item.tipo === "Company"
+                                      ? "bg-blue-500"
+                                      : item.tipo === "Articulador"
+                                      ? "bg-orange-500"
+                                      : item.tipo === "Convocatoria"
+                                      ? "bg-purple-500"
+                                      : "bg-red-500"
+                                  }`}
+                                ></span>
+                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                  {item.tipo}
+                                </span>
+                              </div>
 
-                            <h4 className="font-bold text-gray-900 mb-1 text-sm leading-tight">
-                              {item.nombre}
-                            </h4>
+                              <h4 className="font-bold text-gray-900 mb-1 text-sm leading-tight">
+                                {item.nombre}
+                              </h4>
 
-                            {item.descripcion && (
-                              <p className="text-xs text-gray-700 mb-2 leading-relaxed">
-                                {item.descripcion.length > 100
-                                  ? `${item.descripcion.substring(0, 100)}...`
-                                  : item.descripcion}
-                              </p>
-                            )}
-
-                            <div className="text-xs text-gray-500 space-y-1">
-                              {item.ciudad && (
-                                <p className="flex items-start">
-                                  <span className="mr-1">📍</span>
-                                  <span>
-                                    {item.ciudad}
-                                    {item.departamento
-                                      ? `, ${item.departamento}`
-                                      : ""}
-                                  </span>
+                              {item.descripcion && (
+                                <p className="text-xs text-gray-700 mb-2 leading-relaxed">
+                                  {item.descripcion.length > 100
+                                    ? `${item.descripcion.substring(0, 100)}...`
+                                    : item.descripcion}
                                 </p>
                               )}
 
-                              {/* Información específica por tipo */}
-                              {item.tipo === "Company" && item.industry && (
-                                <p className="flex items-start">
-                                  <span className="mr-1">🏢</span>
-                                  <span>{item.industry}</span>
-                                </p>
-                              )}
-                              {item.tipo === "Company" && item.fundada && (
-                                <p className="flex items-start">
-                                  <span className="mr-1">📅</span>
-                                  <span>Fundada: {item.fundada}</span>
-                                </p>
-                              )}
-                              {item.tipo === "Articulador" &&
-                                item.experiencia && (
+                              <div className="text-xs text-gray-500 space-y-1">
+                                {item.ciudad && (
                                   <p className="flex items-start">
-                                    <span className="mr-1">💼</span>
-                                    <span>{item.experiencia}</span>
-                                  </p>
-                                )}
-                              {item.tipo === "Convocatoria" &&
-                                item.categoria && (
-                                  <p className="flex items-start">
-                                    <span className="mr-1">📋</span>
-                                    <span>{item.categoria}</span>
-                                  </p>
-                                )}
-                              {item.tipo === "Convocatoria" && item.entidad && (
-                                <p className="flex items-start">
-                                  <span className="mr-1">🏛️</span>
-                                  <span>{item.entidad}</span>
-                                </p>
-                              )}
-                              {item.tipo === "Convocatoria" && item.estado && (
-                                <p className="flex items-start">
-                                  <span className="mr-1">📊</span>
-                                  <span>Estado: {item.estado}</span>
-                                </p>
-                              )}
-                              {item.tipo === "Convocatoria" &&
-                                item.fechaInicio && (
-                                  <p className="flex items-start">
-                                    <span className="mr-1">📅</span>
+                                    <span className="mr-1">📍</span>
                                     <span>
-                                      Inicio:{" "}
-                                      {new Date(
-                                        item.fechaInicio
-                                      ).toLocaleDateString("es-ES")}
+                                      {item.ciudad}
+                                      {item.departamento
+                                        ? `, ${item.departamento}`
+                                        : ""}
                                     </span>
                                   </p>
                                 )}
-                              {item.tipo === "Convocatoria" &&
-                                item.fechaFin && (
+
+                                {/* Información específica por tipo */}
+                                {item.tipo === "Company" && item.industry && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">🏢</span>
+                                    <span>{item.industry}</span>
+                                  </p>
+                                )}
+                                {item.tipo === "Company" && item.fundada && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">📅</span>
+                                    <span>Fundada: {item.fundada}</span>
+                                  </p>
+                                )}
+                                {item.tipo === "Articulador" &&
+                                  item.experiencia && (
+                                    <p className="flex items-start">
+                                      <span className="mr-1">💼</span>
+                                      <span>{item.experiencia}</span>
+                                    </p>
+                                  )}
+                                {item.tipo === "Convocatoria" &&
+                                  item.categoria && (
+                                    <p className="flex items-start">
+                                      <span className="mr-1">📋</span>
+                                      <span>{item.categoria}</span>
+                                    </p>
+                                  )}
+                                {item.tipo === "Convocatoria" && item.entidad && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">🏛️</span>
+                                    <span>{item.entidad}</span>
+                                  </p>
+                                )}
+                                {item.tipo === "Convocatoria" && item.estado && (
+                                  <p className="flex items-start">
+                                    <span className="mr-1">📊</span>
+                                    <span>Estado: {item.estado}</span>
+                                  </p>
+                                )}
+                                {item.tipo === "Convocatoria" &&
+                                  item.fechaInicio && (
+                                    <p className="flex items-start">
+                                      <span className="mr-1">📅</span>
+                                      <span>
+                                        Inicio:{" "}
+                                        {new Date(
+                                          item.fechaInicio
+                                        ).toLocaleDateString("es-ES")}
+                                      </span>
+                                    </p>
+                                  )}
+                                {item.tipo === "Convocatoria" && item.fechaFin && (
                                   <p className="flex items-start">
                                     <span className="mr-1">⏰</span>
                                     <span>
@@ -566,19 +714,20 @@ export default function MapaSimple({
                                     </span>
                                   </p>
                                 )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            }
-          );
+                    </Popup>
+                  </Marker>
+                );
+              }
+            );
 
-          return markers;
-        })()}
+            return markers;
+          })()}
+        </MarkerClusterGroup>
       </MapContainer>
 
       {/* Controles de zoom personalizados para móvil */}

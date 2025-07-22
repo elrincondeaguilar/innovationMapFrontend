@@ -4,6 +4,7 @@ import { useState } from "react";
 import Navbar from "../../components/Navbar";
 import { ConvocatoriaService } from "../../services/backendService";
 import { AnalisisConvocatoria } from "../../types/api";
+import { log } from "console";
 
 interface ConvocatoriaData {
   titulo: string;
@@ -19,6 +20,18 @@ interface ConvocatoriaData {
   palabrasClave?: string;
   fechaApertura?: string;
   fechaCierre?: string;
+}
+
+// Helper para fechas seguras
+function safeToISOString(dateInput: string | Date | undefined, fallback: Date): string {
+  if (!dateInput || dateInput === "null" || dateInput === "No especificada" || dateInput === "") {
+    return fallback.toISOString();
+  }
+  if (dateInput instanceof Date) {
+    return isNaN(dateInput.getTime()) ? fallback.toISOString() : dateInput.toISOString();
+  }
+  const d = new Date(dateInput);
+  return isNaN(d.getTime()) ? fallback.toISOString() : d.toISOString();
 }
 
 export default function AnalizarPage() {
@@ -156,7 +169,10 @@ ${textoCompleto}`,
         const analisisJSON = JSON.parse(jsonString);
 
         setAnalisisData(analisisJSON);
-        setConvocatoriaExtraida(analisisJSON.datosConvocatoria);
+        setConvocatoriaExtraida({
+          ...analisisJSON.datosConvocatoria,
+          enlace: url // fuerza la url del input
+        });
 
         // Formatear la respuesta para mostrar
         const respuestaFormateada = `
@@ -253,39 +269,43 @@ ${textoCompleto}`,
     if (!convocatoriaExtraida || !analisisData) return;
 
     setGuardando(true);
+    console.log("convocatoriaExtraida", convocatoriaExtraida);
     try {
-      await ConvocatoriaService.crearConvocatoria({
-        ...convocatoriaExtraida,
-        fechaInicio:
-          analisisData.fechasEncontradas?.inicio ||
-          new Date().toISOString().split("T")[0],
-        fechaFin:
-          analisisData.fechasEncontradas?.fin ||
+      const payload = {
+        titulo: convocatoriaExtraida.titulo,
+        descripcion: convocatoriaExtraida.descripcion,
+        fechaInicio: safeToISOString(analisisData.fechasEncontradas?.inicio, new Date()),
+        fechaFin: safeToISOString(
+          analisisData.fechasEncontradas?.fin,
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
-        // 🆕 Usar las nuevas fechas si están disponibles
-        fechaApertura: analisisData.fechasEncontradas?.apertura,
-        fechaCierre: analisisData.fechasEncontradas?.cierre,
-        estado:
-          analisisData.estado === "activa"
-            ? "activa"
-            : analisisData.estado === "cerrada"
-            ? "cerrada"
-            : "pendiente",
-      });
+        ),
+        categoria: convocatoriaExtraida.categoria,
+        entidad: convocatoriaExtraida.entidad,
+        enlace: url,
+        ...(typeof (convocatoriaExtraida as any).companyId !== 'undefined' && { companyId: (convocatoriaExtraida as any).companyId }),
+        ...(typeof (convocatoriaExtraida as any).presupuesto === 'number' && { presupuesto: (convocatoriaExtraida as any).presupuesto }),
+        requisitos: convocatoriaExtraida.requisitos || [],
+        estado: (['activa', 'cerrada', 'pendiente'].includes(analisisData.estado) ? analisisData.estado : 'pendiente') as 'activa' | 'cerrada' | 'pendiente',
+        ...(typeof (convocatoriaExtraida as any).estadoManual !== 'undefined' && { estadoManual: (convocatoriaExtraida as any).estadoManual })
+      };
+      const resultado = await ConvocatoriaService.crearConvocatoria(payload);
 
-      setAgregadoExitoso(true);
-
-      // Limpiar el formulario después de agregar
-      setTimeout(() => {
-        limpiarFormulario();
-      }, 3000);
-    } catch (error) {
+      if (resultado.success) {
+        setAgregadoExitoso(true);
+        setTimeout(() => {
+          limpiarFormulario();
+        }, 3000);
+      } else {
+        setRespuesta(
+          (respuesta ? respuesta + "\n\n" : "") +
+          `❌ Error al agregar la convocatoria: ${resultado.message || resultado.errors || "Error desconocido"}`
+        );
+      }
+    } catch (error: any) {
       console.error("Error agregando convocatoria:", error);
       setRespuesta(
-        respuesta +
-          "\n\n❌ Error al agregar la convocatoria. Por favor, intenta nuevamente."
+        (respuesta ? respuesta + "\n\n" : "") +
+        `❌ Error al agregar la convocatoria. ${error?.message || "Error desconocido"}`
       );
     } finally {
       setGuardando(false);

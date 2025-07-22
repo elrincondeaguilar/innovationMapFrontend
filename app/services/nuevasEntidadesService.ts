@@ -73,12 +73,10 @@ export class EcosystemService {
     const dept = this.normalizeDepartamento(departamento || "");
     const coords = this.DEPARTAMENTO_COORDS[dept] || this.DEPARTAMENTO_COORDS["default"];
     
-    // Agregar pequeña variación aleatoria para evitar superposición
-    const randomOffset = () => (Math.random() - 0.5) * 0.01; // ±0.005 grados
     
     return {
-      latitud: coords.lat + randomOffset(),
-      longitud: coords.lng + randomOffset()
+      latitud: coords.lat,
+      longitud: coords.lng
     };
   }
 

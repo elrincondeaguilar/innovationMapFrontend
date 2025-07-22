@@ -373,22 +373,15 @@ export class ConvocatoriaService {
   }
 
   static async crearConvocatoria(convocatoria: CreateConvocatoriaRequest) {
-    // Convert frontend camelCase to backend PascalCase
-    // Convert date strings (YYYY-MM-DD) to ISO format with UTC timezone
-    const fechaInicioISO = convocatoria.fechaInicio
-      ? new Date(convocatoria.fechaInicio + "T00:00:00Z").toISOString()
-      : null;
-    const fechaFinISO = convocatoria.fechaFin
-      ? new Date(convocatoria.fechaFin + "T00:00:00Z").toISOString()
-      : null;
-
+    // Usa directamente los strings de fecha que llegan del frontend
     const backendData = {
       Titulo: convocatoria.titulo?.trim(),
       Descripcion: convocatoria.descripcion?.trim(),
-      FechaInicio: fechaInicioISO,
-      FechaFin: fechaFinISO,
+      FechaInicio: convocatoria.fechaInicio,
+      FechaFin: convocatoria.fechaFin,
       Categoria: convocatoria.categoria?.trim(),
       Entidad: convocatoria.entidad?.trim(),
+      Enlace: convocatoria.enlace?.trim(),
       // Only include optional fields if they have valid values
       ...(convocatoria.requisitos &&
         convocatoria.requisitos.length > 0 && {
@@ -410,6 +403,7 @@ export class ConvocatoriaService {
       ...(convocatoria.estadoManual !== undefined && {
         EstadoManual: convocatoria.estadoManual,
       }),
+      ...(convocatoria.enlace && { Enlace: convocatoria.enlace }),
     };
 
     return backendService.post<Convocatoria>("convocatorias", backendData);
