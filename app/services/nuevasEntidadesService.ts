@@ -72,11 +72,20 @@ export class EcosystemService {
 
   static async getAllEcosystemItems(): Promise<ServiceResponse<EcosystemMapItem[]>> {
     try {
+      // Agregar timestamp para evitar cache
+      const timestamp = Date.now();
+      
       // Obtener datos de articuladores, convocatorias y empresas
       const [articuladoresRes, convocatoriasRes, empresasRes] = await Promise.all([
         ArticuladorService.getAll(),
-        fetch("/api/proxy/convocatorias").then(res => res.json()),
-        fetch("/api/proxy/companies").then(res => res.json())
+        fetch(`/api/proxy/convocatorias?_t=${timestamp}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        }).then(res => res.json()),
+        fetch(`/api/proxy/companies?_t=${timestamp}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        }).then(res => res.json())
       ]);
 
       const ecosystemItems: EcosystemMapItem[] = [];
@@ -174,7 +183,11 @@ export class ArticuladorService {
 
   static async getAll(): Promise<ServiceResponse<Articulador[]>> {
     try {
-      const response = await fetch(this.baseUrl);
+      const timestamp = Date.now();
+      const response = await fetch(`${this.baseUrl}?_t=${timestamp}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (!response.ok) {
         const errorData = await response.json();
         return {

@@ -5,8 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Company, EcosystemMapItem } from "../types/api";
-import { EcosystemService } from "../services/nuevasEntidadesService";
-import { useSearchParams } from "next/navigation";
+import { useMapEcosystemData } from "../hooks/useEcosystemData";
 
 // Función para agrupar elementos por ubicación
 function groupByLocation(
@@ -32,9 +31,11 @@ function groupByLocation(
 }
 
 // Props interface
-interface MapaSimpleProps {
+interface MapaSimpleMejoradoProps {
   empresaEspecifica?: Company | null;
   soloEmpresaEspecifica?: boolean;
+  enableAutoRefresh?: boolean;
+  autoRefreshInterval?: number;
 }
 
 // Configurar iconos de Leaflet
@@ -113,91 +114,26 @@ function MapController({
   return null;
 }
 
-export default function MapaSimple({
+export default function MapaSimpleMejorado({
   empresaEspecifica = null,
   soloEmpresaEspecifica = false,
-}: MapaSimpleProps) {
-  const [ecosystemItems, setEcosystemItems] = useState<EcosystemMapItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  enableAutoRefresh = false,
+  autoRefreshInterval = 60000,
+}: MapaSimpleMejoradoProps) {
+  // Usar el hook personalizado para manejo de datos
+  const {
+    ecosystemItems,
+    loading,
+    error,
+    lastUpdate,
+    refresh,
+    getCountByType
+  } = useMapEcosystemData();
+
   const [filtroTipo, setFiltroTipo] = useState<string>("");
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [mostrarLeyenda, setMostrarLeyenda] = useState(false);
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
-
-  // Función para recargar datos manualmente
-  const recargarDatos = () => {
-    setLastUpdate(Date.now());
-  };
-
-  // Cargar datos del ecosistema
-  useEffect(() => {
-    let isMounted = true;
-
-    const cargarDatos = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Usar el servicio que incluye empresas
-        const result = await EcosystemService.getAllEcosystemItems(); // Solo actualizar estado si el componente sigue montado
-        if (isMounted) {
-          if (result.success && result.data) {
-            setEcosystemItems(result.data);
-            if (process.env.NODE_ENV === "development") {
-              console.log("🗺️ Ecosystem items loaded:", result.data.length);
-              console.log("🗺️ Raw ecosystem data:", result.data);
-              console.log("🗺️ Items by type:", {
-                companies: result.data.filter(
-                  (item: EcosystemMapItem) => item.tipo === "Company"
-                ).length,
-                articuladores: result.data.filter(
-                  (item: EcosystemMapItem) => item.tipo === "Articulador"
-                ).length,
-                convocatorias: result.data.filter(
-                  (item: EcosystemMapItem) => item.tipo === "Convocatoria"
-                ).length,
-              });
-
-              // Debug de coordenadas
-              const itemsWithCoords = result.data.filter(
-                (item) => item.latitud && item.longitud
-              );
-              const itemsWithoutCoords = result.data.filter(
-                (item) => !item.latitud || !item.longitud
-              );
-              console.log("🗺️ Items WITH coordinates:", itemsWithCoords.length);
-              console.log(
-                "🗺️ Items WITHOUT coordinates:",
-                itemsWithoutCoords.length
-              );
-              console.log("🗺️ Items WITH coordinates:", itemsWithCoords);
-              console.log("🗺️ Items WITHOUT coordinates:", itemsWithoutCoords);
-            }
-          } else {
-            setError(result.message || "Error al cargar datos");
-          }
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error("Error cargando datos del ecosistema:", error);
-          setError("Error al cargar los datos del mapa");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    cargarDatos();
-
-    // Cleanup function
-    return () => {
-      isMounted = false;
-    };
-  }, [lastUpdate]); // Sin dependencias para evitar recargas innecesarias
 
   // Cerrar paneles móviles al hacer click en el mapa
   useEffect(() => {
@@ -237,7 +173,10 @@ export default function MapaSimple({
 
   const zoomInicial = empresaEspecifica ? 12 : 7;
 
-  if (loading) {
+  // Obtener conteos por tipo para la leyenda
+  const countsByType = getCountByType();
+
+  if (loading && ecosystemItems.length === 0) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-100">
         <div className="text-center">
@@ -248,13 +187,13 @@ export default function MapaSimple({
     );
   }
 
-  if (error) {
+  if (error && ecosystemItems.length === 0) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-100">
         <div className="text-center text-red-600">
           <p className="mb-2">⚠️ {error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={refresh}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Reintentar
@@ -266,6 +205,21 @@ export default function MapaSimple({
 
   return (
     <div className="h-full w-full relative">
+      {/* Indicador de actualización */}
+      {lastUpdate && (
+        <div className="absolute top-2 right-2 z-30 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+          Actualizado: {lastUpdate.toLocaleTimeString()}
+        </div>
+      )}
+
+      {/* Indicador de carga en tiempo real */}
+      {loading && ecosystemItems.length > 0 && (
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 bg-blue-500 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
+          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+          Actualizando...
+        </div>
+      )}
+
       {/* Botones de control móvil */}
       {!soloEmpresaEspecifica && (
         <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 sm:hidden">
@@ -284,7 +238,7 @@ export default function MapaSimple({
             📊
           </button>
           <button
-            onClick={recargarDatos}
+            onClick={refresh}
             disabled={loading}
             className={`bg-white rounded-lg shadow-lg p-2 border border-gray-200 hover:bg-gray-50 transition-colors ${
               loading ? "opacity-50 cursor-not-allowed" : ""
@@ -331,9 +285,9 @@ export default function MapaSimple({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-sm"
             >
               <option value="">🔍 Todos los tipos</option>
-              <option value="Company">🏢 Empresas</option>
-              <option value="Articulador">🤝 Articuladores</option>
-              <option value="Convocatoria">📢 Convocatorias</option>
+              <option value="Company">🏢 Empresas ({countsByType.Company || 0})</option>
+              <option value="Articulador">🤝 Articuladores ({countsByType.Articulador || 0})</option>
+              <option value="Convocatoria">📢 Convocatorias ({countsByType.Convocatoria || 0})</option>
             </select>
             {filtroTipo && (
               <button
@@ -344,7 +298,7 @@ export default function MapaSimple({
               </button>
             )}
             <button
-              onClick={recargarDatos}
+              onClick={refresh}
               disabled={loading}
               className={`mt-2 w-full px-3 py-2 text-xs border rounded transition-colors ${
                 loading
@@ -626,10 +580,7 @@ export default function MapaSimple({
                 <span className="text-gray-700 font-medium">🏢 Empresas</span>
               </div>
               <span className="text-gray-500 text-xs">
-                {
-                  elementosAMostrar.filter((item) => item.tipo === "Company")
-                    .length
-                }
+                {countsByType.Company || 0}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
@@ -640,11 +591,7 @@ export default function MapaSimple({
                 </span>
               </div>
               <span className="text-gray-500 text-xs">
-                {
-                  elementosAMostrar.filter(
-                    (item) => item.tipo === "Articulador"
-                  ).length
-                }
+                {countsByType.Articulador || 0}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
@@ -655,11 +602,7 @@ export default function MapaSimple({
                 </span>
               </div>
               <span className="text-gray-500 text-xs">
-                {
-                  elementosAMostrar.filter(
-                    (item) => item.tipo === "Convocatoria"
-                  ).length
-                }
+                {countsByType.Convocatoria || 0}
               </span>
             </div>
           </div>
@@ -681,6 +624,11 @@ export default function MapaSimple({
                 <span className="font-medium">{elementosAMostrar.length}</span>{" "}
                 elementos del ecosistema
               </p>
+              {lastUpdate && (
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  Actualizado: {lastUpdate.toLocaleTimeString()}
+                </p>
+              )}
             </div>
           )}
         </div>
