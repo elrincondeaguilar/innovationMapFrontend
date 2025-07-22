@@ -84,6 +84,38 @@ const iconMap = {
   }),
 };
 
+// Icono de cluster con número
+function getClusterIcon(count: number, baseIcon: L.Icon) {
+  return L.divIcon({
+    html: `
+      <div style="position: relative; display: inline-block;">
+        <img src="${baseIcon.options.iconUrl}" style="width: 32px; height: 48px;"/>
+        <span style="
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background: #2563eb;
+          color: white;
+          font-size: 14px;
+          font-weight: bold;
+          border-radius: 50%;
+          width: 22px;
+          height: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid white;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        ">${count}</span>
+      </div>
+    `,
+    iconSize: [32, 48],
+    iconAnchor: [16, 48],
+    popupAnchor: [1, -34],
+    className: "custom-cluster-icon"
+  });
+}
+
 // Hook para centrar el mapa cuando hay una empresa específica y manejar zoom
 function MapController({
   empresaEspecifica,
@@ -376,9 +408,13 @@ export default function MapaSimple({
               // Usar el icono del primer elemento, o un icono especial si hay múltiples tipos
               const hasMultipleTypes =
                 new Set(items.map((item) => item.tipo)).size > 1;
-              const icon = hasMultipleTypes
+              const baseIcon = hasMultipleTypes
                 ? defaultIcon
                 : iconMap[items[0].tipo as keyof typeof iconMap] || defaultIcon;
+
+              // Si hay más de un elemento, mostrar el icono con número
+              // Mostrar el icono con número SIEMPRE
+              const icon = getClusterIcon(items.length, baseIcon);
 
               markers.push(
                 <Marker

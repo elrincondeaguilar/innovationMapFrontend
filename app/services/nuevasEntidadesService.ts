@@ -47,6 +47,18 @@ export class EcosystemService {
     "default": { lat: 4.5709, lng: -74.2973 } // Centro de Colombia
   };
 
+  // Normaliza el nombre del departamento para que coincida con las claves del diccionario
+  private static normalizeDepartamento(dep?: string | null): string {
+    return dep
+      ? dep
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[ 0-6f]/g, "") // quita tildes
+          .replace(/^ a0+| a0+$/g, "") // quita espacios no separables
+          .replace(/^\s+|\s+$/g, "") // quita espacios normales
+      : "default";
+  }
+
   private static getCoordinatesForLocation(
     latitud?: number | null, 
     longitud?: number | null, 
@@ -57,8 +69,8 @@ export class EcosystemService {
       return { latitud, longitud };
     }
 
-    // Si no, usar coordenadas por departamento
-    const dept = (departamento || "").toLowerCase().trim();
+    // Normalizar el nombre del departamento
+    const dept = this.normalizeDepartamento(departamento || "");
     const coords = this.DEPARTAMENTO_COORDS[dept] || this.DEPARTAMENTO_COORDS["default"];
     
     // Agregar pequeña variación aleatoria para evitar superposición
