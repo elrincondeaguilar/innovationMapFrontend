@@ -203,16 +203,29 @@ export default function EmpresasPage() {
     if (!editandoEmpresa || !editandoEmpresa.id) return;
 
     try {
+      // Normalizar el departamento antes de enviar (igual que en registro/page.tsx)
+      let departamentoNormalizado = editandoEmpresa.department
+        ? editandoEmpresa.department
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/\u0300-\u036f/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+        : "";
+      const payload = {
+        ...editandoEmpresa,
+        department: departamentoNormalizado,
+        departamento: departamentoNormalizado,
+      };
+
       // Validar URL
-      if (editandoEmpresa.url && !editandoEmpresa.url.startsWith("http")) {
-        setEditandoEmpresa((prev) =>
-          prev ? { ...prev, url: `https://${prev.url}` } : null
-        );
+      if (payload.url && !payload.url.startsWith("http")) {
+        payload.url = `https://${payload.url}`;
       }
 
       const resultado = await EmpresaService.actualizarEmpresa(
         editandoEmpresa.id,
-        editandoEmpresa
+        payload
       );
 
       if (resultado.success) {
@@ -566,42 +579,38 @@ export default function EmpresasPage() {
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                   >
                     <option value="">Selecciona un departamento</option>
-                    <option value="Amazonas">Amazonas</option>
-                    <option value="Antioquia">Antioquia</option>
-                    <option value="Arauca">Arauca</option>
-                    <option value="Atlántico">Atlántico</option>
-                    <option value="Bolívar">Bolívar</option>
-                    <option value="Boyacá">Boyacá</option>
-                    <option value="Caldas">Caldas</option>
-                    <option value="Caquetá">Caquetá</option>
-                    <option value="Casanare">Casanare</option>
-                    <option value="Cauca">Cauca</option>
-                    <option value="Cesar">Cesar</option>
-                    <option value="Chocó">Chocó</option>
-                    <option value="Córdoba">Córdoba</option>
-                    <option value="Cundinamarca">Cundinamarca</option>
-                    <option value="Guainía">Guainía</option>
-                    <option value="Guaviare">Guaviare</option>
-                    <option value="Huila">Huila</option>
-                    <option value="La Guajira">La Guajira</option>
-                    <option value="Magdalena">Magdalena</option>
-                    <option value="Meta">Meta</option>
-                    <option value="Nariño">Nariño</option>
-                    <option value="Norte de Santander">
-                      Norte de Santander
-                    </option>
-                    <option value="Putumayo">Putumayo</option>
-                    <option value="Quindío">Quindío</option>
-                    <option value="Risaralda">Risaralda</option>
-                    <option value="San Andrés y Providencia">
-                      San Andrés y Providencia
-                    </option>
-                    <option value="Santander">Santander</option>
-                    <option value="Sucre">Sucre</option>
-                    <option value="Tolima">Tolima</option>
-                    <option value="Valle del Cauca">Valle del Cauca</option>
-                    <option value="Vaupés">Vaupés</option>
-                    <option value="Vichada">Vichada</option>
+                    <option value="amazonas">Amazonas</option>
+                    <option value="antioquia">Antioquia</option>
+                    <option value="arauca">Arauca</option>
+                    <option value="atlantico">Atlántico</option>
+                    <option value="bolivar">Bolívar</option>
+                    <option value="boyaca">Boyacá</option>
+                    <option value="caldas">Caldas</option>
+                    <option value="caqueta">Caquetá</option>
+                    <option value="casanare">Casanare</option>
+                    <option value="cauca">Cauca</option>
+                    <option value="cesar">Cesar</option>
+                    <option value="choco">Chocó</option>
+                    <option value="cordoba">Córdoba</option>
+                    <option value="cundinamarca">Cundinamarca</option>
+                    <option value="guainia">Guainía</option>
+                    <option value="guaviare">Guaviare</option>
+                    <option value="huila">Huila</option>
+                    <option value="la guajira">La Guajira</option>
+                    <option value="magdalena">Magdalena</option>
+                    <option value="meta">Meta</option>
+                    <option value="nariño">Nariño</option>
+                    <option value="norte de santander">Norte de Santander</option>
+                    <option value="putumayo">Putumayo</option>
+                    <option value="quindio">Quindío</option>
+                    <option value="risaralda">Risaralda</option>
+                    <option value="san andres y providencia">San Andrés y Providencia</option>
+                    <option value="santander">Santander</option>
+                    <option value="sucre">Sucre</option>
+                    <option value="tolima">Tolima</option>
+                    <option value="valle del cauca">Valle del Cauca</option>
+                    <option value="vaupes">Vaupés</option>
+                    <option value="vichada">Vichada</option>
                   </select>
                 </div>
               </div>

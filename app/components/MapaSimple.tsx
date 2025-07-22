@@ -220,6 +220,16 @@ export default function MapaSimple({
               );
               console.log("🗺️ Items WITH coordinates:", itemsWithCoords);
               console.log("🗺️ Items WITHOUT coordinates:", itemsWithoutCoords);
+
+              // LOG DETALLADO DE EMPRESAS NO MOSTRADAS
+              const empresas = result.data.filter((item) => item.tipo === "Company");
+              const empresasSinCoords = empresas.filter((item) => !item.latitud || !item.longitud);
+              const empresasCoordsNulas = empresas.filter((item) => item.latitud === 0 || item.longitud === 0);
+              const empresasConCoords = empresas.filter((item) => item.latitud && item.longitud && item.latitud !== 0 && item.longitud !== 0);
+              console.log("🔎 Empresas totales:", empresas.length);
+              console.log("❌ Empresas SIN coordenadas:", empresasSinCoords);
+              console.log("⚠️ Empresas con coordenadas 0,0:", empresasCoordsNulas);
+              console.log("✅ Empresas con coordenadas válidas:", empresasConCoords.length);
             }
           } else {
             setError(result.message || "Error al cargar datos");
@@ -396,7 +406,7 @@ export default function MapaSimple({
                 </svg>
                 Elementos en esta ubicación
               </h3>
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-gray-100 max-h-72 overflow-y-auto pr-2">
                 {entidadesEnUbicacion.map((entidad) => (
                   <li
                     key={entidad.id + '-' + entidad.tipo}
@@ -481,6 +491,19 @@ export default function MapaSimple({
                   <div className="flex items-center text-xs text-gray-500 mb-1"><span className="mr-2">⏰</span>Fecha fin: {empresaSeleccionada.fechaFin && new Date(empresaSeleccionada.fechaFin).toLocaleDateString("es-ES")}</div>
                 </>
               )}
+              {empresaSeleccionada.tipo === "Company" && empresaSeleccionada.url && (
+                <div className="flex items-center text-xs text-blue-600 mb-1">
+                  <span className="mr-2">🔗</span>
+                  <a
+                    href={empresaSeleccionada.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-800 break-all"
+                  >
+                    Visitar sitio web
+                  </a>
+                </div>
+              )}
               {empresaSeleccionada.tipo === "Convocatoria" && empresaSeleccionada.enlace && (
                 <div className="flex items-center text-xs text-blue-600 mb-1">
                   <span className="mr-2">🔗</span>
@@ -492,6 +515,12 @@ export default function MapaSimple({
                   >
                     Ver enlace
                   </a>
+                </div>
+              )}
+              {empresaSeleccionada.tipo === "Articulador" && empresaSeleccionada.contacto && (
+                <div className="flex items-center text-xs text-green-700 mb-1">
+                  <span className="mr-2">✉️</span>
+                  <span className="break-all">{empresaSeleccionada.contacto}</span>
                 </div>
               )}
               <button
@@ -566,9 +595,13 @@ export default function MapaSimple({
                     icon={icon}
                     eventHandlers={{
                       click: () => {
-                        // Mostrar todas las entidades agrupadas en la ubicación
-                        setEntidadesEnUbicacion(items);
-                        setEmpresaSeleccionada(null);
+                        if (items.length === 1) {
+                          setEntidadesEnUbicacion(items);
+                          setEmpresaSeleccionada(items[0]);
+                        } else {
+                          setEntidadesEnUbicacion(items);
+                          setEmpresaSeleccionada(null);
+                        }
                       }
                     }}
                   >

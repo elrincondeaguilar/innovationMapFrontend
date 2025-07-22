@@ -162,7 +162,8 @@ export class EcosystemService {
             entidad: conv.entidad,
             fechaInicio: conv.fechaInicio,
             fechaFin: conv.fechaFin,
-            estado: conv.estado
+            estado: conv.estado,
+            enlace: conv.enlace // <-- Asegurarse de incluir el enlace
           });
         });
       }

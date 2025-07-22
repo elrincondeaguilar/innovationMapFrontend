@@ -18,6 +18,8 @@ export interface EcosystemMapItem {
   fechaInicio?: string; // Para Convocatoria
   fechaFin?: string; // Para Convocatoria
   estado?: string; // Para Convocatoria
+  // Agregado para mostrar enlaces de convocatorias en el mapa
+  enlace?: string;
 }
 
 // Tipos para la API del backend
