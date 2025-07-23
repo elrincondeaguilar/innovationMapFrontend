@@ -41,10 +41,14 @@ function parseFechaEspanol(fechaStr: string | undefined): Date | undefined {
   const slashDate = fechaStr.match(/^\d{2}\/\d{2}\/\d{4}$/);
   if (slashDate) {
     // Ajusta a MM/DD/YYYY o DD/MM/YYYY según tu fuente
-    const [_, mm, dd, yyyy] = slashDate;
-    // Si tu fuente es DD/MM/YYYY, usa: `${yyyy}-${dd}-${mm}`
-    const date = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
-    return isNaN(date.getTime()) ? undefined : date;
+    // const [_, mm, dd, yyyy] = slashDate;
+    // Como no se usan los grupos, parsea directamente:
+    const parts = fechaStr.split("/");
+    if (parts.length === 3) {
+      const [mm, dd, yyyy] = parts;
+      const date = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+      return isNaN(date.getTime()) ? undefined : date;
+    }
   }
   const meses: Record<string, string> = {
     enero: "January", febrero: "February", marzo: "March", abril: "April",
