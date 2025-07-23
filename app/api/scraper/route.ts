@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
     // Por ahora, solo devuelve la URL recibida como texto de ejemplo
     return NextResponse.json({ text: `Texto extraído de: ${url}` });
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: 'Error procesando la URL' }, { status: 400 });
   }
 }

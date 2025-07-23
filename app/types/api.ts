@@ -20,6 +20,9 @@ export interface EcosystemMapItem {
   estado?: string; // Para Convocatoria
   // Agregado para mostrar enlaces de convocatorias en el mapa
   enlace?: string;
+  // Agregado para empresas con url
+  url?: string;
+  contacto?: string;
 }
 
 // Tipos para la API del backend

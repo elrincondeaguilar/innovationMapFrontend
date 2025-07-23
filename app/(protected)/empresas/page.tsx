@@ -204,7 +204,7 @@ export default function EmpresasPage() {
 
     try {
       // Normalizar el departamento antes de enviar (igual que en registro/page.tsx)
-      let departamentoNormalizado = editandoEmpresa.department
+      const departamentoNormalizado = editandoEmpresa.department
         ? editandoEmpresa.department
             .toLowerCase()
             .normalize("NFD")

@@ -4,7 +4,6 @@ import { useState } from "react";
 import Navbar from "../../components/Navbar";
 import { ConvocatoriaService } from "../../services/backendService";
 import { AnalisisConvocatoria } from "../../types/api";
-import { log } from "console";
 
 interface ConvocatoriaData {
   titulo: string;
@@ -282,11 +281,15 @@ ${textoCompleto}`,
         categoria: convocatoriaExtraida.categoria,
         entidad: convocatoriaExtraida.entidad,
         enlace: url,
-        ...(typeof (convocatoriaExtraida as any).companyId !== 'undefined' && { companyId: (convocatoriaExtraida as any).companyId }),
-        ...(typeof (convocatoriaExtraida as any).presupuesto === 'number' && { presupuesto: (convocatoriaExtraida as any).presupuesto }),
+        ...(typeof (convocatoriaExtraida as unknown as { companyId: string }).companyId !== 'undefined' && !isNaN(Number((convocatoriaExtraida as unknown as { companyId: string }).companyId)) && {
+          companyId: Number((convocatoriaExtraida as unknown as { companyId: string }).companyId)
+        }),
+        ...(typeof (convocatoriaExtraida as unknown as { presupuesto: number }).presupuesto === 'number' && { presupuesto: (convocatoriaExtraida as unknown as { presupuesto: number }).presupuesto }),
         requisitos: convocatoriaExtraida.requisitos || [],
         estado: (['activa', 'cerrada', 'pendiente'].includes(analisisData.estado) ? analisisData.estado : 'pendiente') as 'activa' | 'cerrada' | 'pendiente',
-        ...(typeof (convocatoriaExtraida as any).estadoManual !== 'undefined' && { estadoManual: (convocatoriaExtraida as any).estadoManual })
+        ...(typeof (convocatoriaExtraida as unknown as { estadoManual: string }).estadoManual !== 'undefined' && {
+          estadoManual: (convocatoriaExtraida as unknown as { estadoManual: string }).estadoManual === 'true'
+        })
       };
       const resultado = await ConvocatoriaService.crearConvocatoria(payload);
 
@@ -301,11 +304,11 @@ ${textoCompleto}`,
           `❌ Error al agregar la convocatoria: ${resultado.message || resultado.errors || "Error desconocido"}`
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error agregando convocatoria:", error);
       setRespuesta(
         (respuesta ? respuesta + "\n\n" : "") +
-        `❌ Error al agregar la convocatoria. ${error?.message || "Error desconocido"}`
+        `❌ Error al agregar la convocatoria. ${error instanceof Error ? error.message : "Error desconocido"}`
       );
     } finally {
       setGuardando(false);
