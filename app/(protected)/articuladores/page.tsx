@@ -562,7 +562,7 @@ export default function ArticuladoresPage() {
                     </div>
                   )}
 
-                  {articulador.contacto && (
+                  {articulador.contacto && /^\S+@\S+\.\S+$/.test(articulador.contacto) ? (
                     <div className="flex items-center">
                       <svg
                         className="w-4 h-4 text-green-500 mr-2"
@@ -580,9 +580,27 @@ export default function ArticuladoresPage() {
                       <a
                         href={`mailto:${articulador.contacto}`}
                         className="text-sm text-green-600 hover:text-green-800 underline truncate max-w-40"
+                        title="Enviar correo"
                       >
                         Contactar
                       </a>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-sm text-gray-400">
+                      <svg
+                        className="w-4 h-4 text-gray-400 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                        />
+                      </svg>
+                      <span>Contacto no disponible</span>
                     </div>
                   )}
                 </div>
