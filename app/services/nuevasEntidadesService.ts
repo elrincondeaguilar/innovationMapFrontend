@@ -48,15 +48,13 @@ export class EcosystemService {
   };
 
   // Normaliza el nombre del departamento para que coincida con las claves del diccionario
-  private static normalizeDepartamento(dep?: string | null): string {
-    return dep
-      ? dep
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[ 0-6f]/g, "") // quita tildes
-          .replace(/^ a0+| a0+$/g, "") // quita espacios no separables
-          .replace(/^\s+|\s+$/g, "") // quita espacios normales
-      : "default";
+  private static normalizeDepartamento(departamento: string): string {
+    return departamento
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   private static getCoordinatesForLocation(
@@ -72,6 +70,7 @@ export class EcosystemService {
     // Normalizar el nombre del departamento
     const dept = this.normalizeDepartamento(departamento || "");
     const coords = this.DEPARTAMENTO_COORDS[dept] || this.DEPARTAMENTO_COORDS["default"];
+    console.log("[MAP DEBUG] Buscando coordenadas para:", departamento, "Normalizado:", dept, "Existe:", !!this.DEPARTAMENTO_COORDS[dept]);
     
     
     return {
@@ -145,10 +144,11 @@ export class EcosystemService {
       // Procesar convocatorias
       if (Array.isArray(convocatoriasRes)) {
         convocatoriasRes.forEach((conv: Convocatoria) => {
+          const departamentoConv = (conv as unknown as { Ubicacion?: string; ubicacion?: string }).Ubicacion || (conv as unknown as { Ubicacion?: string; ubicacion?: string }).ubicacion || "";
           const coords = this.getCoordinatesForLocation(
-            undefined, 
-            undefined, 
-            "antioquia" // Default para convocatorias
+            undefined,
+            undefined,
+            departamentoConv
           );
 
           ecosystemItems.push({
@@ -156,6 +156,7 @@ export class EcosystemService {
             nombre: conv.titulo,
             tipo: "Convocatoria",
             descripcion: conv.descripcion,
+            departamento: departamentoConv,
             latitud: coords.latitud,
             longitud: coords.longitud,
             categoria: conv.categoria,

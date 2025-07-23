@@ -23,6 +23,8 @@ export interface EcosystemMapItem {
   // Agregado para empresas con url
   url?: string;
   contacto?: string;
+  Ubicacion?: string;
+  ubicacion?: string;
 }
 
 // Tipos para la API del backend
@@ -49,6 +51,8 @@ export interface Convocatoria {
   palabrasClave?: string; // Palabras clave relacionadas
   fechaApertura?: string; // Fecha de apertura
   fechaCierre?: string; // Fecha de cierre
+  Ubicacion?: string;
+  ubicacion?: string;
 
   // Campos relacionados con la empresa
   companyId?: number; // Corresponde a CompanyId en el backend
@@ -173,6 +177,7 @@ export interface CreateConvocatoriaRequest {
   estadoManual?: boolean; // Indica si el estado se establece manualmente
   requisitos: string[]; // Array de strings para coincidir con List<string>
   companyId?: number; // ID de la empresa asociada
+  departamento?: string;
 
   // 🆕 NUEVOS CAMPOS EXTENDIDOS
   enlace?: string;

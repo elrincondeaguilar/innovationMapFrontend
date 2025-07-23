@@ -13,6 +13,11 @@ import {
   Empresa,
 } from "../../types/api";
 
+// Lista de departamentos de Colombia (normalizada)
+const DEPARTAMENTOS_COLOMBIA = [
+  "Amazonas", "Antioquia", "Arauca", "Atlántico", "Bolívar", "Boyacá", "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó", "Córdoba", "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira", "Magdalena", "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío", "Risaralda", "San Andrés y Providencia", "Santander", "Sucre", "Tolima", "Valle del Cauca", "Vaupés", "Vichada"
+];
+
 // Local utility functions and constants
 const CATEGORIAS_CONVOCATORIA = [
   "Innovación",
@@ -37,6 +42,7 @@ const validateConvocatoriaForBackend = (
   if (!data.fechaFin) errors.push("La fecha de fin es requerida");
   if (!data.categoria?.trim()) errors.push("La categoría es requerida");
   if (!data.entidad?.trim()) errors.push("La entidad es requerida");
+  if (!data.departamento?.trim()) errors.push("El departamento es requerido");
 
   if (data.fechaInicio && data.fechaFin && data.fechaInicio >= data.fechaFin) {
     errors.push("La fecha de fin debe ser posterior a la fecha de inicio");
@@ -103,6 +109,7 @@ export default function ConvocatoriasPage() {
     "recientes" | "antiguas" | "alfabetico" | "fecha-inicio"
   >("recientes");
 
+  // Añadir latitud y longitud al estado inicial del formulario
   const [formData, setFormData] = useState<CreateConvocatoriaRequest>({
     titulo: "",
     descripcion: "",
@@ -116,7 +123,10 @@ export default function ConvocatoriasPage() {
     presupuesto: undefined, // Incluir presupuesto en el estado inicial
     companyId: undefined, // Nuevo campo para la empresa
     enlace: "",
+    departamento: "",
   });
+
+  // Eliminar importación de MiniMap y dynamic
 
   // Función helper para formatear fechas de manera segura
   const formatearFecha = (fechaString: string): string => {
@@ -243,12 +253,18 @@ export default function ConvocatoriasPage() {
           estadoManual: formData.estadoManual,
           requisitos: formData.requisitos,
           ...(typeof formData.companyId === 'number' && { companyId: formData.companyId }),
-          ...(typeof formData.presupuesto === 'number' && { presupuesto: formData.presupuesto })
+          ...(typeof formData.presupuesto === 'number' && { presupuesto: formData.presupuesto }),
+          Ubicacion: formData.departamento,
         };
         resultado = await ConvocatoriaService.actualizarConvocatoria(editingConvocatoria.id!, payload);
       } else {
         // Crear nueva convocatoria
-        resultado = await ConvocatoriaService.crearConvocatoria(formData);
+        const payload = {
+          ...formData,
+          Ubicacion: formData.departamento,
+        };
+        delete payload.departamento;
+        resultado = await ConvocatoriaService.crearConvocatoria(payload);
       }
 
       if (resultado.success) {
@@ -267,6 +283,7 @@ export default function ConvocatoriasPage() {
           presupuesto: undefined,
           companyId: undefined,
           enlace: "",
+          departamento: "",
         });
         cargarConvocatorias(); // Recargar la lista
       } else {
@@ -304,6 +321,7 @@ export default function ConvocatoriasPage() {
       presupuesto: convocatoria.presupuesto || undefined, // Incluir presupuesto
       companyId: convocatoria.companyId || undefined, // Incluir companyId
       enlace: convocatoria.enlace || "",
+      departamento: convocatoria.Ubicacion || convocatoria.ubicacion || "",
     };
 
     setFormData(formDataToSet);
@@ -325,6 +343,7 @@ export default function ConvocatoriasPage() {
       presupuesto: undefined, // Incluir presupuesto en el reset
       companyId: undefined, // Incluir companyId en el reset
       enlace: "",
+      departamento: "",
     });
     setShowForm(false);
   };
@@ -909,6 +928,28 @@ export default function ConvocatoriasPage() {
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
                   />
                 </div>
+                {/* Eliminar latitud y longitud del formulario */}
+                <div className="group col-span-1 md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Departamento *
+                  </label>
+                  <select
+                    required
+                    value={formData.departamento || ""}
+                    onChange={e => setFormData({ ...formData, departamento: e.target.value })}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 bg-white text-gray-900"
+                  >
+                    <option value="">Selecciona un departamento</option>
+                    {DEPARTAMENTOS_COLOMBIA.map(dep => (
+                      <option key={dep} value={dep}>{dep}</option>
+                    ))}
+                  </select>
+                  {formData.departamento === "" ? (
+                    <p className="text-xs text-red-600 mt-1">Debes seleccionar el departamento de la convocatoria</p>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">Departamento: {formData.departamento}</p>
+                  )}
+                </div>
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Enlace de la convocatoria (opcional)
@@ -1038,6 +1079,17 @@ export default function ConvocatoriasPage() {
                   <h3 className="text-xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300 line-clamp-2">
                     {convocatoria.titulo}
                   </h3>
+                  {(convocatoria.Ubicacion || convocatoria.ubicacion) && (
+                    <div className="flex items-center mt-1 mb-2">
+                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 12.414a2 2 0 00-2.828 0l-4.243 4.243a8 8 0 1111.314 0z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span className="text-sm text-gray-600">
+                        {convocatoria.Ubicacion || convocatoria.ubicacion}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex flex-col items-end gap-1">
                     <span
                       className={`px-3 py-1 text-xs font-semibold rounded-full ${getEstadoColor(

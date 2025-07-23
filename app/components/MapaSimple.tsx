@@ -42,81 +42,61 @@ interface MapaSimpleProps {
 }
 
 // Configurar iconos de Leaflet
-const defaultIcon = new L.Icon({
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+// Elimina la declaración de defaultIcon si no se usa
 
-// Iconos específicos para cada tipo de entidad
+// Iconos específicos para cada tipo de entidad (modernos con divIcon)
 const iconMap = {
-  Company: new L.Icon({
-    iconUrl:
-      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
+  Company: L.divIcon({
+    html: `<div style="background:#2563eb;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.15);">🏢</div>`,
+    className: "",
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
   }),
-
-  Articulador: new L.Icon({
-    iconUrl:
-      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
+  Articulador: L.divIcon({
+    html: `<div style="background:#f59e42;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.15);">🤝</div>`,
+    className: "",
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
   }),
-  Convocatoria: new L.Icon({
-    iconUrl:
-      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
+  Convocatoria: L.divIcon({
+    html: `<div style="background:#a259e6;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.15);">📢</div>`,
+    className: "",
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
   }),
 };
 
-// Icono de cluster con número
-function getClusterIcon(count: number, baseIcon: L.Icon) {
+// Icono de cluster con número y estilo moderno
+function getClusterIcon(count: number, baseIcon: L.DivIcon, types: string[] = ["Company"]) {
+  let bgColor = "#2563eb";
+  const emojis = types.map(tipo => {
+    if (tipo === "Company") return "🏢";
+    if (tipo === "Articulador") return "🤝";
+    if (tipo === "Convocatoria") return "📢";
+    return "❓";
+  }).join("");
+  if (types.length === 1) {
+    if (types[0] === "Articulador") bgColor = "#f59e42";
+    else if (types[0] === "Convocatoria") bgColor = "#a259e6";
+    else bgColor = "#2563eb";
+  } else {
+    // Azul con transparencia para agrupaciones de varios tipos
+    bgColor = "rgba(37,99,235,0.5)";
+  }
   return L.divIcon({
     html: `
-      <div style="position: relative; display: inline-block;">
-        <img src="${baseIcon.options.iconUrl}" style="width: 32px; height: 48px;"/>
-        <span style="
-          position: absolute;
-          top: 2px;
-          right: 2px;
-          background: #2563eb;
-          color: white;
-          font-size: 14px;
-          font-weight: bold;
-          border-radius: 50%;
-          width: 22px;
-          height: 22px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid white;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        ">${count}</span>
+      <div style=\"position: relative; display: flex; align-items: center; justify-content: center;\">
+        <div style=\"background:${bgColor};border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.18);\">${emojis}</div>
+        <span style=\"position: absolute; bottom: -6px; right: -6px; background: #fff; color: #2563eb; font-size: 14px; font-weight: bold; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid #2563eb; box-shadow: 0 1px 4px rgba(0,0,0,0.12);\">${count}</span>
       </div>
     `,
-    iconSize: [32, 48],
-    iconAnchor: [16, 48],
-    popupAnchor: [1, -34],
-    className: "custom-cluster-icon"
+    className: "custom-cluster-icon",
+    iconSize: [44, 44],
+    iconAnchor: [22, 44],
+    popupAnchor: [0, -44],
   });
 }
 
@@ -467,6 +447,12 @@ export default function MapaSimple({
                   <div className="text-xs text-gray-500">{empresaSeleccionada.tipo}</div>
                 </div>
               </div>
+              {(empresaSeleccionada.departamento || empresaSeleccionada.Ubicacion || empresaSeleccionada.ubicacion) && (
+                <div className="flex items-center text-xs text-gray-500 mb-1">
+                  <span className="mr-2">📍</span>
+                  <span>{empresaSeleccionada.departamento || empresaSeleccionada.Ubicacion || empresaSeleccionada.ubicacion}</span>
+                </div>
+              )}
               {empresaSeleccionada.descripcion && (
                 <p className="text-sm text-gray-700 mb-2">{empresaSeleccionada.descripcion}</p>
               )}
@@ -578,15 +564,25 @@ export default function MapaSimple({
                   items[0].longitud,
                 ];
 
-                // Usar el icono del primer elemento, o un icono especial si hay múltiples tipos
-                const hasMultipleTypes =
-                  new Set(items.map((item) => item.tipo)).size > 1;
-                const baseIcon = hasMultipleTypes
-                  ? defaultIcon
-                  : iconMap[items[0].tipo as keyof typeof iconMap] || defaultIcon;
-
-                // Mostrar el icono con número SIEMPRE
-                const icon = getClusterIcon(items.length, baseIcon);
+                const hasMultipleTypes = new Set(items.map((item) => item.tipo)).size > 1;
+                const types = Array.from(new Set(items.map((item) => item.tipo)));
+                let icon;
+                if (items.length === 1) {
+                  // Un solo item: icono simple del tipo
+                  icon = iconMap[items[0].tipo as keyof typeof iconMap] || iconMap.Company;
+                } else {
+                  // Más de uno: icono con emojis de los tipos y número por tipo
+                  const baseIcon = hasMultipleTypes
+                    ? L.divIcon({
+                        html: `<div style=\"background:#64748b;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.15);\">${types.map(tipo => tipo === "Company" ? "🏢" : tipo === "Articulador" ? "🤝" : tipo === "Convocatoria" ? "📢" : "❓").join("")}</div>`,
+                        className: "",
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 36],
+                        popupAnchor: [0, -36],
+                      })
+                    : iconMap[items[0].tipo as keyof typeof iconMap] || iconMap.Company;
+                  icon = getClusterIcon(items.length, baseIcon, types);
+                }
 
                 markers.push(
                   <Marker

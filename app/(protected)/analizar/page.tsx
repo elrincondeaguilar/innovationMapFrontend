@@ -19,23 +19,53 @@ interface ConvocatoriaData {
   palabrasClave?: string;
   fechaApertura?: string;
   fechaCierre?: string;
+  ubicacion?: string; // Nuevo campo para la ubicación
+  departamento?: string; // Nuevo campo para el departamento
 }
 
-// Helper para fechas seguras
-function safeToISOString(dateInput: string | Date | undefined, fallback: Date): string {
-  if (!dateInput || dateInput === "null" || dateInput === "No especificada" || dateInput === "") {
-    return fallback.toISOString();
+// Función para extraer fechas de apertura y cierre del texto
+function extraerFechasAperturaCierre(texto: string) {
+  // Expresión regular mejorada para ignorar el día de la semana
+  const aperturaMatch = texto.match(/Apertura\s*[:|]?\s*(?:[a-záéíóúñ]+\s+)?([0-9]{1,2} [a-zA-Záéíóúñ]+ [0-9]{4}(?: [0-9]{2}:[0-9]{2}(?::[0-9]{2})?(?: ?[ap]m)?)?)/i);
+  const cierreMatch = texto.match(/Cierre\s*[:|]?\s*(?:[a-záéíóúñ]+\s+)?([0-9]{1,2} [a-zA-Záéíóúñ]+ [0-9]{4}(?: [0-9]{2}:[0-9]{2}(?::[0-9]{2})?(?: ?[ap]m)?)?)/i);
+  return {
+    apertura: aperturaMatch ? aperturaMatch[1] : undefined,
+    cierre: cierreMatch ? cierreMatch[1] : undefined,
+  };
+}
+
+// Función para parsear fechas en español a Date válido
+function parseFechaEspanol(fechaStr: string | undefined): Date | undefined {
+  if (!fechaStr) return undefined;
+  // Si es MM/DD/YYYY o DD/MM/YYYY
+  const slashDate = fechaStr.match(/^\d{2}\/\d{2}\/\d{4}$/);
+  if (slashDate) {
+    // Ajusta a MM/DD/YYYY o DD/MM/YYYY según tu fuente
+    const [_, mm, dd, yyyy] = slashDate;
+    // Si tu fuente es DD/MM/YYYY, usa: `${yyyy}-${dd}-${mm}`
+    const date = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+    return isNaN(date.getTime()) ? undefined : date;
   }
-  if (dateInput instanceof Date) {
-    return isNaN(dateInput.getTime()) ? fallback.toISOString() : dateInput.toISOString();
-  }
-  const d = new Date(dateInput);
-  return isNaN(d.getTime()) ? fallback.toISOString() : d.toISOString();
+  const meses: Record<string, string> = {
+    enero: "January", febrero: "February", marzo: "March", abril: "April",
+    mayo: "May", junio: "June", julio: "July", agosto: "August",
+    septiembre: "September", setiembre: "September", octubre: "October",
+    noviembre: "November", diciembre: "December"
+  };
+  let str = fechaStr.toLowerCase();
+  Object.entries(meses).forEach(([es, en]) => {
+    str = str.replace(new RegExp(es, "g"), en);
+  });
+  // Elimina el día de la semana si está presente
+  str = str.replace(/^(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\s*/i, "");
+  // Intenta parsear
+  const date = new Date(str);
+  return isNaN(date.getTime()) ? undefined : date;
 }
 
 export default function AnalizarPage() {
   const [url, setUrl] = useState("");
-  const [texto, setTexto] = useState("");
+  const [texto, setTexto] = useState(""); // texto completo de la página
   const [respuesta, setRespuesta] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -264,35 +294,48 @@ ${textoCompleto}`,
     }
   };
 
+  // Al agregar convocatoria, usa el texto completo para extraer fechas
   const agregarConvocatoria = async () => {
     if (!convocatoriaExtraida || !analisisData) return;
 
     setGuardando(true);
-    console.log("convocatoriaExtraida", convocatoriaExtraida);
     try {
+      // Usa el texto completo de la página, no solo la descripción
+      const textoParaFechas = texto;
+      const fechas = extraerFechasAperturaCierre(textoParaFechas);
+      let fechaInicio = fechas.apertura ? parseFechaEspanol(fechas.apertura) : undefined;
+      let fechaFin = fechas.cierre ? parseFechaEspanol(fechas.cierre) : undefined;
+      if (!fechaInicio && analisisData.fechasEncontradas?.inicio) fechaInicio = new Date(analisisData.fechasEncontradas.inicio);
+      if (!fechaFin && analisisData.fechasEncontradas?.fin) fechaFin = new Date(analisisData.fechasEncontradas.fin);
+      // Calcular estado
+      let estado: "activa" | "cerrada" | "pendiente" = "pendiente";
+      if (fechaFin) {
+        estado = fechaFin < new Date() ? "cerrada" : "activa";
+      }
+      // Departamento/ubicación: pide al usuario si no se puede inferir
+      let ubicacion = convocatoriaExtraida.ubicacion || convocatoriaExtraida.departamento || "";
+      if (!ubicacion) {
+        ubicacion = "Cundinamarca";
+      }
+      if (!fechaInicio || !fechaFin) {
+        alert("No se pudo extraer la fecha de inicio o fin. Por favor, verifica el texto o ingrésalas manualmente.");
+        setGuardando(false);
+        return;
+      }
       const payload = {
         titulo: convocatoriaExtraida.titulo,
         descripcion: convocatoriaExtraida.descripcion,
-        fechaInicio: safeToISOString(analisisData.fechasEncontradas?.inicio, new Date()),
-        fechaFin: safeToISOString(
-          analisisData.fechasEncontradas?.fin,
-          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        ),
+        fechaInicio: fechaInicio.toISOString(),
+        fechaFin: fechaFin.toISOString(),
         categoria: convocatoriaExtraida.categoria,
         entidad: convocatoriaExtraida.entidad,
-        enlace: url,
-        ...(typeof (convocatoriaExtraida as unknown as { companyId: string }).companyId !== 'undefined' && !isNaN(Number((convocatoriaExtraida as unknown as { companyId: string }).companyId)) && {
-          companyId: Number((convocatoriaExtraida as unknown as { companyId: string }).companyId)
-        }),
-        ...(typeof (convocatoriaExtraida as unknown as { presupuesto: number }).presupuesto === 'number' && { presupuesto: (convocatoriaExtraida as unknown as { presupuesto: number }).presupuesto }),
+        Ubicacion: ubicacion,
+        enlace: convocatoriaExtraida.enlace || "",
+        presupuesto: convocatoriaExtraida.presupuesto || undefined,
         requisitos: convocatoriaExtraida.requisitos || [],
-        estado: (['activa', 'cerrada', 'pendiente'].includes(analisisData.estado) ? analisisData.estado : 'pendiente') as 'activa' | 'cerrada' | 'pendiente',
-        ...(typeof (convocatoriaExtraida as unknown as { estadoManual: string }).estadoManual !== 'undefined' && {
-          estadoManual: (convocatoriaExtraida as unknown as { estadoManual: string }).estadoManual === 'true'
-        })
+        estado,
       };
       const resultado = await ConvocatoriaService.crearConvocatoria(payload);
-
       if (resultado.success) {
         setAgregadoExitoso(true);
         setTimeout(() => {
